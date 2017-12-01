@@ -95,7 +95,8 @@ def main():
     upgrade_parser.add_argument(
         '-r',
         '--rev',
-        help='do upgrading from this revision only',
+        help='do upgrading from this revision only. '
+                'that may be useful when the hosts file is empty',
     )
     
     for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
