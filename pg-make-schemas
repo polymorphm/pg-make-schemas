@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- mode: python; coding: utf-8 -*-
 
-from lib_pg_make_schemas_2017_11 import main
+from lib_pg_make_schemas import main
 
 if __name__ == '__main__':
     main.main()

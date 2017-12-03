@@ -10,7 +10,9 @@ def inspect_cmd(args_ctx, print_func, err_print_func):
     raise NotImplementedError('inspect_cmd is not implemented yet')
 
 def install_cmd(args_ctx, print_func, err_print_func):
-    raise NotImplementedError('install_cmd is not implemented yet')
+    from . import install
+    
+    install.install_cmd(args_ctx, print_func, err_print_func)
 
 def upgrade_cmd(args_ctx, print_func, err_print_func):
     raise NotImplementedError('upgrade_cmd is not implemented yet')
@@ -19,6 +21,8 @@ def install_settings_cmd(args_ctx, print_func, err_print_func):
     raise NotImplementedError('install_settings_cmd is not implemented yet')
 
 def try_print(*args, **kwargs):
+    kwargs.setdefault('flush', True)
+    
     try:
         print(*args, **kwargs)
     except OSError:
@@ -26,6 +30,7 @@ def try_print(*args, **kwargs):
 
 def try_err_print(*args, **kwargs):
     kwargs.setdefault('file', sys.stderr)
+    kwargs.setdefault('flush', True)
     
     try:
         print(*args, **kwargs)
