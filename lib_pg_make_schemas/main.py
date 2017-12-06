@@ -6,6 +6,9 @@ import argparse
 class ArgsCtx:
     pass
 
+def init_cmd(args_ctx, print_func, err_print_func):
+    raise NotImplementedError('init_cmd is not implemented yet')
+
 def install_cmd(args_ctx, print_func, err_print_func):
     from . import install
     
@@ -47,6 +50,12 @@ def main():
         dest='command',
     )
     
+    init_parser = subparsers.add_parser(
+        'init',
+        help='do some basic initialization of schemas, e.g., creation of extensions and roles',
+        description='do some basic initialization of schemas, e.g., creation of extensions and roles',
+    )
+    
     install_parser = subparsers.add_parser(
         'install',
         help='do fresh installing schemas',
@@ -71,7 +80,7 @@ def main():
         description='do inspection of source code for some rude errors',
     )
     
-    for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
+    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
         sub_parser.add_argument(
             '-o',
             '--output',
@@ -104,7 +113,7 @@ def main():
                 'that may be useful when the hosts file is empty',
     )
     
-    for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
+    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
         sub_parser.add_argument(
             'hosts',
             help='path to the hosts file. if \'-\' is used, it is '
@@ -112,13 +121,15 @@ def main():
                     'when the ``--output`` option is used',
         )
     
-    for sub_parser in (install_parser, upgrade_parser, inspect_parser):
-        if sub_parser == upgrade_parser:
-            arg_help='path to source code. will be used migration files'
-        elif sub_parser == inspect_parser:
-            arg_help='path to source code for inspection'
-        else:
-            arg_help='path to source code. won\'t be used migration files'
+    for sub_parser in (init_parser, install_parser, upgrade_parser, inspect_parser):
+        arg_help_map = {
+            init_parser: 'path to source code. will be used init files only',
+            install_parser: 'path to source code. won\'t be used init and migration files',
+            upgrade_parser: 'path to source code. will be used migration files',
+            inspect_parser: 'path to source code for inspection',
+        }
+        
+        arg_help = arg_help_map[sub_parser]
         
         sub_parser.add_argument(
             'source_code',
@@ -126,6 +137,7 @@ def main():
         )
         
         del arg_help
+        del arg_help_map
     
     for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
         if sub_parser in (install_parser, upgrade_parser):
@@ -158,17 +170,15 @@ def main():
     
     args_ctx.command = args.command
     
-    if args_ctx.command in ('install', 'upgrade', 'install-settings'):
+    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings'):
         args_ctx.output = args.output
         args_ctx.hosts = args.hosts
-        args_ctx.settings_source_code = args.settings_source_code
         
         if args_ctx.hosts == '-':
             args_ctx.hosts = None
     else:
         args_ctx.output = None
         args_ctx.hosts = None
-        args_ctx.settings_source_code = None
     
     if args_ctx.command == 'install' and args.reinstall:
         args_ctx.reinstall = True
@@ -186,12 +196,18 @@ def main():
     else:
         args_ctx.rev = None
     
-    if args_ctx.command in ('install', 'upgrade', 'inspect'):
+    if args_ctx.command in ('init', 'install', 'upgrade', 'inspect'):
         args_ctx.source_code = args.source_code
     else:
         args_ctx.source_code = None
     
+    if args_ctx.command in ('install', 'upgrade', 'install-settings'):
+        args_ctx.settings_source_code = args.settings_source_code
+    else:
+        args_ctx.settings_source_code = None
+    
     cmd_func_map = {
+        'init': init_cmd,
         'install': install_cmd,
         'upgrade': upgrade_cmd,
         'install-settings': install_settings_cmd,
