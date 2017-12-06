@@ -6,9 +6,6 @@ import argparse
 class ArgsCtx:
     pass
 
-def inspect_cmd(args_ctx, print_func, err_print_func):
-    raise NotImplementedError('inspect_cmd is not implemented yet')
-
 def install_cmd(args_ctx, print_func, err_print_func):
     from . import install
     
@@ -19,6 +16,9 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
 
 def install_settings_cmd(args_ctx, print_func, err_print_func):
     raise NotImplementedError('install_settings_cmd is not implemented yet')
+
+def inspect_cmd(args_ctx, print_func, err_print_func):
+    raise NotImplementedError('inspect_cmd is not implemented yet')
 
 def try_print(*args, **kwargs):
     kwargs.setdefault('flush', True)
@@ -47,12 +47,6 @@ def main():
         dest='command',
     )
     
-    inspect_parser = subparsers.add_parser(
-        'inspect',
-        help='do inspection of source code for some rude errors',
-        description='do inspection of source code for some rude errors',
-    )
-    
     install_parser = subparsers.add_parser(
         'install',
         help='do fresh installing schemas',
@@ -69,6 +63,12 @@ def main():
         'install-settings',
         help='do fresh installing schema settings',
         description='do fresh installing schema settings',
+    )
+    
+    inspect_parser = subparsers.add_parser(
+        'inspect',
+        help='do inspection of source code for some rude errors',
+        description='do inspection of source code for some rude errors',
     )
     
     for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
@@ -112,11 +112,11 @@ def main():
                     'when the ``--output`` option is used',
         )
     
-    for sub_parser in (inspect_parser, install_parser, upgrade_parser):
-        if sub_parser == inspect_parser:
-            arg_help='path to source code for inspection'
-        elif sub_parser == upgrade_parser:
+    for sub_parser in (install_parser, upgrade_parser, inspect_parser):
+        if sub_parser == upgrade_parser:
             arg_help='path to source code. will be used migration files'
+        elif sub_parser == inspect_parser:
+            arg_help='path to source code for inspection'
         else:
             arg_help='path to source code. won\'t be used migration files'
         
@@ -186,16 +186,16 @@ def main():
     else:
         args_ctx.rev = None
     
-    if args_ctx.command in ('inspect', 'install', 'upgrade'):
+    if args_ctx.command in ('install', 'upgrade', 'inspect'):
         args_ctx.source_code = args.source_code
     else:
         args_ctx.source_code = None
     
     cmd_func_map = {
-        'inspect': inspect_cmd,
         'install': install_cmd,
         'upgrade': upgrade_cmd,
         'install-settings': install_settings_cmd,
+        'inspect': inspect_cmd,
     }
     
     cmd_func = cmd_func_map[args_ctx.command]
