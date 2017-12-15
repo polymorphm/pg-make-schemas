@@ -6,7 +6,7 @@ import yaml
 
 class LoadUtils:
     @classmethod
-    def check_for_real(self, file_path):
+    def check_for_real(cls, file_path):
         if os.path.islink(file_path):
             raise ValueError('{!r}: this file is link'.format(file_path))
         
@@ -18,7 +18,7 @@ class LoadUtils:
             ))
     
     @classmethod
-    def norm_path_join(self, path1, path2):
+    def norm_path_join(cls, path1, path2):
         path = os.path.join(path1, path2)
         
         if path != os.path.normpath(path) or \
@@ -28,7 +28,7 @@ class LoadUtils:
         return path
     
     @classmethod
-    def check_include_elem(self, include_elem, first_elem, last_elem):
+    def check_include_elem(cls, include_elem, first_elem, last_elem):
         if include_elem is not None and not isinstance(include_elem, (list, str)):
             raise ValueError('not isinstance(include_elem, (list, str))')
         
@@ -40,7 +40,7 @@ class LoadUtils:
     
     @classmethod
     def load_file_path_list(
-                self,
+                cls,
                 cluster_dir, file_dir,
                 include_elem, first_elem, last_elem,
                 filt_func,
@@ -65,7 +65,7 @@ class LoadUtils:
                 if not isinstance(include_item_elem, str):
                     raise ValueError('not isinstance(include_item_elem, str)')
                 
-                path = self.norm_path_join(cluster_dir, include_item_elem)
+                path = cls.norm_path_join(cluster_dir, include_item_elem)
                 
                 path_list.append(path)
         
@@ -73,7 +73,7 @@ class LoadUtils:
         
         for path in path_list:
             for f in sorted(d.name for d in os.scandir(path)):
-                file_path = self.norm_path_join(path, f)
+                file_path = cls.norm_path_join(path, f)
                 
                 if not filt_func(file_path):
                     continue
@@ -96,7 +96,7 @@ class LoadUtils:
                     file_is_used = False
                     
                     for path in path_list:
-                        file_path = self.norm_path_join(path, ordered_item_elem)
+                        file_path = cls.norm_path_join(path, ordered_item_elem)
                         
                         if file_path not in file_path_list:
                             continue
