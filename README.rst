@@ -4,7 +4,7 @@ pg-make-schemas
 ``pg-make-schemas`` is an utility for installing and upgrading database schemas
 from a revisioned source code repository.
 
-status
+Status
 ------
 
 Developer version (for master git branch).
