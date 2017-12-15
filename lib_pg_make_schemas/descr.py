@@ -39,7 +39,12 @@ class LoadUtils:
             raise ValueError('not isinstance(last_elem, (list, str))')
     
     @classmethod
-    def load_file_path_list(self, file_dir, include_elem, first_elem, last_elem, filt_func):
+    def load_file_path_list(
+                self,
+                cluster_dir, file_dir,
+                include_elem, first_elem, last_elem,
+                filt_func,
+            ):
         path_list = []
         file_path_list = []
         file_path_set = set()
@@ -60,7 +65,7 @@ class LoadUtils:
                 if not isinstance(include_item_elem, str):
                     raise ValueError('not isinstance(include_item_elem, str)')
                 
-                path = self.norm_path_join(file_dir, include_item_elem)
+                path = self.norm_path_join(cluster_dir, include_item_elem)
                 
                 path_list.append(path)
         
@@ -107,7 +112,7 @@ class LoadUtils:
 
 class HostsDescr:
     _load_utils = LoadUtils
-
+    
     def load(self, file_path):
         self._load_utils.check_for_real(file_path)
         
@@ -160,8 +165,8 @@ class SchemaDescr:
     _load_utils = LoadUtils
     
     file_name = 'schema.yaml'
-
-    def load(self, file_path):
+    
+    def load(self, cluster_dir, file_path):
         self._load_utils.check_for_real(file_path)
         
         file_dir = os.path.dirname(file_path)
@@ -221,7 +226,8 @@ class SchemaDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem, sql_filt_func
+                    cluster_dir, file_dir, include_elem, first_elem, last_elem,
+                    sql_filt_func,
                 )
         
         self.schema_name = schema_name
@@ -238,8 +244,8 @@ class SchemasDescr:
     _schema_descr_class = SchemaDescr
     
     file_name = 'schemas.yaml'
-
-    def load(self, file_path):
+    
+    def load(self, cluster_dir, file_path):
         self._load_utils.check_for_real(file_path)
         
         file_dir = os.path.dirname(file_path)
@@ -275,7 +281,8 @@ class SchemasDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem, schema_filt_func
+                    cluster_dir, file_dir, include_elem, first_elem, last_elem,
+                    schema_filt_func,
                 )
         
         var_schema_list = []
@@ -291,7 +298,7 @@ class SchemasDescr:
             schema_descr = self._schema_descr_class()
             
             try:
-                schema_descr.load(schema_file_path)
+                schema_descr.load(cluster_dir, schema_file_path)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
             
@@ -326,11 +333,11 @@ class ClusterDescr:
     _schemas_descr_class = SchemasDescr
     
     file_name = 'cluster.yaml'
-
+    
     def load(self, file_path):
         self._load_utils.check_for_real(file_path)
         
-        file_dir = os.path.dirname(file_path)
+        cluster_dir = os.path.dirname(file_path)
         
         with open(file_path, encoding='utf-8') as fd:
             doc = yaml.safe_load(fd)
@@ -363,7 +370,8 @@ class ClusterDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem, schemas_filt_func
+                    cluster_dir, cluster_dir, include_elem, first_elem, last_elem,
+                    schemas_filt_func,
                 )
         
         schemas_list = []
@@ -378,7 +386,7 @@ class ClusterDescr:
             schemas_descr = self._schemas_descr_class()
             
             try:
-                schemas_descr.load(schemas_file_path)
+                schemas_descr.load(cluster_dir, schemas_file_path)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
             
