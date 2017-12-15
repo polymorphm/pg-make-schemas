@@ -15,7 +15,7 @@ class LoadUtils:
         if last_elem is not None and not isinstance(last_elem, (list, str)):
             raise ValueError('not isinstance(last_elem, (list, str))')
     
-    def load_file_path_list(self, file_dir, path_elem, first_elem, last_elem):
+    def load_file_path_list(self, file_dir, path_elem, first_elem, last_elem, filt_func):
         path_list = []
         file_path_list = []
         file_path_set = set()
@@ -43,46 +43,41 @@ class LoadUtils:
                 path_list.append(path)
         
         for path in path_list:
-            if not os.path.samefile(os.path.commonpath((file_dir, path)), file_dir):
-                raise ValueError('{!r}: schema cannot refer to this path'.format(path))
-        
-        for path in path_list:
             for f in sorted(d.name for d in os.scandir(path)):
-                file_path = os.path.join(path, f)
+                file_path = os.path.realpath(os.path.join(path, f))
+                
+                if not filt_func(file_path):
+                    continue
                 
                 if file_path in file_path_set:
-                    continue
+                    raise ValueError('{!r}: this file is duplicated'.format(file_path))
                 
                 file_path_set.add(file_path)
                 file_path_list.append(file_path)
         
-        if first_elem is not None:
-            for first_item_elem in first_elem:
-                if not isinstance(first_item_elem, str):
-                    raise ValueError('not isinstance(first_item_elem, str)')
-                
-                for path in path_list:
-                    file_path = os.path.realpath(os.path.join(path, first_item_elem))
+        for ordered_elem, ordered_file_path_list in [
+                    (first_elem, first_file_path_list),
+                    (last_elem, last_file_path_list),
+                ]:
+            if ordered_elem is not None:
+                for ordered_item_elem in ordered_elem:
+                    if not isinstance(ordered_item_elem, str):
+                        raise ValueError('not isinstance(ordered_item_elem, str)')
                     
-                    if file_path not in file_path_list:
-                        continue
+                    file_is_used = False
                     
-                    file_path_list.remove(file_path)
-                    first_file_path_list.append(file_path)
-        
-        if last_elem is not None:
-            for last_item_elem in last_elem:
-                if not isinstance(last_item_elem, str):
-                    raise ValueError('not isinstance(last_item_elem, str)')
-                
-                for path in path_list:
-                    file_path = os.path.realpath(os.path.join(path, last_item_elem))
+                    for path in path_list:
+                        file_path = os.path.realpath(os.path.join(path, ordered_item_elem))
+                        
+                        if file_path not in file_path_list:
+                            continue
+                        
+                        file_is_used = True
+                        file_path_list.remove(file_path)
+                        ordered_file_path_list.append(file_path)
                     
-                    if file_path not in file_path_list:
-                        continue
-                    
-                    file_path_list.remove(file_path)
-                    last_file_path_list.append(file_path)
+                    if not file_is_used:
+                        raise ValueError('{!r}: this file is not used'.format(file_path))
         
         return file_path_list, first_file_path_list, last_file_path_list
 
@@ -194,24 +189,21 @@ class SchemaDescr:
                 
                 grant_list.append(grant)
         
+        def sql_filt_func(file_path):
+            return file_path.endswith('.sql')
+        
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, path_elem, first_elem, last_elem
+                    file_dir, path_elem, first_elem, last_elem, sql_filt_func
                 )
-        
-        filt = lambda l: [f for f in l if f.endswith('.sql')]
-        
-        filt_file_path_list = filt(file_path_list)
-        filt_first_file_path_list = filt(first_file_path_list)
-        filt_last_file_path_list = filt(last_file_path_list)
         
         self.schema_name = schema_name
         self.schema_type = schema_type
         self.owner = owner
         self.grant_list = grant_list
-        self.file_path_list = filt_file_path_list
-        self.first_file_path_list = filt_first_file_path_list
-        self.last_file_path_list = filt_last_file_path_list
+        self.file_path_list = file_path_list
+        self.first_file_path_list = first_file_path_list
+        self.last_file_path_list = last_file_path_list
         self.sql = sql
 
 class SchemasDescr:
@@ -247,9 +239,17 @@ class SchemasDescr:
         
         self._load_utils.check_path_elem(path_elem, first_elem, last_elem)
         
+        def schema_filt_func(file_path):
+            schema_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._schema_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(schema_file_path)
+        
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, path_elem, first_elem, last_elem
+                    file_dir, path_elem, first_elem, last_elem, schema_filt_func
                 )
         
         var_schema_list = []
@@ -257,13 +257,10 @@ class SchemasDescr:
         schema_name_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schema_file_path = os.path.join(
+            schema_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schema_descr_class.file_name,
-            )
-            
-            if not os.path.isfile(schema_file_path):
-                continue
+            ))
             
             schema_descr = self._schema_descr_class()
             
@@ -331,22 +328,27 @@ class ClusterDescr:
         
         self._load_utils.check_path_elem(path_elem, first_elem, last_elem)
         
+        def schemas_filt_func(file_path):
+            schemas_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._schemas_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(schemas_file_path)
+        
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, path_elem, first_elem, last_elem
+                    file_dir, path_elem, first_elem, last_elem, schemas_filt_func
                 )
         
         schemas_list = []
         schemas_type_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schemas_file_path = os.path.join(
+            schemas_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schemas_descr_class.file_name,
-            )
-            
-            if not os.path.isfile(schemas_file_path):
-                continue
+            ))
             
             schemas_descr = self._schemas_descr_class()
             
