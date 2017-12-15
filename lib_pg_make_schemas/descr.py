@@ -5,9 +5,32 @@ import os, os.path
 import yaml
 
 class LoadUtils:
-    def check_path_elem(self, path_elem, first_elem, last_elem):
-        if path_elem is not None and not isinstance(path_elem, (list, str)):
-            raise ValueError('not isinstance(path_elem, (list, str))')
+    @classmethod
+    def check_for_real(self, file_path):
+        if os.path.islink(file_path):
+            raise ValueError('{!r}: this file is link'.format(file_path))
+        
+        real_file_path = os.path.realpath(file_path)
+        
+        if file_path != real_file_path:
+            raise ValueError('{!r}, {!r}: checking for real is not passed'.format(
+                file_path, real_file_path
+            ))
+    
+    @classmethod
+    def norm_path_join(self, path1, path2):
+        path = os.path.join(path1, path2)
+        
+        if path != os.path.normpath(path) or \
+                os.path.normpath(path) == os.path.normpath(path2):
+            raise ValueError('{!r}, {!r}: this path joining is not normal'.format(path1, path2))
+        
+        return path
+    
+    @classmethod
+    def check_include_elem(self, include_elem, first_elem, last_elem):
+        if include_elem is not None and not isinstance(include_elem, (list, str)):
+            raise ValueError('not isinstance(include_elem, (list, str))')
         
         if first_elem is not None and not isinstance(first_elem, (list, str)):
             raise ValueError('not isinstance(first_elem, (list, str))')
@@ -15,15 +38,16 @@ class LoadUtils:
         if last_elem is not None and not isinstance(last_elem, (list, str)):
             raise ValueError('not isinstance(last_elem, (list, str))')
     
-    def load_file_path_list(self, file_dir, path_elem, first_elem, last_elem, filt_func):
+    @classmethod
+    def load_file_path_list(self, file_dir, include_elem, first_elem, last_elem, filt_func):
         path_list = []
         file_path_list = []
         file_path_set = set()
         first_file_path_list = []
         last_file_path_list = []
         
-        if isinstance(path_elem, str):
-            path_elem = [path_elem]
+        if isinstance(include_elem, str):
+            include_elem = [include_elem]
         
         if isinstance(first_elem, str):
             first_elem = [first_elem]
@@ -31,20 +55,20 @@ class LoadUtils:
         if isinstance(last_elem, str):
             last_elem = [last_elem]
         
-        if path_elem is None:
-            path_list.append(file_dir)
-        else:
-            for path_item_elem in path_elem:
-                if not isinstance(path_item_elem, str):
-                    raise ValueError('not isinstance(path_item_elem, str)')
+        if include_elem is not None:
+            for include_item_elem in include_elem:
+                if not isinstance(include_item_elem, str):
+                    raise ValueError('not isinstance(include_item_elem, str)')
                 
-                path = os.path.realpath(os.path.join(file_dir, path_item_elem))
+                path = self.norm_path_join(file_dir, include_item_elem)
                 
                 path_list.append(path)
         
+        path_list.append(file_dir)
+        
         for path in path_list:
             for f in sorted(d.name for d in os.scandir(path)):
-                file_path = os.path.realpath(os.path.join(path, f))
+                file_path = self.norm_path_join(path, f)
                 
                 if not filt_func(file_path):
                     continue
@@ -67,7 +91,7 @@ class LoadUtils:
                     file_is_used = False
                     
                     for path in path_list:
-                        file_path = os.path.realpath(os.path.join(path, ordered_item_elem))
+                        file_path = self.norm_path_join(path, ordered_item_elem)
                         
                         if file_path not in file_path_list:
                             continue
@@ -82,7 +106,11 @@ class LoadUtils:
         return file_path_list, first_file_path_list, last_file_path_list
 
 class HostsDescr:
+    _load_utils = LoadUtils
+
     def load(self, file_path):
+        self._load_utils.check_for_real(file_path)
+        
         with open(file_path, encoding='utf-8') as fd:
             doc = yaml.safe_load(fd)
         
@@ -129,14 +157,13 @@ class HostsDescr:
         self.host_list = host_list
 
 class SchemaDescr:
-    _load_utils_class = LoadUtils
+    _load_utils = LoadUtils
     
     file_name = 'schema.yaml'
-    
-    def __init__(self):
-        self._load_utils = self._load_utils_class()
-    
+
     def load(self, file_path):
+        self._load_utils.check_for_real(file_path)
+        
         file_dir = os.path.dirname(file_path)
         
         with open(file_path, encoding='utf-8') as fd:
@@ -154,7 +181,7 @@ class SchemaDescr:
         schema_type = schema_elem['type']
         owner = schema_elem['owner']
         grant_elem = schema_elem.get('grant')
-        path_elem = schema_elem.get('path')
+        include_elem = schema_elem.get('include')
         first_elem = schema_elem.get('first')
         last_elem = schema_elem.get('last')
         sql = schema_elem['sql']
@@ -171,7 +198,7 @@ class SchemaDescr:
         if grant_elem is not None and not isinstance(grant_elem, (list, str)):
             raise ValueError('not isinstance(grant_elem, (list, str)')
         
-        self._load_utils.check_path_elem(path_elem, first_elem, last_elem)
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
         if sql is not None and not isinstance(sql, str):
             raise ValueError('not isinstance(sql, str')
@@ -194,7 +221,7 @@ class SchemaDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, path_elem, first_elem, last_elem, sql_filt_func
+                    file_dir, include_elem, first_elem, last_elem, sql_filt_func
                 )
         
         self.schema_name = schema_name
@@ -207,15 +234,14 @@ class SchemaDescr:
         self.sql = sql
 
 class SchemasDescr:
-    _load_utils_class = LoadUtils
+    _load_utils = LoadUtils
     _schema_descr_class = SchemaDescr
     
     file_name = 'schemas.yaml'
-    
-    def __init__(self):
-        self._load_utils = self._load_utils_class()
-    
+
     def load(self, file_path):
+        self._load_utils.check_for_real(file_path)
+        
         file_dir = os.path.dirname(file_path)
         
         with open(file_path, encoding='utf-8') as fd:
@@ -230,26 +256,26 @@ class SchemasDescr:
             raise ValueError('not isinstance(doc, schemas_elem)')
         
         schemas_type = schemas_elem['type']
-        path_elem = schemas_elem.get('path')
+        include_elem = schemas_elem.get('include')
         first_elem = schemas_elem.get('first')
         last_elem = schemas_elem.get('last')
         
         if not isinstance(schemas_type, str):
             raise ValueError('not isinstance(schemas_type, str)')
         
-        self._load_utils.check_path_elem(path_elem, first_elem, last_elem)
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
         def schema_filt_func(file_path):
-            schema_file_path = os.path.realpath(os.path.join(
+            schema_file_path = self._load_utils.norm_path_join(
                 file_path,
                 self._schema_descr_class.file_name,
-            ))
+            )
             
             return os.path.isfile(schema_file_path)
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, path_elem, first_elem, last_elem, schema_filt_func
+                    file_dir, include_elem, first_elem, last_elem, schema_filt_func
                 )
         
         var_schema_list = []
@@ -257,10 +283,10 @@ class SchemasDescr:
         schema_name_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schema_file_path = os.path.realpath(os.path.join(
+            schema_file_path = self._load_utils.norm_path_join(
                 file_path,
                 self._schema_descr_class.file_name,
-            ))
+            )
             
             schema_descr = self._schema_descr_class()
             
@@ -296,15 +322,14 @@ class SchemasDescr:
         self.func_schema_list = func_schema_list
 
 class ClusterDescr:
-    _load_utils_class = LoadUtils
+    _load_utils = LoadUtils
     _schemas_descr_class = SchemasDescr
     
     file_name = 'cluster.yaml'
-    
-    def __init__(self):
-        self._load_utils = self._load_utils_class()
-    
+
     def load(self, file_path):
+        self._load_utils.check_for_real(file_path)
+        
         file_dir = os.path.dirname(file_path)
         
         with open(file_path, encoding='utf-8') as fd:
@@ -319,36 +344,36 @@ class ClusterDescr:
             raise ValueError('not isinstance(doc, cluster_elem)')
         
         revision = cluster_elem['revision']
-        path_elem = cluster_elem.get('path')
+        include_elem = cluster_elem.get('include')
         first_elem = cluster_elem.get('first')
         last_elem = cluster_elem.get('last')
         
         if not isinstance(revision, str):
             raise ValueError('not isinstance(revision, str)')
         
-        self._load_utils.check_path_elem(path_elem, first_elem, last_elem)
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
         def schemas_filt_func(file_path):
-            schemas_file_path = os.path.realpath(os.path.join(
+            schemas_file_path = self._load_utils.norm_path_join(
                 file_path,
                 self._schemas_descr_class.file_name,
-            ))
+            )
             
             return os.path.isfile(schemas_file_path)
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, path_elem, first_elem, last_elem, schemas_filt_func
+                    file_dir, include_elem, first_elem, last_elem, schemas_filt_func
                 )
         
         schemas_list = []
         schemas_type_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schemas_file_path = os.path.realpath(os.path.join(
+            schemas_file_path = self._load_utils.norm_path_join(
                 file_path,
                 self._schemas_descr_class.file_name,
-            ))
+            )
             
             schemas_descr = self._schemas_descr_class()
             
