@@ -18,22 +18,29 @@ def install_cmd(args_ctx, print_func, err_print_func):
     else:
         hosts_descr = None
     
-    source_code_path = os.path.realpath(args_ctx.source_code)
-    source_code_descr = descr.ClusterDescr()
+    include_list = []
     
-    source_code_descr.load(os.path.join(
-        source_code_path,
+    for include in args_ctx.include_list:
+        include_list.append(os.path.realpath(include))
+    
+    source_code_file_path = os.path.realpath(os.path.join(
+        args_ctx.source_code,
         descr.ClusterDescr.file_name,
     ))
+    include_list.append(os.path.dirname(source_code_file_path))
+    source_code_descr = descr.ClusterDescr()
+    
+    source_code_descr.load(source_code_file_path, include_list)
     
     if args_ctx.settings_source_code is not None:
-        settings_source_code_path = os.path.realpath(args_ctx.settings_source_code)
-        settings_source_code_descr = descr.ClusterDescr()
-        
-        settings_source_code_descr.load(os.path.join(
-            settings_source_code_path,
+        settings_source_code_file_path = os.path.realpath(os.path.join(
+            args_ctx.settings_source_code,
             descr.ClusterDescr.file_name,
         ))
+        include_list.append(os.path.dirname(settings_source_code_file_path))
+        settings_source_code_descr = descr.ClusterDescr()
+        
+        settings_source_code_descr.load(settings_source_code_file_path, include_list)
     else:
         settings_source_code_descr = None
     

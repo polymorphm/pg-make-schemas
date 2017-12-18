@@ -6,26 +6,43 @@ import yaml
 
 class LoadUtils:
     @classmethod
-    def check_for_real(cls, file_path):
-        if os.path.islink(file_path):
-            raise ValueError('{!r}: this file is link'.format(file_path))
+    def check_and_open_for_r(cls, file_path, include_list):
+        for include in include_list:
+            if os.path.commonpath((file_path, include)) == include:
+                break
+        else:
+            raise ValueError(
+                '{!r}: this file is not in any directory which is included to allowed list'.format(
+                    file_path,
+                ),
+            )
         
-        real_file_path = os.path.realpath(file_path)
+        fileno = None
+        fd = None
         
-        if file_path != real_file_path:
-            raise ValueError('{!r}, {!r}: checking for real is not passed'.format(
-                file_path, real_file_path
-            ))
-    
-    @classmethod
-    def norm_path_join(cls, path1, path2):
-        path = os.path.join(path1, path2)
+        try:
+            fileno = os.open(file_path, os.O_NOFOLLOW)
+            
+            if os.path.isdir('/proc'):
+                opened_file_path = os.readlink('/proc/self/fd/{}'.format(fileno))
+                
+                if file_path != opened_file_path:
+                    raise OSError(
+                        '{!r}, {!r}: the opened file has unexpectedly changed to another'.format(
+                            file_path,
+                            opened_file_path,
+                        ),
+                    )
+            
+            # XXX   portability issue:
+            #       we have no a full safe implementation here if there is no ``/proc``
+            
+            fd = os.fdopen(fileno, encoding='utf-8')
+        finally:
+            if fileno is not None and fd is None:
+                os.close(fileno)
         
-        if path != os.path.normpath(path) or \
-                os.path.normpath(path) == os.path.normpath(path2):
-            raise ValueError('{!r}, {!r}: this path joining is not normal'.format(path1, path2))
-        
-        return path
+        return fd
     
     @classmethod
     def check_include_elem(cls, include_elem, first_elem, last_elem):
@@ -41,7 +58,7 @@ class LoadUtils:
     @classmethod
     def load_file_path_list(
                 cls,
-                cluster_dir, file_dir,
+                file_dir,
                 include_elem, first_elem, last_elem,
                 filt_func,
             ):
@@ -65,7 +82,10 @@ class LoadUtils:
                 if not isinstance(include_item_elem, str):
                     raise ValueError('not isinstance(include_item_elem, str)')
                 
-                path = cls.norm_path_join(cluster_dir, include_item_elem)
+                path = os.path.realpath(os.path.join(
+                    file_dir,
+                    include_item_elem,
+                ))
                 
                 path_list.append(path)
         
@@ -73,7 +93,7 @@ class LoadUtils:
         
         for path in path_list:
             for f in sorted(d.name for d in os.scandir(path)):
-                file_path = cls.norm_path_join(path, f)
+                file_path = os.path.realpath(os.path.join(path, f))
                 
                 if not filt_func(file_path):
                     continue
@@ -96,7 +116,10 @@ class LoadUtils:
                     file_is_used = False
                     
                     for path in path_list:
-                        file_path = cls.norm_path_join(path, ordered_item_elem)
+                        file_path = os.path.realpath(os.path.join(
+                            path,
+                            ordered_item_elem,
+                        ))
                         
                         if file_path not in file_path_list:
                             continue
@@ -111,11 +134,7 @@ class LoadUtils:
         return file_path_list, first_file_path_list, last_file_path_list
 
 class HostsDescr:
-    _load_utils = LoadUtils
-    
     def load(self, file_path):
-        self._load_utils.check_for_real(file_path)
-        
         with open(file_path, encoding='utf-8') as fd:
             doc = yaml.safe_load(fd)
         
@@ -166,12 +185,10 @@ class SchemaDescr:
     
     file_name = 'schema.yaml'
     
-    def load(self, cluster_dir, file_path):
-        self._load_utils.check_for_real(file_path)
-        
+    def load(self, file_path, include_list):
         file_dir = os.path.dirname(file_path)
         
-        with open(file_path, encoding='utf-8') as fd:
+        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -226,7 +243,7 @@ class SchemaDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    cluster_dir, file_dir, include_elem, first_elem, last_elem,
+                    file_dir, include_elem, first_elem, last_elem,
                     sql_filt_func,
                 )
         
@@ -245,12 +262,10 @@ class SchemasDescr:
     
     file_name = 'schemas.yaml'
     
-    def load(self, cluster_dir, file_path):
-        self._load_utils.check_for_real(file_path)
-        
+    def load(self, file_path, include_list):
         file_dir = os.path.dirname(file_path)
         
-        with open(file_path, encoding='utf-8') as fd:
+        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -272,16 +287,16 @@ class SchemasDescr:
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
         def schema_filt_func(file_path):
-            schema_file_path = self._load_utils.norm_path_join(
+            schema_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schema_descr_class.file_name,
-            )
+            ))
             
             return os.path.isfile(schema_file_path)
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    cluster_dir, file_dir, include_elem, first_elem, last_elem,
+                    file_dir, include_elem, first_elem, last_elem,
                     schema_filt_func,
                 )
         
@@ -290,17 +305,19 @@ class SchemasDescr:
         schema_name_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schema_file_path = self._load_utils.norm_path_join(
+            schema_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schema_descr_class.file_name,
-            )
+            ))
             
             schema_descr = self._schema_descr_class()
             
             try:
-                schema_descr.load(cluster_dir, schema_file_path)
+                schema_descr.load(schema_file_path, include_list)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
+            except OSError as e:
+                raise OSError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
             
             if schema_descr.schema_name in schema_name_set:
                 raise ValueError(
@@ -334,12 +351,10 @@ class ClusterDescr:
     
     file_name = 'cluster.yaml'
     
-    def load(self, file_path):
-        self._load_utils.check_for_real(file_path)
+    def load(self, file_path, include_list):
+        file_dir = os.path.dirname(file_path)
         
-        cluster_dir = os.path.dirname(file_path)
-        
-        with open(file_path, encoding='utf-8') as fd:
+        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -361,16 +376,16 @@ class ClusterDescr:
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
         def schemas_filt_func(file_path):
-            schemas_file_path = self._load_utils.norm_path_join(
+            schemas_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schemas_descr_class.file_name,
-            )
+            ))
             
             return os.path.isfile(schemas_file_path)
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    cluster_dir, cluster_dir, include_elem, first_elem, last_elem,
+                    file_dir, include_elem, first_elem, last_elem,
                     schemas_filt_func,
                 )
         
@@ -378,17 +393,19 @@ class ClusterDescr:
         schemas_type_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schemas_file_path = self._load_utils.norm_path_join(
+            schemas_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schemas_descr_class.file_name,
-            )
+            ))
             
             schemas_descr = self._schemas_descr_class()
             
             try:
-                schemas_descr.load(cluster_dir, schemas_file_path)
+                schemas_descr.load(schemas_file_path, include_list)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
+            except OSError as e:
+                raise OSError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
             
             if schemas_descr.schemas_type in schemas_type_set:
                 raise ValueError(

@@ -90,6 +90,16 @@ def main():
                     'this conduct is less smart and more dangerous',
         )
     
+    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser, inspect_parser):
+        sub_parser.add_argument(
+            '-i',
+            '--include',
+            action='append',
+            help='add this path to allowed list of directories which can be '
+                    'refered from source code files or settings source code files. '
+                    'you can use this option many times',
+        )
+    
     install_parser.add_argument(
         '--reinstall',
         action='store_true',
@@ -179,6 +189,12 @@ def main():
     else:
         args_ctx.output = None
         args_ctx.hosts = None
+    
+    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings', 'inspect') \
+            and args.include is not None:
+        args_ctx.include_list = args.include
+    else:
+        args_ctx.include_list = []
     
     if args_ctx.command == 'install' and args.reinstall:
         args_ctx.reinstall = True
