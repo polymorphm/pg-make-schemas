@@ -132,6 +132,31 @@ class LoadUtils:
                         raise ValueError('{!r}: this file is not used'.format(file_path))
         
         return file_path_list, first_file_path_list, last_file_path_list
+    
+    @classmethod
+    def read_content(
+                cls,
+                file_path_list, first_file_path_list, last_file_path_list,
+                inline,
+                include_list,
+            ):
+        if first_file_path_list is not None:
+            for file_path in first_file_path_list:
+                with cls.check_and_open_for_r(file_path, include_list) as fd:
+                    yield fd.read()
+        
+        if file_path_list is not None:
+            for file_path in file_path_list:
+                with cls.check_and_open_for_r(file_path, include_list) as fd:
+                    yield fd.read()
+        
+        if inline is not None:
+            yield inline
+        
+        if last_file_path_list is not None:
+            for file_path in last_file_path_list:
+                with cls.check_and_open_for_r(file_path, include_list) as fd:
+                    yield fd.read()
 
 class HostsDescr:
     def load(self, file_path):
@@ -259,18 +284,13 @@ class SchemaDescr:
         self.sql = sql
     
     def read_sql(self):
-        for sql_file_path in self.first_file_path_list + self.file_path_list:
-            with self._load_utils.check_and_open_for_r(sql_file_path, self.include_list) as fd:
-                yield fd.read()
-        
-        sql = self.sql
-        
-        if sql is not None:
-            yield sql
-        
-        for sql_file_path in self.last_file_path_list:
-            with self._load_utils.check_and_open_for_r(sql_file_path, self.include_list) as fd:
-                yield fd.read()
+        yield from self._load_utils.read_content(
+            self.file_path_list,
+            self.first_file_path_list,
+            self.last_file_path_list,
+            self.sql,
+            self.include_list,
+        )
 
 class SchemasDescr:
     _load_utils = LoadUtils
