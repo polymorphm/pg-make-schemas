@@ -205,6 +205,60 @@ class HostsDescr:
         
         self.host_list = host_list
 
+class InitDescr:
+    _load_utils = LoadUtils
+    
+    file_name = 'init.yaml'
+    
+    def load(self, file_path, include_list):
+        file_dir = os.path.dirname(file_path)
+        
+        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
+            doc = yaml.safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        init_elem = doc['init']
+        
+        if not isinstance(init_elem, dict):
+            raise ValueError('not isinstance(init_elem, dict)')
+        
+        include_elem = init_elem.get('include')
+        first_elem = init_elem.get('first')
+        last_elem = init_elem.get('last')
+        sql = init_elem.get('sql')
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        if sql is not None and not isinstance(sql, str):
+            raise ValueError('not isinstance(sql, str')
+        
+        def sql_filt_func(file_path):
+            return file_path.endswith('.sql')
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    file_dir, include_elem, first_elem, last_elem,
+                    sql_filt_func,
+                )
+        
+        self.file_path = file_path
+        self.include_list = include_list
+        self.file_path_list = file_path_list
+        self.first_file_path_list = first_file_path_list
+        self.last_file_path_list = last_file_path_list
+        self.sql = sql
+    
+    def read_sql(self):
+        yield from self._load_utils.read_content(
+            self.file_path_list,
+            self.first_file_path_list,
+            self.last_file_path_list,
+            self.sql,
+            self.include_list,
+        )
+
 class SchemaDescr:
     _load_utils = LoadUtils
     
@@ -294,6 +348,7 @@ class SchemaDescr:
 
 class SchemasDescr:
     _load_utils = LoadUtils
+    _init_descr_class = InitDescr
     _schema_descr_class = SchemaDescr
     
     file_name = 'schemas.yaml'
@@ -322,6 +377,14 @@ class SchemasDescr:
         
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
+        def init_filt_func(file_path):
+            init_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._init_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(init_file_path)
+        
         def schema_filt_func(file_path):
             schema_file_path = os.path.realpath(os.path.join(
                 file_path,
@@ -330,17 +393,47 @@ class SchemasDescr:
             
             return os.path.isfile(schema_file_path)
         
+        def filt_func(file_path):
+            return init_filt_func(file_path) or schema_filt_func(file_path)
+        
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
                     schemas_file_dir, include_elem, first_elem, last_elem,
-                    schema_filt_func,
+                    filt_func,
                 )
         
+        init = None
         var_schema_list = []
         func_schema_list = []
         schema_name_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
+            if init_filt_func(file_path):
+                init_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._init_descr_class.file_name,
+                ))
+                
+                if init is not None:
+                    raise ValueError(
+                        '{!r}: non unique init'.format(
+                            init_file_path,
+                        )
+                    )
+                
+                init_descr = self._init_descr_class()
+                
+                try:
+                    init_descr.load(init_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(init_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(init_file_path, type(e), e)) from e
+                
+                init = init_descr
+                
+                continue
+            
             schema_file_path = os.path.realpath(os.path.join(
                 file_path,
                 self._schema_descr_class.file_name,
@@ -380,6 +473,7 @@ class SchemasDescr:
         self.schemas_file_path = schemas_file_path
         self.include_list = include_list
         self.schemas_type = schemas_type
+        self.init = init
         self.var_schema_list = var_schema_list
         self.func_schema_list = func_schema_list
 
