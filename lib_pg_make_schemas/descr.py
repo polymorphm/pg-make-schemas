@@ -247,6 +247,8 @@ class SchemaDescr:
                     sql_filt_func,
                 )
         
+        self.file_path = file_path
+        self.include_list = include_list
         self.schema_name = schema_name
         self.schema_type = schema_type
         self.owner = owner
@@ -255,6 +257,20 @@ class SchemaDescr:
         self.first_file_path_list = first_file_path_list
         self.last_file_path_list = last_file_path_list
         self.sql = sql
+    
+    def read_sql(self):
+        for sql_file_path in self.first_file_path_list + self.file_path_list:
+            with self._load_utils.check_and_open_for_r(sql_file_path, self.include_list) as fd:
+                yield fd.read()
+        
+        sql = self.sql
+        
+        if sql is not None:
+            yield sql
+        
+        for sql_file_path in self.last_file_path_list:
+            with self._load_utils.check_and_open_for_r(sql_file_path, self.include_list) as fd:
+                yield fd.read()
 
 class SchemasDescr:
     _load_utils = LoadUtils
@@ -341,6 +357,8 @@ class SchemasDescr:
                     )
                 )
         
+        self.file_path = file_path
+        self.include_list = include_list
         self.schemas_type = schemas_type
         self.var_schema_list = var_schema_list
         self.func_schema_list = func_schema_list
@@ -418,5 +436,7 @@ class ClusterDescr:
             schemas_type_set.add(schemas_descr.schemas_type)
             schemas_list.append(schemas_descr)
         
+        self.file_path = file_path
+        self.include_list = include_list
         self.revision = revision
         self.schemas_list = schemas_list
