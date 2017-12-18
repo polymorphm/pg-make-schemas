@@ -197,7 +197,7 @@ class SchemaDescr:
         schema_elem = doc['schema']
         
         if not isinstance(schema_elem, dict):
-            raise ValueError('not isinstance(doc, schema_elem)')
+            raise ValueError('not isinstance(schema_elem, dict)')
         
         schema_name = schema_elem['name']
         schema_type = schema_elem['type']
@@ -274,7 +274,7 @@ class SchemasDescr:
         schemas_elem = doc['schemas']
         
         if not isinstance(schemas_elem, dict):
-            raise ValueError('not isinstance(doc, schemas_elem)')
+            raise ValueError('not isinstance(schemas_elem, dict)')
         
         schemas_type = schemas_elem['type']
         include_elem = schemas_elem.get('include')
@@ -363,7 +363,7 @@ class ClusterDescr:
         cluster_elem = doc['cluster']
         
         if not isinstance(cluster_elem, dict):
-            raise ValueError('not isinstance(doc, cluster_elem)')
+            raise ValueError('not isinstance(cluster_elem, dict)')
         
         revision = cluster_elem['revision']
         include_elem = cluster_elem.get('include')
