@@ -129,7 +129,7 @@ class LoadUtils:
                         ordered_file_path_list.append(file_path)
                     
                     if not file_is_used:
-                        raise ValueError('{!r}: this file is not used'.format(file_path))
+                        raise ValueError('{!r}: this file is not used'.format(ordered_item_elem))
         
         return file_path_list, first_file_path_list, last_file_path_list
     
@@ -210,10 +210,10 @@ class SchemaDescr:
     
     file_name = 'schema.yaml'
     
-    def load(self, file_path, include_list):
-        file_dir = os.path.dirname(file_path)
+    def load(self, schema_file_path, include_list):
+        schema_file_dir = os.path.dirname(schema_file_path)
         
-        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
+        with self._load_utils.check_and_open_for_r(schema_file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -268,11 +268,11 @@ class SchemaDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem,
+                    schema_file_dir, include_elem, first_elem, last_elem,
                     sql_filt_func,
                 )
         
-        self.file_path = file_path
+        self.schema_file_path = schema_file_path
         self.include_list = include_list
         self.schema_name = schema_name
         self.schema_type = schema_type
@@ -298,10 +298,10 @@ class SchemasDescr:
     
     file_name = 'schemas.yaml'
     
-    def load(self, file_path, include_list):
-        file_dir = os.path.dirname(file_path)
+    def load(self, schemas_file_path, include_list):
+        schemas_file_dir = os.path.dirname(schemas_file_path)
         
-        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
+        with self._load_utils.check_and_open_for_r(schemas_file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -332,7 +332,7 @@ class SchemasDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem,
+                    schemas_file_dir, include_elem, first_elem, last_elem,
                     schema_filt_func,
                 )
         
@@ -377,7 +377,7 @@ class SchemasDescr:
                     )
                 )
         
-        self.file_path = file_path
+        self.schemas_file_path = schemas_file_path
         self.include_list = include_list
         self.schemas_type = schemas_type
         self.var_schema_list = var_schema_list
@@ -389,10 +389,10 @@ class ClusterDescr:
     
     file_name = 'cluster.yaml'
     
-    def load(self, file_path, include_list):
-        file_dir = os.path.dirname(file_path)
+    def load(self, cluster_file_path, include_list):
+        cluster_file_dir = os.path.dirname(cluster_file_path)
         
-        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
+        with self._load_utils.check_and_open_for_r(cluster_file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -423,7 +423,7 @@ class ClusterDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem,
+                    cluster_file_dir, include_elem, first_elem, last_elem,
                     schemas_filt_func,
                 )
         
@@ -456,7 +456,7 @@ class ClusterDescr:
             schemas_type_set.add(schemas_descr.schemas_type)
             schemas_list.append(schemas_descr)
         
-        self.file_path = file_path
+        self.cluster_file_path = cluster_file_path
         self.include_list = include_list
         self.revision = revision
         self.schemas_list = schemas_list
