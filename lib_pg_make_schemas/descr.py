@@ -231,7 +231,7 @@ class SchemaDescr:
         include_elem = schema_elem.get('include')
         first_elem = schema_elem.get('first')
         last_elem = schema_elem.get('last')
-        sql = schema_elem['sql']
+        sql = schema_elem.get('sql')
         
         if not isinstance(schema_name, str):
             raise ValueError('not isinstance(schema_name, str)')
