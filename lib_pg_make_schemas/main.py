@@ -127,7 +127,7 @@ def main():
         sub_parser.add_argument(
             'hosts',
             help='path to the hosts file. if \'-\' is used, it is '
-                    'considered as the empty hosts file. that may be useful '
+                    'considered as an empty hosts file. that may be useful '
                     'when the ``--output`` option is used',
         )
     
