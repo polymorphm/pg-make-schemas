@@ -82,12 +82,21 @@ def main():
     
     for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
         sub_parser.add_argument(
+            '-e',
+            '--execute',
+            action='store_true',
+            help='do database interactions. '
+                    'it is default when the ``--output`` option is not used',
+        )
+        
+        sub_parser.add_argument(
             '-o',
             '--output',
             help='prefix to output SQL files. this makes output SQL files '
-                    'instead of doing database interactions. '
+                    'instead of doing database interactions (besides '
+                    'doing database interactions when the ``--execute`` option is used). '
                     'warning(!) the result may be different from the result of database interactions. '
-                    'this conduct is less smart and more dangerous',
+                    'the output code is less smart and it can be more dangerous',
         )
     
     for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser, inspect_parser):
@@ -181,12 +190,17 @@ def main():
     args_ctx.command = args.command
     
     if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings'):
+        args_ctx.execute = args.execute
         args_ctx.output = args.output
         args_ctx.hosts = args.hosts
+        
+        if args_ctx.output is None:
+            args_ctx.execute = True
         
         if args_ctx.hosts == '-':
             args_ctx.hosts = None
     else:
+        args_ctx.execute = False
         args_ctx.output = None
         args_ctx.hosts = None
     
