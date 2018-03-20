@@ -126,10 +126,19 @@ def main():
     )
     
     upgrade_parser.add_argument(
+        '--change-rev-only',
+        action='store_true',
+        help='do nothing except changing revision information. '
+                'warning(!) it is dangerous feature, you can mistakenly lose real revision information '
+                'when the ``--rev`` option is not used',
+    )
+    
+    upgrade_parser.add_argument(
         '-r',
         '--rev',
         help='do upgrading from this revision only. '
-                'that may be useful when the hosts file is empty',
+                'that may be useful when the hosts file is empty '
+                'or when ``--change-rev-only`` is used',
     )
     
     for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
@@ -222,8 +231,14 @@ def main():
         args_ctx.reinstall_funcs = False
     
     if args_ctx.command == 'upgrade':
+        if args.change_rev_only:
+            args_ctx.change_rev_only = True
+        else:
+            args_ctx.change_rev_only = False
+        
         args_ctx.rev = args.rev
     else:
+        args_ctx.change_rev_only = False
         args_ctx.rev = None
     
     if args_ctx.command in ('init', 'install', 'upgrade', 'inspect'):
