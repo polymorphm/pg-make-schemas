@@ -126,6 +126,12 @@ def main():
     )
     
     upgrade_parser.add_argument(
+        '--init',
+        action='store_true',
+        help='do some basic initialization besides doing upgrade. see ``init`` command',
+    )
+    
+    upgrade_parser.add_argument(
         '--show-rev-only',
         action='store_true',
         help='do nothing except showing revision information. '
@@ -239,6 +245,11 @@ def main():
         args_ctx.reinstall_funcs = False
     
     if args_ctx.command == 'upgrade':
+        if args.init:
+            args_ctx.init = True
+        else:
+            args_ctx.init = False
+        
         if args.show_rev_only:
             args_ctx.show_rev_only = True
         else:
@@ -251,6 +262,7 @@ def main():
         
         args_ctx.rev = args.rev
     else:
+        args_ctx.init = False
         args_ctx.show_rev_only = False
         args_ctx.change_rev_only = False
         args_ctx.rev = None
