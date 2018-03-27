@@ -64,8 +64,8 @@ def main():
     
     upgrade_parser = subparsers.add_parser(
         'upgrade',
-        help='do upgrading schemas from a previous version',
-        description='upgrading schemas from a previous version',
+        help='do upgrading schemas from one of previous revisions',
+        description='upgrading schemas from one of previous revisions',
     )
     
     install_settings_parser = subparsers.add_parser(
