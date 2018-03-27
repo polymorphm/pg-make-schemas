@@ -163,11 +163,12 @@ def main():
                     'when the ``--output`` option is used',
         )
     
-    for sub_parser in (init_parser, install_parser, upgrade_parser, inspect_parser):
+    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser, inspect_parser):
         arg_help_map = {
             init_parser: 'path to source code. will be used init files only',
             install_parser: 'path to source code. won\'t be used init and migration files',
             upgrade_parser: 'path to source code. will be used migration files',
+            install_settings_parser: 'path to source code',
             inspect_parser: 'path to source code for inspection',
         }
         
@@ -183,9 +184,9 @@ def main():
     
     for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
         if sub_parser in (install_parser, upgrade_parser):
-            arg_nargs='?'
+            arg_nargs='*'
         else:
-            arg_nargs=None
+            arg_nargs='+'
         
         if sub_parser == upgrade_parser:
             arg_help='path to settings source code. will be used migration files'
@@ -267,7 +268,7 @@ def main():
         args_ctx.change_rev_only = False
         args_ctx.rev = None
     
-    if args_ctx.command in ('init', 'install', 'upgrade', 'inspect'):
+    if args_ctx.command in ('init', 'install', 'upgrade', 'install_settings_parser', 'inspect'):
         args_ctx.source_code = args.source_code
     else:
         args_ctx.source_code = None
@@ -275,7 +276,7 @@ def main():
     if args_ctx.command in ('install', 'upgrade', 'install-settings'):
         args_ctx.settings_source_code = args.settings_source_code
     else:
-        args_ctx.settings_source_code = None
+        args_ctx.settings_source_code = []
     
     cmd_func_map = {
         'init': init_cmd,
