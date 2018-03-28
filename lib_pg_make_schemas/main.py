@@ -109,6 +109,13 @@ def main():
                     'you can use this option many times',
         )
     
+    for sub_parser in (install_parser, upgrade_parser):
+        sub_parser.add_argument(
+            '--init',
+            action='store_true',
+            help='do some basic initialization. see ``init`` command',
+        )
+    
     install_parser.add_argument(
         '--reinstall',
         action='store_true',
@@ -123,12 +130,6 @@ def main():
         help='it is like ``--reinstall`` option, but doesn\'t touch variable schemas. '
                 'so your data will be safe, but variable schemas '
                 'might become incompatible with created function schemas',
-    )
-    
-    upgrade_parser.add_argument(
-        '--init',
-        action='store_true',
-        help='do some basic initialization besides doing upgrade. see ``init`` command',
     )
     
     upgrade_parser.add_argument(
@@ -166,7 +167,7 @@ def main():
     for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser, inspect_parser):
         arg_help_map = {
             init_parser: 'path to source code. will be used init files only',
-            install_parser: 'path to source code. won\'t be used init and migration files',
+            install_parser: 'path to source code. won\'t be used migration files',
             upgrade_parser: 'path to source code. will be used migration files',
             install_settings_parser: 'path to source code',
             inspect_parser: 'path to source code for inspection',
@@ -245,12 +246,15 @@ def main():
     else:
         args_ctx.reinstall_funcs = False
     
-    if args_ctx.command == 'upgrade':
+    if args_ctx.command in ('install', 'upgrade'):
         if args.init:
             args_ctx.init = True
         else:
             args_ctx.init = False
-        
+    else:
+        args_ctx.init = False
+    
+    if args_ctx.command == 'upgrade':
         if args.show_rev_only:
             args_ctx.show_rev_only = True
         else:
@@ -263,7 +267,6 @@ def main():
         
         args_ctx.rev = args.rev
     else:
-        args_ctx.init = False
         args_ctx.show_rev_only = False
         args_ctx.change_rev_only = False
         args_ctx.rev = None
