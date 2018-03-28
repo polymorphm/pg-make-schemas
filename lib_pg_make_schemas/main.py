@@ -90,6 +90,14 @@ def main():
         )
         
         sub_parser.add_argument(
+            '-p',
+            '--pretend',
+            action='store_true',
+            help='use rollbacks instead of commits after doing database interactions. '
+                    'this implies ``--execute`` option',
+        )
+        
+        sub_parser.add_argument(
             '-o',
             '--output',
             help='prefix to output SQL files. this makes output SQL files '
@@ -216,16 +224,18 @@ def main():
     
     if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings'):
         args_ctx.execute = args.execute
+        args_ctx.pretend = args.pretend
         args_ctx.output = args.output
         args_ctx.hosts = args.hosts
         
-        if args_ctx.output is None:
+        if args_ctx.pretend or args_ctx.output is None:
             args_ctx.execute = True
         
         if args_ctx.hosts == '-':
             args_ctx.hosts = None
     else:
         args_ctx.execute = False
+        args_ctx.pretend = False
         args_ctx.output = None
         args_ctx.hosts = None
     
@@ -247,24 +257,13 @@ def main():
         args_ctx.reinstall_funcs = False
     
     if args_ctx.command in ('install', 'upgrade'):
-        if args.init:
-            args_ctx.init = True
-        else:
-            args_ctx.init = False
+        args_ctx.init = args.init
     else:
         args_ctx.init = False
     
     if args_ctx.command == 'upgrade':
-        if args.show_rev_only:
-            args_ctx.show_rev_only = True
-        else:
-            args_ctx.show_rev_only = False
-        
-        if args.change_rev_only:
-            args_ctx.change_rev_only = True
-        else:
-            args_ctx.change_rev_only = False
-        
+        args_ctx.show_rev_only = args.show_rev_only
+        args_ctx.change_rev_only = args.change_rev_only
         args_ctx.rev = args.rev
     else:
         args_ctx.show_rev_only = False
