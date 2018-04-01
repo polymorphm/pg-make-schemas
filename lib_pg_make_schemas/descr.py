@@ -159,8 +159,8 @@ class LoadUtils:
                     yield fd.read()
 
 class HostsDescr:
-    def load(self, file_path):
-        with open(file_path, encoding='utf-8') as fd:
+    def load(self, hosts_file_path):
+        with open(hosts_file_path, encoding='utf-8') as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -203,6 +203,7 @@ class HostsDescr:
                 'params': host_params,
             })
         
+        self.hosts_file_path = hosts_file_path
         self.host_list = host_list
 
 class InitDescr:
@@ -210,10 +211,10 @@ class InitDescr:
     
     file_name = 'init.yaml'
     
-    def load(self, file_path, include_list):
-        file_dir = os.path.dirname(file_path)
+    def load(self, init_file_path, include_list):
+        file_dir = os.path.dirname(init_file_path)
         
-        with self._load_utils.check_and_open_for_r(file_path, include_list) as fd:
+        with self._load_utils.check_and_open_for_r(init_file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
         
         if not isinstance(doc, dict):
@@ -243,7 +244,7 @@ class InitDescr:
                     sql_filt_func,
                 )
         
-        self.file_path = file_path
+        self.init_file_path = init_file_path
         self.include_list = include_list
         self.file_path_list = file_path_list
         self.first_file_path_list = first_file_path_list
