@@ -32,17 +32,17 @@ def install_cmd(args_ctx, print_func, err_print_func):
     
     source_code_descr.load(source_code_file_path, include_list)
     
-    if args_ctx.settings_source_code is not None:
-        settings_source_code_file_path = os.path.realpath(os.path.join(
-            args_ctx.settings_source_code,
-            descr.ClusterDescr.file_name,
-        ))
-        include_list.append(os.path.dirname(settings_source_code_file_path))
-        settings_source_code_descr = descr.ClusterDescr()
-        
-        settings_source_code_descr.load(settings_source_code_file_path, include_list)
-    else:
-        settings_source_code_descr = None
+    #if args_ctx.settings_source_code is not None:
+    #    settings_source_code_file_path = os.path.realpath(os.path.join(
+    #        args_ctx.settings_source_code,
+    #        descr.ClusterDescr.file_name,
+    #    ))
+    #    include_list.append(os.path.dirname(settings_source_code_file_path))
+    #    settings_source_code_descr = descr.ClusterDescr()
+    #    
+    #    settings_source_code_descr.load(settings_source_code_file_path, include_list)
+    #else:
+    #    settings_source_code_descr = None
     
     err_print_func('hosts_descr:', hosts_descr)
     err_print_func('source_code_descr:', vars(source_code_descr))
@@ -50,7 +50,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
     err_print_func('source_code_descr.schemas_list[0].init:', vars(source_code_descr.schemas_list[0].init))
     err_print_func('source_code_descr.schemas_list[0].var_schema_list[0]:', vars(source_code_descr.schemas_list[0].var_schema_list[0]))
     err_print_func('source_code_descr.schemas_list[0].func_schema_list[0]:', vars(source_code_descr.schemas_list[0].func_schema_list[0]))
-    err_print_func('settings_source_code_descr:', settings_source_code_descr)
+    #err_print_func('settings_source_code_descr:', settings_source_code_descr)
     
     for sql in source_code_descr.schemas_list[0].init.read_sql():
         err_print_func('init-sql:', sql)

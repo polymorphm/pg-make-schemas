@@ -478,13 +478,86 @@ class SchemasDescr:
         self.var_schema_list = var_schema_list
         self.func_schema_list = func_schema_list
 
+class SettingsDescr:
+    _load_utils = LoadUtils
+    
+    file_name = 'settings.yaml'
+    
+    def load(self, settings_file_path, include_list):
+        file_dir = os.path.dirname(settings_file_path)
+        
+        with self._load_utils.check_and_open_for_r(settings_file_path, include_list) as fd:
+            doc = yaml.safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        settings_elem = doc['settings']
+        
+        if not isinstance(settings_elem, dict):
+            raise ValueError('not isinstance(settings_elem, dict)')
+        
+        settings_type = settings_elem['type']
+        include_elem = settings_elem.get('include')
+        first_elem = settings_elem.get('first')
+        last_elem = settings_elem.get('last')
+        sql = settings_elem.get('sql')
+        
+        if not isinstance(settings_type, str):
+            raise ValueError('not isinstance(settings_type, str)')
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        if sql is not None and not isinstance(sql, str):
+            raise ValueError('not isinstance(sql, str')
+        
+        def sql_filt_func(file_path):
+            return file_path.endswith('.sql')
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    file_dir, include_elem, first_elem, last_elem,
+                    sql_filt_func,
+                )
+        
+        self.settings_file_path = settings_file_path
+        self.include_list = include_list
+        self.settings_type = settings_type
+        self.file_path_list = file_path_list
+        self.first_file_path_list = first_file_path_list
+        self.last_file_path_list = last_file_path_list
+        self.sql = sql
+    
+    def read_sql(self):
+        yield from self._load_utils.read_content(
+            self.file_path_list,
+            self.first_file_path_list,
+            self.last_file_path_list,
+            self.sql,
+            self.include_list,
+        )
+
+class MigrationsDescr:
+    _load_utils = LoadUtils
+    #_migration_descr_class = MigrationDescr
+    
+    file_name = 'migrations.yaml'
+    
+    def load(self, cluster_file_path, include_list):
+        pass # TODO     ... ... ...
+
 class ClusterDescr:
     _load_utils = LoadUtils
     _schemas_descr_class = SchemasDescr
+    _settings_descr_class = SettingsDescr
+    _migrations_descr_class = MigrationsDescr
     
     file_name = 'cluster.yaml'
     
-    def load(self, cluster_file_path, include_list):
+    def load(self, cluster_file_path, include_list, settingsMode=None):
+        if settingsMode is None:
+            settingsMode = False
+        
         cluster_file_dir = os.path.dirname(cluster_file_path)
         
         with self._load_utils.check_and_open_for_r(cluster_file_path, include_list) as fd:
@@ -498,13 +571,36 @@ class ClusterDescr:
         if not isinstance(cluster_elem, dict):
             raise ValueError('not isinstance(cluster_elem, dict)')
         
-        revision = cluster_elem['revision']
+        if settingsMode:
+            revision = None
+            compatible_elem = cluster_elem['compatible']
+        else:
+            revision = cluster_elem['revision']
+            compatible_list = []
+        
         include_elem = cluster_elem.get('include')
         first_elem = cluster_elem.get('first')
         last_elem = cluster_elem.get('last')
         
-        if not isinstance(revision, str):
-            raise ValueError('not isinstance(revision, str)')
+        if settingsMode:
+            if not isinstance(compatible_elem, (list, str)):
+                raise ValueError('not isinstance(compatible_elem, (list, str)')
+            
+            if isinstance(compatible_elem, str):
+                compatible_list = [compatible_elem]
+            else:
+                compatible_list = []
+                
+                for compatible_item_elem in compatible_elem:
+                    if not isinstance(compatible_item_elem, str):
+                        raise ValueError('not isinstance(compatible_item_elem, str)')
+                    
+                    compatible_list.append(compatible_item_elem)
+        else:
+            if not isinstance(revision, str):
+                raise ValueError('not isinstance(revision, str)')
+            
+            compatible_list = []
         
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
         
@@ -516,42 +612,122 @@ class ClusterDescr:
             
             return os.path.isfile(schemas_file_path)
         
+        def settings_filt_func(file_path):
+            settings_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._settings_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(settings_file_path)
+        
+        def migrations_filt_func(file_path):
+            migrations_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._migrations_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(migrations_file_path)
+        
+        if settingsMode:
+            def filt_func(file_path):
+                return settings_filt_func(file_path) or migrations_filt_func(file_path)
+        else:
+            def filt_func(file_path):
+                return schemas_filt_func(file_path) or migrations_filt_func(file_path)
+        
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
                     cluster_file_dir, include_elem, first_elem, last_elem,
-                    schemas_filt_func,
+                    filt_func,
                 )
         
         schemas_list = []
+        settings_list = []
+        migrations = None
         schemas_type_set = set()
+        settings_type_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            schemas_file_path = os.path.realpath(os.path.join(
-                file_path,
-                self._schemas_descr_class.file_name,
-            ))
-            
-            schemas_descr = self._schemas_descr_class()
-            
-            try:
-                schemas_descr.load(schemas_file_path, include_list)
-            except (LookupError, ValueError) as e:
-                raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
-            except OSError as e:
-                raise OSError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
-            
-            if schemas_descr.schemas_type in schemas_type_set:
-                raise ValueError(
-                    '{!r}, {!r}: non unique schemas_type'.format(
-                        schemas_descr.schemas_type,
-                        schemas_file_path,
+            if schemas_filt_func(file_path):
+                schemas_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._schemas_descr_class.file_name,
+                ))
+                
+                schemas_descr = self._schemas_descr_class()
+                
+                try:
+                    schemas_descr.load(schemas_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
+                
+                if schemas_descr.schemas_type in schemas_type_set:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique schemas_type'.format(
+                            schemas_descr.schemas_type,
+                            schemas_file_path,
+                        )
                     )
-                )
-            
-            schemas_type_set.add(schemas_descr.schemas_type)
-            schemas_list.append(schemas_descr)
+                
+                schemas_type_set.add(schemas_descr.schemas_type)
+                schemas_list.append(schemas_descr)
+            elif settings_filt_func(file_path):
+                settings_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._settings_descr_class.file_name,
+                ))
+                
+                settings_descr = self._settings_descr_class()
+                
+                try:
+                    settings_descr.load(settings_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(settings_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(settings_file_path, type(e), e)) from e
+                
+                if settings_descr.settings_type in settings_type_set:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique settings_type'.format(
+                            settings_descr.settings_type,
+                            settings_file_path,
+                        )
+                    )
+                
+                settings_type_set.add(settings_descr.settings_type)
+                settings_list.append(settings_descr)
+            elif migrations_filt_func(file_path):
+                if migrations is not None:
+                    raise ValueError(
+                        '{!r}: non unique migrations'.format(
+                            migrations_file_path,
+                        )
+                    )
+                
+                migrations_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._migrations_descr_class.file_name,
+                ))
+                
+                migrations_descr = self._migrations_descr_class()
+                
+                try:
+                    migrations_descr.load(migrations_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(migrations_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(migrations_file_path, type(e), e)) from e
+                
+                migrations = migrations_descr
+            else:
+                raise AssertionError
         
         self.cluster_file_path = cluster_file_path
         self.include_list = include_list
         self.revision = revision
+        self.compatible_list = compatible_list
         self.schemas_list = schemas_list
+        self.migrations = migrations
+        self.settings = settings_list = settings_list
