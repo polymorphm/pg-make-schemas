@@ -552,14 +552,245 @@ class SettingsDescr:
             self.include_list,
         )
 
+class UpgradeDescr:
+    _load_utils = LoadUtils
+    
+    file_name = 'upgrade.yaml'
+    
+    def load(self, upgrade_file_path, include_list):
+        upgrade_file_dir = os.path.dirname(upgrade_file_path)
+        
+        with self._load_utils.check_and_open_for_r(upgrade_file_path, include_list) as fd:
+            doc = yaml.safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        upgrade_elem = doc['upgrade']
+        
+        if upgrade_elem is None:
+            upgrade_elem = {}
+        
+        if not isinstance(upgrade_elem, dict):
+            raise ValueError('not isinstance(upgrade_elem, dict)')
+        
+        upgrade_type = upgrade_elem['type']
+        include_elem = upgrade_elem.get('include')
+        first_elem = upgrade_elem.get('first')
+        last_elem = upgrade_elem.get('last')
+        sql = upgrade_elem.get('sql')
+        
+        if not isinstance(upgrade_type, str):
+            raise ValueError('not isinstance(upgrade_type, str)')
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        if sql is not None and not isinstance(sql, str):
+            raise ValueError('not isinstance(sql, str')
+        
+        def sql_filt_func(file_path):
+            return file_path.endswith('.sql')
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    upgrade_file_dir, include_elem, first_elem, last_elem,
+                    sql_filt_func,
+                )
+        
+        self.upgrade_file_path = upgrade_file_path
+        self.include_list = include_list
+        self.upgrade_type = upgrade_type
+        self.file_path_list = file_path_list
+        self.first_file_path_list = first_file_path_list
+        self.last_file_path_list = last_file_path_list
+        self.sql = sql
+    
+    def read_sql(self):
+        yield from self._load_utils.read_content(
+            self.file_path_list,
+            self.first_file_path_list,
+            self.last_file_path_list,
+            self.sql,
+            self.include_list,
+        )
+
+class MigrationDescr:
+    _load_utils = LoadUtils
+    _upgrade_descr_class = UpgradeDescr
+    
+    file_name = 'migration.yaml'
+    
+    def load(self, migration_file_path, include_list):
+        migration_file_dir = os.path.dirname(migration_file_path)
+        
+        with self._load_utils.check_and_open_for_r(migration_file_path, include_list) as fd:
+            doc = yaml.safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        migration_elem = doc['migration']
+        
+        if migration_elem is None:
+            migration_elem = {}
+        
+        if not isinstance(migration_elem, dict):
+            raise ValueError('not isinstance(migration_elem, dict)')
+        
+        revision = migration_elem['revision']
+        compatible_elem = migration_elem['compatible']
+        
+        include_elem = migration_elem.get('include')
+        first_elem = migration_elem.get('first')
+        last_elem = migration_elem.get('last')
+        
+        if not isinstance(revision, str):
+            raise ValueError('not isinstance(revision, str)')
+        
+        if not isinstance(compatible_elem, (list, str)):
+            raise ValueError('not isinstance(compatible_elem, (list, str)')
+        
+        if isinstance(compatible_elem, str):
+            compatible_list = [compatible_elem]
+        else:
+            compatible_list = []
+            
+            for compatible_item_elem in compatible_elem:
+                if not isinstance(compatible_item_elem, str):
+                    raise ValueError('not isinstance(compatible_item_elem, str)')
+                
+                compatible_list.append(compatible_item_elem)
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        def upgrade_filt_func(file_path):
+            upgrade_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._upgrade_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(upgrade_file_path)
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    migration_file_dir, include_elem, first_elem, last_elem,
+                    upgrade_filt_func,
+                )
+        
+        upgrade_list = []
+        upgrade_type_set = set()
+        
+        for file_path in first_file_path_list + file_path_list + last_file_path_list:
+            upgrade_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._upgrade_descr_class.file_name,
+            ))
+            
+            upgrade_descr = self._upgrade_descr_class()
+            
+            try:
+                upgrade_descr.load(upgrade_file_path, include_list)
+            except (LookupError, ValueError) as e:
+                raise ValueError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
+            except OSError as e:
+                raise OSError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
+            
+            if upgrade_descr.upgrade_type in upgrade_type_set:
+                raise ValueError(
+                    '{!r}, {!r}: non unique upgrade_type'.format(
+                        upgrade_descr.upgrade_type,
+                        upgrade_file_path,
+                    )
+                )
+            
+            upgrade_type_set.add(upgrade_descr.upgrade_type)
+            upgrade_list.append(upgrade_descr)
+        
+        self.migration_file_path = migration_file_path
+        self.include_list = include_list
+        self.revision = revision
+        self.compatible_list = compatible_list
+        self.upgrade_list = upgrade_list
+
 class MigrationsDescr:
     _load_utils = LoadUtils
-    #_migration_descr_class = MigrationDescr
+    _migration_descr_class = MigrationDescr
     
     file_name = 'migrations.yaml'
     
     def load(self, migrations_file_path, include_list):
-        pass # TODO     ... ... ...
+        migrations_file_dir = os.path.dirname(migrations_file_path)
+        
+        with self._load_utils.check_and_open_for_r(migrations_file_path, include_list) as fd:
+            doc = yaml.safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        migrations_elem = doc['migrations']
+        
+        if migrations_elem is None:
+            migrations_elem = {}
+        
+        if not isinstance(migrations_elem, dict):
+            raise ValueError('not isinstance(migrations_elem, dict)')
+        
+        include_elem = migrations_elem.get('include')
+        first_elem = migrations_elem.get('first')
+        last_elem = migrations_elem.get('last')
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        def migration_filt_func(file_path):
+            migration_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._migration_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(migration_file_path)
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    migrations_file_dir, include_elem, first_elem, last_elem,
+                    migration_filt_func,
+                )
+        
+        migration_list = []
+        migration_way_set = set()
+        
+        for file_path in first_file_path_list + file_path_list + last_file_path_list:
+            migration_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._migration_descr_class.file_name,
+            ))
+            
+            migration_descr = self._migration_descr_class()
+            
+            try:
+                migration_descr.load(migration_file_path, include_list)
+            except (LookupError, ValueError) as e:
+                raise ValueError('{!r}: {!r}: {}'.format(migration_file_path, type(e), e)) from e
+            except OSError as e:
+                raise OSError('{!r}: {!r}: {}'.format(migration_file_path, type(e), e)) from e
+            
+            for compatible in migration_descr.compatible_list:
+                migration_way = migration_descr.revision, compatible
+                
+                if migration_way in migration_way_set:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique migration_way'.format(
+                            migration_way,
+                            migration_file_path,
+                        )
+                    )
+                
+                migration_way_set.add(migration_way)
+            
+            migration_list.append(migration_descr)
+        
+        self.migrations_file_path = migrations_file_path
+        self.include_list = include_list
+        self.migration_list = migration_list
 
 class ClusterDescr:
     _load_utils = LoadUtils
