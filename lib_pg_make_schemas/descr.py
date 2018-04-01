@@ -168,6 +168,9 @@ class HostsDescr:
         
         hosts_elem = doc['hosts']
         
+        if hosts_elem is None:
+            hosts_elem = {}
+        
         if not isinstance(hosts_elem, list):
             raise ValueError('not isinstance(hosts_elem, list)')
         
@@ -222,6 +225,9 @@ class InitDescr:
         
         init_elem = doc['init']
         
+        if init_elem is None:
+            init_elem = {}
+        
         if not isinstance(init_elem, dict):
             raise ValueError('not isinstance(init_elem, dict)')
         
@@ -275,6 +281,9 @@ class SchemaDescr:
             raise ValueError('not isinstance(doc, dict)')
         
         schema_elem = doc['schema']
+        
+        if schema_elem is None:
+            schema_elem = {}
         
         if not isinstance(schema_elem, dict):
             raise ValueError('not isinstance(schema_elem, dict)')
@@ -364,6 +373,9 @@ class SchemasDescr:
             raise ValueError('not isinstance(doc, dict)')
         
         schemas_elem = doc['schemas']
+        
+        if schemas_elem is None:
+            schemas_elem = {}
         
         if not isinstance(schemas_elem, dict):
             raise ValueError('not isinstance(schemas_elem, dict)')
@@ -494,6 +506,9 @@ class SettingsDescr:
         
         settings_elem = doc['settings']
         
+        if settings_elem is None:
+            settings_elem = {}
+        
         if not isinstance(settings_elem, dict):
             raise ValueError('not isinstance(settings_elem, dict)')
         
@@ -567,6 +582,9 @@ class ClusterDescr:
             raise ValueError('not isinstance(doc, dict)')
         
         cluster_elem = doc['cluster']
+        
+        if cluster_elem is None:
+            cluster_elem = {}
         
         if not isinstance(cluster_elem, dict):
             raise ValueError('not isinstance(cluster_elem, dict)')
