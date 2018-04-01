@@ -212,7 +212,7 @@ class InitDescr:
     file_name = 'init.yaml'
     
     def load(self, init_file_path, include_list):
-        file_dir = os.path.dirname(init_file_path)
+        init_file_dir = os.path.dirname(init_file_path)
         
         with self._load_utils.check_and_open_for_r(init_file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
@@ -240,7 +240,7 @@ class InitDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem,
+                    init_file_dir, include_elem, first_elem, last_elem,
                     sql_filt_func,
                 )
         
@@ -484,7 +484,7 @@ class SettingsDescr:
     file_name = 'settings.yaml'
     
     def load(self, settings_file_path, include_list):
-        file_dir = os.path.dirname(settings_file_path)
+        settings_file_dir = os.path.dirname(settings_file_path)
         
         with self._load_utils.check_and_open_for_r(settings_file_path, include_list) as fd:
             doc = yaml.safe_load(fd)
@@ -516,7 +516,7 @@ class SettingsDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    file_dir, include_elem, first_elem, last_elem,
+                    settings_file_dir, include_elem, first_elem, last_elem,
                     sql_filt_func,
                 )
         
