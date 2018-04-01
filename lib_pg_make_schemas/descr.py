@@ -543,7 +543,7 @@ class MigrationsDescr:
     
     file_name = 'migrations.yaml'
     
-    def load(self, cluster_file_path, include_list):
+    def load(self, migrations_file_path, include_list):
         pass # TODO     ... ... ...
 
 class ClusterDescr:
@@ -730,4 +730,4 @@ class ClusterDescr:
         self.compatible_list = compatible_list
         self.schemas_list = schemas_list
         self.migrations = migrations
-        self.settings = settings_list = settings_list
+        self.settings_list = settings_list
