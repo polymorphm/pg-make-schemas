@@ -409,17 +409,17 @@ class SchemasDescr:
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
             if init_filt_func(file_path):
-                init_file_path = os.path.realpath(os.path.join(
-                    file_path,
-                    self._init_descr_class.file_name,
-                ))
-                
                 if init is not None:
                     raise ValueError(
                         '{!r}: non unique init'.format(
                             init_file_path,
                         )
                     )
+                
+                init_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._init_descr_class.file_name,
+                ))
                 
                 init_descr = self._init_descr_class()
                 
@@ -431,44 +431,44 @@ class SchemasDescr:
                     raise OSError('{!r}: {!r}: {}'.format(init_file_path, type(e), e)) from e
                 
                 init = init_descr
+            elif schema_filt_func(file_path):
+                schema_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._schema_descr_class.file_name,
+                ))
                 
-                continue
-            
-            schema_file_path = os.path.realpath(os.path.join(
-                file_path,
-                self._schema_descr_class.file_name,
-            ))
-            
-            schema_descr = self._schema_descr_class()
-            
-            try:
-                schema_descr.load(schema_file_path, include_list)
-            except (LookupError, ValueError) as e:
-                raise ValueError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
-            except OSError as e:
-                raise OSError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
-            
-            if schema_descr.schema_name in schema_name_set:
-                raise ValueError(
-                    '{!r}, {!r}: non unique schema_name'.format(
-                        schema_descr.schema_name,
-                        schema_file_path,
+                schema_descr = self._schema_descr_class()
+                
+                try:
+                    schema_descr.load(schema_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
+                
+                if schema_descr.schema_name in schema_name_set:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique schema_name'.format(
+                            schema_descr.schema_name,
+                            schema_file_path,
+                        )
                     )
-                )
-            
-            schema_name_set.add(schema_descr.schema_name)
-            
-            if schema_descr.schema_type == 'var':
-                var_schema_list.append(schema_descr)
-            elif schema_descr.schema_type == 'func':
-                func_schema_list.append(schema_descr)
+                
+                schema_name_set.add(schema_descr.schema_name)
+                
+                if schema_descr.schema_type == 'var':
+                    var_schema_list.append(schema_descr)
+                elif schema_descr.schema_type == 'func':
+                    func_schema_list.append(schema_descr)
+                else:
+                    raise ValueError(
+                        '{!r}, {!r}: unknown schema_type'.format(
+                            schema_descr.schema_type,
+                            schema_file_path,
+                        )
+                    )
             else:
-                raise ValueError(
-                    '{!r}, {!r}: unknown schema_type'.format(
-                        schema_descr.schema_type,
-                        schema_file_path,
-                    )
-                )
+                raise AssertionError
         
         self.schemas_file_path = schemas_file_path
         self.include_list = include_list
