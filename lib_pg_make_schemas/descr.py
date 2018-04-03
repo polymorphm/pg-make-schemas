@@ -213,7 +213,7 @@ class HostsDescr:
                     '{!r}, {!r}: non unique host_name'.format(
                         host_name,
                         hosts_file_path,
-                    )
+                    ),
                 )
             
             host_name_set.add(host_name)
@@ -444,7 +444,7 @@ class SchemasDescr:
                     raise ValueError(
                         '{!r}: non unique init'.format(
                             init_file_path,
-                        )
+                        ),
                     )
                 
                 init_file_path = os.path.realpath(os.path.join(
@@ -482,7 +482,7 @@ class SchemasDescr:
                         '{!r}, {!r}: non unique schema_name'.format(
                             schema_descr.schema_name,
                             schema_file_path,
-                        )
+                        ),
                     )
                 
                 schema_name_set.add(schema_descr.schema_name)
@@ -496,7 +496,7 @@ class SchemasDescr:
                         '{!r}, {!r}: unknown schema_type'.format(
                             schema_descr.schema_type,
                             schema_file_path,
-                        )
+                        ),
                     )
             else:
                 raise AssertionError
@@ -718,7 +718,7 @@ class MigrationDescr:
                     '{!r}, {!r}: non unique upgrade_type'.format(
                         upgrade_descr.upgrade_type,
                         upgrade_file_path,
-                    )
+                    ),
                 )
             
             upgrade_type_set.add(upgrade_descr.upgrade_type)
@@ -799,7 +799,7 @@ class MigrationsDescr:
                         '{!r}, {!r}: non unique migration_way'.format(
                             migration_way,
                             migration_file_path,
-                        )
+                        ),
                     )
                 
                 migration_way_set.add(migration_way)
@@ -935,7 +935,7 @@ class ClusterDescr:
                         '{!r}, {!r}: non unique schemas_type'.format(
                             schemas_descr.schemas_type,
                             schemas_file_path,
-                        )
+                        ),
                     )
                 
                 schemas_type_set.add(schemas_descr.schemas_type)
@@ -960,7 +960,7 @@ class ClusterDescr:
                         '{!r}, {!r}: non unique settings_type'.format(
                             settings_descr.settings_type,
                             settings_file_path,
-                        )
+                        ),
                     )
                 
                 settings_type_set.add(settings_descr.settings_type)
@@ -970,7 +970,7 @@ class ClusterDescr:
                     raise ValueError(
                         '{!r}: non unique migrations'.format(
                             migrations_file_path,
-                        )
+                        ),
                     )
                 
                 migrations_file_path = os.path.realpath(os.path.join(
