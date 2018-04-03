@@ -1,6 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
 
-import contextlib
 import os, os.path
 import yaml
 
@@ -43,6 +42,10 @@ class LoadUtils:
                 os.close(fileno)
         
         return fd
+    
+    @classmethod
+    def yaml_safe_load(cls, fd):
+        return yaml.safe_load(fd)
     
     @classmethod
     def check_include_elem(cls, include_elem, first_elem, last_elem):
@@ -159,9 +162,14 @@ class LoadUtils:
                     yield fd.read()
 
 class HostsDescr:
+    _load_utils = LoadUtils
+    
+    def _open(self, hosts_file_path):
+        return open(hosts_file_path, encoding='utf-8')
+    
     def load(self, hosts_file_path):
-        with open(hosts_file_path, encoding='utf-8') as fd:
-            doc = yaml.safe_load(fd)
+        with self._open(hosts_file_path) as fd:
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -228,7 +236,7 @@ class InitDescr:
         init_file_dir = os.path.dirname(init_file_path)
         
         with self._load_utils.check_and_open_for_r(init_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -285,7 +293,7 @@ class SchemaDescr:
         schema_file_dir = os.path.dirname(schema_file_path)
         
         with self._load_utils.check_and_open_for_r(schema_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -377,7 +385,7 @@ class SchemasDescr:
         schemas_file_dir = os.path.dirname(schemas_file_path)
         
         with self._load_utils.check_and_open_for_r(schemas_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -509,7 +517,7 @@ class SettingsDescr:
         settings_file_dir = os.path.dirname(settings_file_path)
         
         with self._load_utils.check_and_open_for_r(settings_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -571,7 +579,7 @@ class UpgradeDescr:
         upgrade_file_dir = os.path.dirname(upgrade_file_path)
         
         with self._load_utils.check_and_open_for_r(upgrade_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -634,7 +642,7 @@ class MigrationDescr:
         migration_file_dir = os.path.dirname(migration_file_path)
         
         with self._load_utils.check_and_open_for_r(migration_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -732,7 +740,7 @@ class MigrationsDescr:
         migrations_file_dir = os.path.dirname(migrations_file_path)
         
         with self._load_utils.check_and_open_for_r(migrations_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -817,7 +825,7 @@ class ClusterDescr:
         cluster_file_dir = os.path.dirname(cluster_file_path)
         
         with self._load_utils.check_and_open_for_r(cluster_file_path, include_list) as fd:
-            doc = yaml.safe_load(fd)
+            doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
