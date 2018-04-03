@@ -175,6 +175,7 @@ class HostsDescr:
             raise ValueError('not isinstance(hosts_elem, list)')
         
         host_list = []
+        host_name_set = set()
         
         for host_elem in hosts_elem:
             if not isinstance(host_elem, dict):
@@ -199,6 +200,15 @@ class HostsDescr:
             if host_params is not None and not isinstance(host_params, dict):
                 raise ValueError('not isinstance(host_params, dict)')
             
+            if host_name in host_name_set:
+                raise ValueError(
+                    '{!r}, {!r}: non unique host_name'.format(
+                        host_name,
+                        hosts_file_path,
+                    )
+                )
+            
+            host_name_set.add(host_name)
             host_list.append({
                 'name': host_name,
                 'type': host_type,
