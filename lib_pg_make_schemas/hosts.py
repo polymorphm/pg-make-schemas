@@ -1,0 +1,124 @@
+# -*- mode: python; coding: utf-8 -*-
+
+import psycopg2
+import contextlib
+
+class Hosts:
+    def __init__(self, execute, pretend, output):
+        self._execute = execute
+        self._pretend = pretend
+        self._output = output
+        self._con_map = {}
+        self._fd_map = {}
+    
+    def _connect(self, conninfo):
+        return psycopg2.connect(conninfo)
+    
+    def _open(self, output_path):
+        return open(output_path, 'w', encoding='utf-8', newline='\n')
+    
+    def begin(self, hosts_descr):
+        if self._execute:
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                conninfo = host['conninfo']
+                
+                if host_name in self._con_map:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique host_name'.format(
+                            host_name,
+                            hosts_descr.hosts_file_path,
+                        ),
+                    )
+                
+                if conninfo is None:
+                    raise ValueError(
+                        '{!r}, {!r}: unable to connect to host without its conninfo'.format(
+                            host_name,
+                            hosts_descr.hosts_file_path,
+                        ),
+                    )
+                
+                con = self._connect(conninfo)
+                self._con_map[host_name] = con
+        
+        if self._output is not None:
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                host_type = host['type']
+                conninfo = host['conninfo']
+                
+                if host_name in self._fd_map:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique host_name'.format(
+                            host_name,
+                            hosts_descr.hosts_file_path,
+                        ),
+                    )
+                
+                output_path = '{}.{}.{}.sql'.format(
+                    self._output,
+                    host_name.replace('/', '-').replace('.', '-'),
+                    host_type.replace('/', '-').replace('.', '-'),
+                )
+                
+                fd = self._open(output_path)
+                self._fd_map[host_name] = fd
+    
+    def get_con(self, host_name):
+        if self._execute:
+            return self._con_map[host_name]
+    
+    def get_fd(self, host_name):
+        if self._output is not None:
+            return self._fd_map[host_name]
+    
+    def done(self, hosts_descr):
+        if self._execute:
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                con = self._con_map[host_name]
+                
+                if self._pretend:
+                    con.rollback()
+                else:
+                    con.commit()
+        
+        if self._output is not None:
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                fd = self._fd_map[host_name]
+                
+                fd.flush()
+            
+            for host in reversed(hosts_descr.host_list):
+                host_name = host['name']
+                fd = self._fd_map[host_name]
+                
+                fd.close()
+                del self._fd_map[host_name]
+        
+        if self._execute:
+            for host in reversed(hosts_descr.host_list):
+                host_name = host['name']
+                con = self._con_map[host_name]
+                
+                con.close()
+                del self._con_map[host_name]
+    
+    def close(self):
+        for host_name, fd in reversed(list(self._fd_map.items())):
+            fd.close()
+            del self._fd_map[host_name]
+        
+        for host_name, con in reversed(list(self._con_map.items())):
+            con.close()
+            del self._con_map[host_name]
+
+@contextlib.contextmanager
+def make_hosts(*args, **kwargs):
+    hosts = Hosts(*args, **kwargs)
+    try:
+        yield hosts
+    finally:
+        hosts.close()
