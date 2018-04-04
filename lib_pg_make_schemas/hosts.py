@@ -1,7 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import psycopg2
-import contextlib
 
 class Hosts:
     def __init__(self, execute, pretend, output):
@@ -114,11 +113,3 @@ class Hosts:
         for host_name, con in reversed(list(self._con_map.items())):
             con.close()
             del self._con_map[host_name]
-
-@contextlib.contextmanager
-def make_hosts(*args, **kwargs):
-    hosts = Hosts(*args, **kwargs)
-    try:
-        yield hosts
-    finally:
-        hosts.close()
