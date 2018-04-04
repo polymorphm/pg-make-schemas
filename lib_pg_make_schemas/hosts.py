@@ -2,7 +2,18 @@
 
 import psycopg2
 
+class SqlFileUtils:
+    @classmethod
+    def write_header(cls, fd):
+        fd.write('-- -*- mode: sql; coding: utf-8 -*-\n\n--begin;\n\n')
+    
+    @classmethod
+    def write_footer(cls, fd):
+        fd.write('--commit;\n')
+
 class Hosts:
+    _sql_file_utils = SqlFileUtils
+    
     def __init__(self, execute, pretend, output):
         self._execute = execute
         self._pretend = pretend
@@ -63,6 +74,12 @@ class Hosts:
                 
                 fd = self._open(output_path)
                 self._fd_map[host_name] = fd
+            
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                fd = self._fd_map[host_name]
+                
+                self._sql_file_utils.write_header(fd)
     
     def get_con(self, host_name):
         if self._execute:
@@ -84,6 +101,12 @@ class Hosts:
                     con.commit()
         
         if self._output is not None:
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                fd = self._fd_map[host_name]
+                
+                self._sql_file_utils.write_footer(fd)
+            
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 fd = self._fd_map[host_name]
