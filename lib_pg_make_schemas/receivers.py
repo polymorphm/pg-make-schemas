@@ -8,6 +8,11 @@ class SqlFileUtils:
         fd.write('-- -*- mode: sql; coding: utf-8 -*-\n\n--begin;\n\n')
     
     @classmethod
+    def write_fragment(cls, fd, fragment):
+        fd.write(fragment)
+        fd.write('\n\n')
+    
+    @classmethod
     def write_footer(cls, fd):
         fd.write('--commit;\n')
 
@@ -85,9 +90,20 @@ class Receivers:
         if self._execute:
             return self._con_map[host_name]
     
-    def get_fd(self, host_name):
-        if self._output is not None:
-            return self._fd_map[host_name]
+    def write_fragment(self, host_name, fragment):
+       if self._output is not None:
+            fd = self._fd_map[host_name]
+            
+            self._sql_file_utils.write_fragment(fd, fragment)
+    
+    def execute(self, host_name, fragment):
+        if self._execute:
+            con = self._con_map[host_name]
+            
+            with con.cursor() as cur:
+                cur.execute(fragment)
+        
+        self.write_fragment(host_name, fragment)
     
     def done(self, hosts_descr):
         if self._execute:
