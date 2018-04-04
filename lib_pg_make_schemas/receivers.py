@@ -11,7 +11,7 @@ class SqlFileUtils:
     def write_footer(cls, fd):
         fd.write('--commit;\n')
 
-class Hosts:
+class Receivers:
     _sql_file_utils = SqlFileUtils
     
     def __init__(self, execute, pretend, output):
