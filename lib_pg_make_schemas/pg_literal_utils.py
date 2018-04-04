@@ -1,0 +1,25 @@
+# -*- mode: python; coding: utf-8 -*-
+
+def pg_quote(value):
+    if value is None:
+        return 'null'
+    
+    return 'e\'{}\''.format(
+        str(value)
+        .replace('\\', '\\\\')
+        .replace('\'', '\\\'')
+        .replace('\n', '\\n')
+    )
+
+def pg_dollar_quote(tag, value):
+    if value is None:
+        return 'null'
+    
+    i = -1
+    
+    while True:
+        i += 1
+        full_tag = '${}{}$'.format(tag, i if i > 0 else '')
+        
+        if full_tag not in value:
+            return '{}{}{}'.format(full_tag, value, full_tag)
