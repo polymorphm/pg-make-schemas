@@ -772,6 +772,8 @@ class ClusterDescr:
         if not isinstance(cluster_elem, dict):
             raise ValueError('not isinstance(cluster_elem, dict)')
         
+        application = cluster_elem['application']
+        
         if settingsMode:
             revision = None
             compatible_elem = cluster_elem['compatible']
@@ -782,6 +784,9 @@ class ClusterDescr:
         include_elem = cluster_elem.get('include')
         first_elem = cluster_elem.get('first')
         last_elem = cluster_elem.get('last')
+        
+        if not isinstance(application, str):
+            raise ValueError('not isinstance(application, str)')
         
         if settingsMode:
             if not isinstance(compatible_elem, (list, str)):
@@ -927,6 +932,7 @@ class ClusterDescr:
         
         self.cluster_file_path = cluster_file_path
         self.include_list = include_list
+        self.application = application
         self.revision = revision
         self.compatible_list = compatible_list
         self.schemas_list = schemas_list
