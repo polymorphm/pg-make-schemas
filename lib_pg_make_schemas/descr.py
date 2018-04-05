@@ -161,72 +161,6 @@ class LoadUtils:
                 with cls.check_and_open_for_r(file_path, include_list) as fd:
                     yield fd.read()
 
-class HostsDescr:
-    _load_utils = LoadUtils
-    
-    def _open(self, hosts_file_path):
-        return open(hosts_file_path, encoding='utf-8')
-    
-    def load(self, hosts_file_path):
-        with self._open(hosts_file_path) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
-        
-        if not isinstance(doc, dict):
-            raise ValueError('not isinstance(doc, dict)')
-        
-        hosts_elem = doc['hosts']
-        
-        if hosts_elem is None:
-            hosts_elem = {}
-        
-        if not isinstance(hosts_elem, list):
-            raise ValueError('not isinstance(hosts_elem, list)')
-        
-        host_list = []
-        host_name_set = set()
-        
-        for host_elem in hosts_elem:
-            if not isinstance(host_elem, dict):
-                raise ValueError('not isinstance(host_elem, dict)')
-            
-            host_name = host_elem['name']
-            host_type = host_elem.get('type')
-            host_conninfo = host_elem.get('conninfo')
-            host_params = host_elem.get('params')
-            
-            if not isinstance(host_name, str):
-                raise ValueError('not isinstance(host_name, str)')
-            
-            if host_type is None:
-                host_type = host_name
-            elif not isinstance(host_type, str):
-                raise ValueError('not isinstance(host_type, str)')
-            
-            if host_conninfo is not None and not isinstance(host_conninfo, str):
-                raise ValueError('not isinstance(host_conninfo, str)')
-            
-            if host_params is not None and not isinstance(host_params, dict):
-                raise ValueError('not isinstance(host_params, dict)')
-            
-            if host_name in host_name_set:
-                raise ValueError(
-                    '{!r}, {!r}: non unique host_name'.format(
-                        host_name,
-                        hosts_file_path,
-                    ),
-                )
-            
-            host_name_set.add(host_name)
-            host_list.append({
-                'name': host_name,
-                'type': host_type,
-                'conninfo': host_conninfo,
-                'params': host_params,
-            })
-        
-        self.hosts_file_path = hosts_file_path
-        self.host_list = host_list
-
 class InitDescr:
     _load_utils = LoadUtils
     
@@ -998,3 +932,85 @@ class ClusterDescr:
         self.schemas_list = schemas_list
         self.migrations = migrations
         self.settings_list = settings_list
+
+class HostsDescr:
+    _load_utils = LoadUtils
+    
+    def _open(self, hosts_file_path):
+        return open(hosts_file_path, encoding='utf-8')
+    
+    def load(self, hosts_file_path):
+        with self._open(hosts_file_path) as fd:
+            doc = self._load_utils.yaml_safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        hosts_elem = doc['hosts']
+        
+        if hosts_elem is None:
+            hosts_elem = {}
+        
+        if not isinstance(hosts_elem, list):
+            raise ValueError('not isinstance(hosts_elem, list)')
+        
+        host_list = []
+        host_name_set = set()
+        
+        for host_elem in hosts_elem:
+            if not isinstance(host_elem, dict):
+                raise ValueError('not isinstance(host_elem, dict)')
+            
+            host_name = host_elem['name']
+            host_type = host_elem.get('type')
+            host_conninfo = host_elem.get('conninfo')
+            host_params = host_elem.get('params')
+            
+            if not isinstance(host_name, str):
+                raise ValueError('not isinstance(host_name, str)')
+            
+            if host_type is None:
+                host_type = host_name
+            elif not isinstance(host_type, str):
+                raise ValueError('not isinstance(host_type, str)')
+            
+            if host_conninfo is not None and not isinstance(host_conninfo, str):
+                raise ValueError('not isinstance(host_conninfo, str)')
+            
+            if host_params is not None and not isinstance(host_params, dict):
+                raise ValueError('not isinstance(host_params, dict)')
+            
+            if host_name in host_name_set:
+                raise ValueError(
+                    '{!r}, {!r}: non unique host_name'.format(
+                        host_name,
+                        hosts_file_path,
+                    ),
+                )
+            
+            host_name_set.add(host_name)
+            host_list.append({
+                'name': host_name,
+                'type': host_type,
+                'conninfo': host_conninfo,
+                'params': host_params,
+            })
+        
+        self.hosts_file_path = hosts_file_path
+        self.host_list = host_list
+    
+    def load_pseudo(self, cluster_descr):
+        host_list = []
+        
+        for schemas in cluster_descr.schemas_list:
+            host_name = schemas.schemas_type
+            
+            host_list.append({
+                'name': host_name,
+                'type': host_name,
+                'conninfo': None,
+                'params': None,
+            })
+        
+        self.hosts_file_path = '<pseudo-hosts>'
+        self.host_list = host_list
