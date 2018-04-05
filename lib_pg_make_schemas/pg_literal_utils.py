@@ -11,6 +11,17 @@ def pg_quote(value):
         .replace('\n', '\\n')
     )
 
+def pg_ident_quote(value):
+    if value is None:
+        return 'null'
+    
+    return 'e"{}"'.format(
+        str(value)
+        .replace('\\', '\\\\')
+        .replace('"', '\\"')
+        .replace('\n', '\\n')
+    )
+
 def pg_dollar_quote(tag, value):
     if value is None:
         return 'null'
