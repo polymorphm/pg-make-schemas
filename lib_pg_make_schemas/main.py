@@ -7,7 +7,9 @@ class ArgsCtx:
     pass
 
 def init_cmd(args_ctx, print_func, err_print_func):
-    raise NotImplementedError('init_cmd is not implemented yet')
+    from . import init_cmd
+    
+    init_cmd.init_cmd(args_ctx, print_func, err_print_func)
 
 def install_cmd(args_ctx, print_func, err_print_func):
     from . import install_cmd
