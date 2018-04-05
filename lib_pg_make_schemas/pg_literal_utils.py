@@ -11,16 +11,11 @@ def pg_quote(value):
         .replace('\n', '\\n')
     )
 
-def pg_ident_quote(value):
-    if value is None:
-        return 'null'
+def pg_ident_quote(ident):
+    if ident is None:
+         raise ValueError('ident is None')
     
-    return 'e"{}"'.format(
-        str(value)
-        .replace('\\', '\\\\')
-        .replace('"', '\\"')
-        .replace('\n', '\\n')
-    )
+    return '"{}"'.format(str(ident).replace('"', '""'))
 
 def pg_dollar_quote(tag, value):
     if value is None:
