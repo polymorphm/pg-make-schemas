@@ -11,6 +11,7 @@ class SqlFileUtils:
     def write_fragment(cls, fd, fragment):
         fd.write(fragment)
         fd.write('\n\n')
+        fd.flush()
     
     @classmethod
     def write_footer(cls, fd):
@@ -122,12 +123,6 @@ class Receivers:
                 fd = self._fd_map[host_name]
                 
                 self._sql_file_utils.write_footer(fd)
-            
-            for host in hosts_descr.host_list:
-                host_name = host['name']
-                fd = self._fd_map[host_name]
-                
-                fd.flush()
             
             for host in reversed(hosts_descr.host_list):
                 host_name = host['name']
