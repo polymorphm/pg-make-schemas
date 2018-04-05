@@ -6,6 +6,7 @@ class SqlFileUtils:
     @classmethod
     def write_header(cls, fd):
         fd.write('-- -*- mode: sql; coding: utf-8 -*-\n\n--begin;\n\n')
+        fd.flush()
     
     @classmethod
     def write_fragment(cls, fd, fragment):
@@ -16,6 +17,7 @@ class SqlFileUtils:
     @classmethod
     def write_footer(cls, fd):
         fd.write('--commit;\n')
+        fd.flush()
 
 class Receivers:
     _sql_file_utils = SqlFileUtils
