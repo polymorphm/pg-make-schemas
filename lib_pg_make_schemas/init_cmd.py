@@ -4,7 +4,7 @@ import os, os.path
 import contextlib
 from . import descr
 from . import receivers
-from . import pg_search_path
+from . import pg_role_path
 from . import revision_sql
 from . import scr_env
 from . import init_sql
@@ -48,7 +48,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             
-            recv.execute(host_name, pg_search_path.pg_search_path(None))
+            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
             recv.execute(host_name, rev_sql.ensure_revision_structs())
         
@@ -57,13 +57,13 @@ def init_cmd(args_ctx, print_func, err_print_func):
             host_type = host['type']
             
             for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
-                recv.execute(host_name, pg_search_path.pg_search_path(None))
+                recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
                 recv.execute(host_name, '{}\n\n;'.format(sql.rstrip()))
         
         for host in hosts_descr.host_list:
             host_name = host['name']
             
-            recv.execute(host_name, pg_search_path.pg_search_path(None))
+            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.clean_scr_env())
         
         recv.done(hosts_descr)
