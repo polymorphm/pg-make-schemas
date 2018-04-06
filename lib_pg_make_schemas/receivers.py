@@ -25,6 +25,8 @@ class SqlFileUtils:
 class Receivers:
     _sql_file_utils = SqlFileUtils
     
+    con_error = psycopg2.Error
+    
     def __init__(self, execute, pretend, output):
         self._execute = execute
         self._pretend = pretend
@@ -109,7 +111,7 @@ class Receivers:
             with con.cursor() as cur:
                 try:
                     cur.execute(fragment)
-                except psycopg2.Error as e:
+                except self.con_error as e:
                     raise ReceiversError('{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
         
         self.write_fragment(host_name, fragment)
