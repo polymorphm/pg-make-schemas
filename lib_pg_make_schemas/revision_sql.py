@@ -4,7 +4,6 @@ from . import pg_literal
 
 CREATE_REVISION_STRUCTS_SQL = '''\
 create schema if not exists {q_revision_schema_ident};
-alter schema {q_revision_schema_ident} owner to postgres;
 revoke all on schema {q_revision_schema_ident} from public;
 
 create table if not exists {q_revision_schema_ident}.{q_revision_func_ident} (
@@ -14,7 +13,6 @@ revision text not null,
 comment text,
 schemas text[]
 );
-alter table {q_revision_schema_ident}.{q_revision_func_ident} owner to postgres;
 
 create table if not exists {q_revision_schema_ident}.{q_revision_var_ident} (
 application text primary key,
@@ -23,7 +21,6 @@ revision text not null,
 comment text,
 schemas text[]
 );
-alter table {q_revision_schema_ident}.{q_revision_var_ident} owner to postgres;
 
 create table if not exists {q_revision_schema_ident}.{q_arch_revision_func_ident} (
 id bigserial primary key,
@@ -34,7 +31,6 @@ revision text not null,
 comment text,
 schemas text[]
 );
-alter table {q_revision_schema_ident}.{q_arch_revision_func_ident} owner to postgres;
 
 create table if not exists {q_revision_schema_ident}.{q_arch_revision_var_ident} (
 id bigserial primary key,
@@ -44,8 +40,7 @@ datetime timestamp with time zone not null,
 revision text not null,
 comment text,
 schemas text[]
-);
-alter table {q_revision_schema_ident}.{q_arch_revision_var_ident} owner to postgres;\
+);\
 '''
 
 class RevisionSqlUtils:
