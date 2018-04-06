@@ -121,6 +121,15 @@ def main():
     
     for sub_parser in (install_parser, upgrade_parser):
         sub_parser.add_argument(
+            '-c',
+            '--comment',
+            action='store_true',
+            help='use ``comment.sh`` shell script for getting revision comment. '
+                    'warning(!) before using this option make sure the shell script '
+                    'is from a trusted origin',
+        )
+        
+        sub_parser.add_argument(
             '--init',
             action='store_true',
             help='do some basic initialization. see ``init`` command',
@@ -259,8 +268,10 @@ def main():
         args_ctx.reinstall_funcs = False
     
     if args_ctx.command in ('install', 'upgrade'):
+        args_ctx.comment = args.comment
         args_ctx.init = args.init
     else:
+        args_ctx.comment = False
         args_ctx.init = False
     
     if args_ctx.command == 'upgrade':
