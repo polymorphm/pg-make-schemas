@@ -38,8 +38,8 @@ def scr_env(
     host_params_body = 'select {}::json'.format(
         pg_dollar_quote_func('json', json_dumps_func(host_params)),
     )
-    host_list_body = 'select array[{}]::text[]'.format(
-        ','.join(pg_quote_func(x) for x in host_list),
+    host_list_body = 'select array[{}\n]::text[]'.format(
+        ','.join('\n{}'.format(pg_quote_func(x)) for x in host_list),
     )
     host_map_body = 'select {}::json'.format(
         pg_dollar_quote_func('json', json_dumps_func(host_map)),
