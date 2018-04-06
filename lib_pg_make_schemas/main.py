@@ -22,9 +22,6 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
 def install_settings_cmd(args_ctx, print_func, err_print_func):
     raise NotImplementedError('install_settings_cmd is not implemented yet')
 
-def inspect_cmd(args_ctx, print_func, err_print_func):
-    raise NotImplementedError('inspect_cmd is not implemented yet')
-
 def try_print(*args, **kwargs):
     kwargs.setdefault('flush', True)
     
@@ -54,8 +51,10 @@ def main():
     
     init_parser = subparsers.add_parser(
         'init',
-        help='do some basic initialization of schemas, e.g., creation of extensions and roles',
-        description='do some basic initialization of schemas, e.g., creation of extensions and roles',
+        help='do some basic initialization of schemas, e.g., '
+                'idempotent creation of extensions and roles',
+        description='do some basic initialization of schemas, e.g., '
+                'idempotent creation of extensions and roles',
     )
     
     install_parser = subparsers.add_parser(
@@ -74,12 +73,6 @@ def main():
         'install-settings',
         help='do fresh installing schema settings',
         description='do fresh installing schema settings',
-    )
-    
-    inspect_parser = subparsers.add_parser(
-        'inspect',
-        help='do inspection of source code for some rude errors',
-        description='do inspection of source code for some rude errors',
     )
     
     for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
@@ -108,8 +101,7 @@ def main():
                     'warning(!) the result may be different from the result of database interactions. '
                     'the output code is less smart and it can be more dangerous',
         )
-    
-    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser, inspect_parser):
+        
         sub_parser.add_argument(
             '-i',
             '--include',
@@ -182,14 +174,12 @@ def main():
                     'considered as an empty hosts file. that may be useful '
                     'when the ``--output`` option is used',
         )
-    
-    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser, inspect_parser):
+        
         arg_help_map = {
             init_parser: 'path to source code. will be used init files only',
             install_parser: 'path to source code. won\'t be used migration files',
             upgrade_parser: 'path to source code. will be used migration files',
             install_settings_parser: 'path to source code',
-            inspect_parser: 'path to source code for inspection',
         }
         
         arg_help = arg_help_map[sub_parser]
@@ -250,7 +240,7 @@ def main():
         args_ctx.output = None
         args_ctx.hosts = None
     
-    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings', 'inspect') \
+    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings') \
             and args.include is not None:
         args_ctx.include_list = args.include
     else:
@@ -283,7 +273,7 @@ def main():
         args_ctx.change_rev_only = False
         args_ctx.rev = None
     
-    if args_ctx.command in ('init', 'install', 'upgrade', 'install_settings_parser', 'inspect'):
+    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings'):
         args_ctx.source_code = args.source_code
     else:
         args_ctx.source_code = None
@@ -298,7 +288,6 @@ def main():
         'install': install_cmd,
         'upgrade': upgrade_cmd,
         'install-settings': install_settings_cmd,
-        'inspect': inspect_cmd,
     }
     
     cmd_func = cmd_func_map[args_ctx.command]
