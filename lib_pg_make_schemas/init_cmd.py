@@ -5,6 +5,7 @@ import contextlib
 from . import descr
 from . import receivers
 from . import pg_search_path
+from . import revision_sql
 from . import scr_env
 from . import init_sql
 
@@ -33,6 +34,8 @@ def init_cmd(args_ctx, print_func, err_print_func):
     if args_ctx.hosts is None:
         hosts_descr.load_pseudo(source_code_cluster_descr)
     
+    rev_sql = revision_sql.RevisionSql(source_code_cluster_descr.application)
+    
     with contextlib.closing(
                 receivers.Receivers(
                     args_ctx.execute,
@@ -46,8 +49,8 @@ def init_cmd(args_ctx, print_func, err_print_func):
             host_name = host['name']
             
             recv.execute(host_name, pg_search_path.pg_search_path(None))
-            # TODO      ensure revision structs
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
+            recv.execute(host_name, rev_sql.ensure_revision_structs())
         
         for host in hosts_descr.host_list:
             host_name = host['name']
