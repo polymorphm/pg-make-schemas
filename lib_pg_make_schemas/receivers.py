@@ -2,6 +2,9 @@
 
 import psycopg2
 
+class ReceiversError(Exception):
+    pass
+
 class SqlFileUtils:
     @classmethod
     def write_header(cls, fd):
@@ -104,7 +107,10 @@ class Receivers:
             con = self._con_map[host_name]
             
             with con.cursor() as cur:
-                cur.execute(fragment)
+                try:
+                    cur.execute(fragment)
+                except psycopg2.Error as e:
+                    raise ReceiversError('{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
         
         self.write_fragment(host_name, fragment)
     
