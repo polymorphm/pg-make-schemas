@@ -69,6 +69,22 @@ insert into {q_revision_schema_ident}.{q_revision_ident}
 values ({q_application}, now (), {q_revision}, {q_comment}, {q_schemas}::text[]);\
 '''
 
+DROP_SCHEMAS_SQL ='''\
+declare
+_schema text;
+begin
+for _schema in
+select unnest (rev.schemas)
+from {q_revision_schema_ident}.{q_revision_ident} rev
+where rev.application = {q_application}
+union
+select unnest ({q_schemas}::text[])
+loop
+execute format ($drop$drop schema if exists %I cascade$drop$, _schema);
+end loop;
+end\
+'''
+
 class RevisionSqlError(Exception):
     pass
 
@@ -98,14 +114,15 @@ class RevisionSqlUtils:
         return 'arch_{}_var_revision'.format(application_ident)
 
 class RevisionSql:
-    _create_revision_schema_sql=CREATE_REVISION_SCHEMA_SQL
-    _create_revision_table_sql=CREATE_REVISION_TABLE_SQL
-    _create_arch_revision_table_sql=CREATE_ARCH_REVISION_TABLE_SQL
-    _fetch_revision_sql=FETCH_REVISION_SQL
-    _guard_revision_sql=GUARD_REVISION_SQL
-    _arch_revision_sql=ARCH_REVISION_SQL
-    _push_revision_sql=PUSH_REVISION_SQL
-    _revision_sql_utils=RevisionSqlUtils
+    _create_revision_schema_sql = CREATE_REVISION_SCHEMA_SQL
+    _create_revision_table_sql = CREATE_REVISION_TABLE_SQL
+    _create_arch_revision_table_sql = CREATE_ARCH_REVISION_TABLE_SQL
+    _fetch_revision_sql = FETCH_REVISION_SQL
+    _guard_revision_sql = GUARD_REVISION_SQL
+    _arch_revision_sql = ARCH_REVISION_SQL
+    _push_revision_sql = PUSH_REVISION_SQL
+    _drop_schemas_sql = DROP_SCHEMAS_SQL
+    _revision_sql_utils = RevisionSqlUtils
     
     def __init__(self, application):
         self._application = application
@@ -190,6 +207,23 @@ class RevisionSql:
             q_comment=self._pg_quote(comment),
             q_schemas=q_schemas,
         )
+    
+    def _drop_schemas(self, revision_schema_ident, revision_ident, schemas):
+        if schemas is not None:
+            q_schemas = 'array[{}\n]'.format(
+                ','.join('\n{}'.format(self._pg_quote(x)) for x in schemas),
+            )
+        else:
+            q_schemas = 'null'
+        
+        drop_schemas_body = self._drop_schemas_sql.format(
+            q_revision_schema_ident=self._pg_ident_quote(revision_schema_ident),
+            q_revision_ident=self._pg_ident_quote(revision_ident),
+            q_application=self._pg_quote(self._application),
+            q_schemas=q_schemas,
+        )
+        
+        return 'do {};'.format(self._pg_dollar_quote('do', drop_schemas_body))
     
     def ensure_revision_structs(self):
         application_ident = self._revision_sql_utils.application_ident(self._application)
@@ -298,3 +332,17 @@ class RevisionSql:
             comment,
             schemas,
         )
+    
+    def drop_func_schemas(self, schemas):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
+        
+        return self._drop_schemas(revision_schema_ident, revision_ident, schemas)
+    
+    def drop_var_schemas(self, schemas):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_var_ident(application_ident)
+        
+        return self._drop_schemas(revision_schema_ident, revision_ident, schemas)
