@@ -2,37 +2,23 @@
 
 from . import pg_literal
 
-CREATE_REVISION_STRUCTS_SQL = '''\
+CREATE_REVISION_SCHEMA_SQL = '''\
 create schema if not exists {q_revision_schema_ident};
-revoke all on schema {q_revision_schema_ident} from public;
+revoke all on schema {q_revision_schema_ident} from public;\
+'''
 
-create table if not exists {q_revision_schema_ident}.{q_revision_func_ident} (
+CREATE_REVISION_TABLE_SQL = '''\
+create table if not exists {q_revision_schema_ident}.{q_revision_ident} (
 application text primary key,
 datetime timestamp with time zone not null,
 revision text not null,
 comment text,
 schemas text[]
-);
+);\
+'''
 
-create table if not exists {q_revision_schema_ident}.{q_revision_var_ident} (
-application text primary key,
-datetime timestamp with time zone not null,
-revision text not null,
-comment text,
-schemas text[]
-);
-
-create table if not exists {q_revision_schema_ident}.{q_arch_revision_func_ident} (
-id bigserial primary key,
-arch_datetime timestamp with time zone not null,
-application text not null,
-datetime timestamp with time zone not null,
-revision text not null,
-comment text,
-schemas text[]
-);
-
-create table if not exists {q_revision_schema_ident}.{q_arch_revision_var_ident} (
+CREATE_ARCH_REVISION_TABLE_SQL = '''\
+create table if not exists {q_revision_schema_ident}.{q_arch_revision_ident} (
 id bigserial primary key,
 arch_datetime timestamp with time zone not null,
 application text not null,
@@ -69,7 +55,9 @@ class RevisionSqlUtils:
         return 'arch_{}_var_revision'.format(application_ident)
 
 class RevisionSql:
-    _create_revision_structs_sql=CREATE_REVISION_STRUCTS_SQL
+    _create_revision_schema_sql=CREATE_REVISION_SCHEMA_SQL
+    _create_revision_table_sql=CREATE_REVISION_TABLE_SQL
+    _create_arch_revision_table_sql=CREATE_ARCH_REVISION_TABLE_SQL
     _revision_sql_utils=RevisionSqlUtils
     
     def __init__(self, application):
@@ -80,24 +68,41 @@ class RevisionSql:
     
     def ensure_revision_structs(self):
         application_ident = self._revision_sql_utils.application_ident(self._application)
-        
-        return self._create_revision_structs_sql.format(
-            q_revision_schema_ident=self._pg_ident_quote_func(
-                self._revision_sql_utils.revision_schema_ident(application_ident)
-            ),
-            q_revision_func_ident=self._pg_ident_quote_func(
-                self._revision_sql_utils.revision_func_ident(application_ident)
-            ),
-            q_revision_var_ident=self._pg_ident_quote_func(
-                self._revision_sql_utils.revision_var_ident(application_ident)
-            ),
-            q_arch_revision_func_ident=self._pg_ident_quote_func(
-                self._revision_sql_utils.arch_revision_func_ident(application_ident)
-            ),
-            q_arch_revision_var_ident=self._pg_ident_quote_func(
-                self._revision_sql_utils.arch_revision_var_ident(application_ident)
-            ),
+        q_revision_schema_ident = self._pg_ident_quote_func(
+            self._revision_sql_utils.revision_schema_ident(application_ident),
         )
+        
+        create_list = [
+            self._create_revision_schema_sql.format(
+                q_revision_schema_ident=q_revision_schema_ident,
+            ),
+            self._create_revision_table_sql.format(
+                q_revision_schema_ident=q_revision_schema_ident,
+                q_revision_ident=self._pg_ident_quote_func(
+                    self._revision_sql_utils.revision_func_ident(application_ident),
+                ),
+            ),
+            self._create_revision_table_sql.format(
+                q_revision_schema_ident=q_revision_schema_ident,
+                q_revision_ident=self._pg_ident_quote_func(
+                    self._revision_sql_utils.revision_var_ident(application_ident),
+                ),
+            ),
+            self._create_arch_revision_table_sql.format(
+                q_revision_schema_ident=q_revision_schema_ident,
+                q_arch_revision_ident=self._pg_ident_quote_func(
+                    self._revision_sql_utils.arch_revision_func_ident(application_ident),
+                ),
+            ),
+            self._create_arch_revision_table_sql.format(
+                q_revision_schema_ident=q_revision_schema_ident,
+                q_arch_revision_ident=self._pg_ident_quote_func(
+                    self._revision_sql_utils.arch_revision_var_ident(application_ident),
+                ),
+            ),
+        ]
+        
+        return '\n\n'.join(create_list)
     
     # TODO      method: fetch_func_revision(recv, host_name) ### select .. for update
     
