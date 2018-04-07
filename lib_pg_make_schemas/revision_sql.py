@@ -51,6 +51,24 @@ end if;
 end\
 '''
 
+ARCH_REVISION_SQL ='''\
+with drev as (
+delete from {q_revision_schema_ident}.{q_revision_ident} rev
+where rev.application = {q_application}
+returning rev.application, rev.datetime, rev.revision, rev.comment, rev.schemas
+)
+insert into {q_revision_schema_ident}.{q_arch_revision_ident}
+(arch_datetime, application, datetime, revision, comment, schemas)
+select now (), rev.application, rev.datetime, rev.revision, rev.comment, rev.schemas
+from drev rev;\
+'''
+
+PUSH_REVISION_SQL ='''\
+insert into {q_revision_schema_ident}.{q_revision_ident}
+(application, datetime, revision, comment, schemas)
+values ({q_application}, now (), {q_revision}, {q_comment}, {q_schemas}::text[]);\
+'''
+
 class RevisionSqlError(Exception):
     pass
 
@@ -85,6 +103,8 @@ class RevisionSql:
     _create_arch_revision_table_sql=CREATE_ARCH_REVISION_TABLE_SQL
     _fetch_revision_sql=FETCH_REVISION_SQL
     _guard_revision_sql=GUARD_REVISION_SQL
+    _arch_revision_sql=ARCH_REVISION_SQL
+    _push_revision_sql=PUSH_REVISION_SQL
     _revision_sql_utils=RevisionSqlUtils
     
     def __init__(self, application):
@@ -139,6 +159,38 @@ class RevisionSql:
         
         return 'do {};'.format(self._pg_dollar_quote('do', guard_revision_body))
     
+    def _arch_revision(self, revision_schema_ident, revision_ident, arch_revision_ident):
+        return self._arch_revision_sql.format(
+            q_revision_schema_ident=self._pg_ident_quote(revision_schema_ident),
+            q_revision_ident=self._pg_ident_quote(revision_ident),
+            q_arch_revision_ident=self._pg_ident_quote(arch_revision_ident),
+            q_application=self._pg_quote(self._application),
+        )
+    
+    def _push_revision(
+                self,
+                revision_schema_ident,
+                revision_ident,
+                revision,
+                comment,
+                schemas,
+            ):
+        if schemas is not None:
+            q_schemas = 'array[{}\n]'.format(
+                ','.join('\n{}'.format(self._pg_quote(x)) for x in schemas),
+            )
+        else:
+            q_schemas = 'null'
+        
+        return self._push_revision_sql.format(
+            q_revision_schema_ident=self._pg_ident_quote(revision_schema_ident),
+            q_revision_ident=self._pg_ident_quote(revision_ident),
+            q_application=self._pg_quote(self._application),
+            q_revision=self._pg_quote(revision),
+            q_comment=self._pg_quote(comment),
+            q_schemas=q_schemas,
+        )
+    
     def ensure_revision_structs(self):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         q_revision_schema_ident = self._pg_ident_quote(
@@ -191,25 +243,58 @@ class RevisionSql:
         
         return self._fetch_revision(recv, host_name, revision_schema_ident, revision_ident)
     
-    def guard_func_revision(self, func_revision):
+    def guard_func_revision(self, revision):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
         
-        return self._guard_revision(revision_schema_ident, revision_ident, func_revision)
+        return self._guard_revision(revision_schema_ident, revision_ident, revision)
     
-    def guard_var_revision(self, var_revision):
+    def guard_var_revision(self, revision):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_var_ident(application_ident)
         
-        return self._guard_revision(revision_schema_ident, revision_ident, var_revision)
+        return self._guard_revision(revision_schema_ident, revision_ident, revision)
     
+    def arch_func_revision(self):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
+        arch_revision_ident = self._revision_sql_utils.arch_revision_func_ident(application_ident)
+        
+        return self._arch_revision(revision_schema_ident, revision_ident, arch_revision_ident)
     
-    # TODO      method: arch_func_revision()
+    def arch_var_revision(self):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_var_ident(application_ident)
+        arch_revision_ident = self._revision_sql_utils.arch_revision_var_ident(application_ident)
+        
+        return self._arch_revision(revision_schema_ident, revision_ident, arch_revision_ident)
     
-    # TODO      method: arch_var_revision()
+    def push_func_revision(self, revision, comment, schemas):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
+        
+        return self._push_revision(
+            revision_schema_ident,
+            revision_ident,
+            revision,
+            comment,
+            schemas,
+        )
     
-    # TODO      method: push_func_revision(func_revision, comment)
-    
-    # TODO      method: push_var_revision(var_revision, comment)
+    def push_var_revision(self, revision, comment, schemas):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_var_ident(application_ident)
+        
+        return self._push_revision(
+            revision_schema_ident,
+            revision_ident,
+            revision,
+            comment,
+            schemas,
+        )
