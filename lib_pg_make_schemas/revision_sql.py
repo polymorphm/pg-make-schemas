@@ -33,7 +33,7 @@ FETCH_REVISION_SQL ='''\
 select rev.revision, rev.comment
 from {q_revision_schema_ident}.{q_revision_ident} rev
 where rev.application = %(application)s
-for update;\
+for update\
 '''
 
 GUARD_REVISION_SQL ='''\
