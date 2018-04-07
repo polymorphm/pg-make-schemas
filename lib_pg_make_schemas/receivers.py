@@ -108,11 +108,11 @@ class Receivers:
         if self._execute:
             con = self._con_map[host_name]
             
-            with con.cursor() as cur:
-                try:
+            try:
+                with con.cursor() as cur:
                     cur.execute(fragment)
-                except self.con_error as e:
-                    raise ReceiversError('{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
+            except self.con_error as e:
+                raise ReceiversError('{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
         
         self.write_fragment(host_name, fragment)
     
