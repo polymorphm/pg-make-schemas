@@ -57,8 +57,12 @@ def init_cmd(args_ctx, print_func, err_print_func):
             host_type = host['type']
             
             for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
-                recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
-                recv.execute(host_name, '{}\n\n;'.format(sql.rstrip()))
+                recv.execute(
+                    host_name, '{}\n\n{}\n\n;'.format(
+                        pg_role_path.pg_role_path('postgres', None),
+                        sql.rstrip(),
+                    ),
+                )
         
         for host in hosts_descr.host_list:
             host_name = host['name']
