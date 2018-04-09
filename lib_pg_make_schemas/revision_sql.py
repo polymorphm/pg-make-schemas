@@ -98,20 +98,20 @@ class RevisionSqlUtils:
         return '{}_revision'.format(application_ident)
     
     @classmethod
-    def revision_func_ident(cls, application_ident):
-        return '{}_func_revision'.format(application_ident)
-    
-    @classmethod
     def revision_var_ident(cls, application_ident):
         return '{}_var_revision'.format(application_ident)
     
     @classmethod
-    def arch_revision_func_ident(cls, application_ident):
-        return 'arch_{}_func_revision'.format(application_ident)
+    def revision_func_ident(cls, application_ident):
+        return '{}_func_revision'.format(application_ident)
     
     @classmethod
     def arch_revision_var_ident(cls, application_ident):
         return 'arch_{}_var_revision'.format(application_ident)
+    
+    @classmethod
+    def arch_revision_func_ident(cls, application_ident):
+        return 'arch_{}_func_revision'.format(application_ident)
 
 class RevisionSql:
     _create_revision_schema_sql = CREATE_REVISION_SCHEMA_SQL
@@ -238,19 +238,13 @@ class RevisionSql:
             self._create_revision_table_sql.format(
                 q_revision_schema_ident=q_revision_schema_ident,
                 q_revision_ident=self._pg_ident_quote(
-                    self._revision_sql_utils.revision_func_ident(application_ident),
+                    self._revision_sql_utils.revision_var_ident(application_ident),
                 ),
             ),
             self._create_revision_table_sql.format(
                 q_revision_schema_ident=q_revision_schema_ident,
                 q_revision_ident=self._pg_ident_quote(
-                    self._revision_sql_utils.revision_var_ident(application_ident),
-                ),
-            ),
-            self._create_arch_revision_table_sql.format(
-                q_revision_schema_ident=q_revision_schema_ident,
-                q_arch_revision_ident=self._pg_ident_quote(
-                    self._revision_sql_utils.arch_revision_func_ident(application_ident),
+                    self._revision_sql_utils.revision_func_ident(application_ident),
                 ),
             ),
             self._create_arch_revision_table_sql.format(
@@ -259,16 +253,15 @@ class RevisionSql:
                     self._revision_sql_utils.arch_revision_var_ident(application_ident),
                 ),
             ),
+            self._create_arch_revision_table_sql.format(
+                q_revision_schema_ident=q_revision_schema_ident,
+                q_arch_revision_ident=self._pg_ident_quote(
+                    self._revision_sql_utils.arch_revision_func_ident(application_ident),
+                ),
+            ),
         ]
         
         return '\n\n'.join(create_list)
-    
-    def fetch_func_revision(self, recv, host_name):
-        application_ident = self._revision_sql_utils.application_ident(self._application)
-        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
-        revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
-        
-        return self._fetch_revision(recv, host_name, revision_schema_ident, revision_ident)
     
     def fetch_var_revision(self, recv, host_name):
         application_ident = self._revision_sql_utils.application_ident(self._application)
@@ -277,12 +270,12 @@ class RevisionSql:
         
         return self._fetch_revision(recv, host_name, revision_schema_ident, revision_ident)
     
-    def guard_func_revision(self, revision):
+    def fetch_func_revision(self, recv, host_name):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
         
-        return self._guard_revision(revision_schema_ident, revision_ident, revision)
+        return self._fetch_revision(recv, host_name, revision_schema_ident, revision_ident)
     
     def guard_var_revision(self, revision):
         application_ident = self._revision_sql_utils.application_ident(self._application)
@@ -291,13 +284,12 @@ class RevisionSql:
         
         return self._guard_revision(revision_schema_ident, revision_ident, revision)
     
-    def arch_func_revision(self):
+    def guard_func_revision(self, revision):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
-        arch_revision_ident = self._revision_sql_utils.arch_revision_func_ident(application_ident)
         
-        return self._arch_revision(revision_schema_ident, revision_ident, arch_revision_ident)
+        return self._guard_revision(revision_schema_ident, revision_ident, revision)
     
     def arch_var_revision(self):
         application_ident = self._revision_sql_utils.application_ident(self._application)
@@ -307,18 +299,13 @@ class RevisionSql:
         
         return self._arch_revision(revision_schema_ident, revision_ident, arch_revision_ident)
     
-    def push_func_revision(self, revision, comment, schemas):
+    def arch_func_revision(self):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
+        arch_revision_ident = self._revision_sql_utils.arch_revision_func_ident(application_ident)
         
-        return self._push_revision(
-            revision_schema_ident,
-            revision_ident,
-            revision,
-            comment,
-            schemas,
-        )
+        return self._arch_revision(revision_schema_ident, revision_ident, arch_revision_ident)
     
     def push_var_revision(self, revision, comment, schemas):
         application_ident = self._revision_sql_utils.application_ident(self._application)
@@ -333,16 +320,29 @@ class RevisionSql:
             schemas,
         )
     
-    def drop_func_schemas(self, schemas):
+    def push_func_revision(self, revision, comment, schemas):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
         
-        return self._drop_schemas(revision_schema_ident, revision_ident, schemas)
+        return self._push_revision(
+            revision_schema_ident,
+            revision_ident,
+            revision,
+            comment,
+            schemas,
+        )
     
     def drop_var_schemas(self, schemas):
         application_ident = self._revision_sql_utils.application_ident(self._application)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.revision_var_ident(application_ident)
+        
+        return self._drop_schemas(revision_schema_ident, revision_ident, schemas)
+    
+    def drop_func_schemas(self, schemas):
+        application_ident = self._revision_sql_utils.application_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+        revision_ident = self._revision_sql_utils.revision_func_ident(application_ident)
         
         return self._drop_schemas(revision_schema_ident, revision_ident, schemas)
