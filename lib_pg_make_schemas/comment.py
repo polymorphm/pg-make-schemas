@@ -2,6 +2,8 @@
 
 import subprocess
 
+COMMENT_FILE_NAME = 'comment.sh'
+
 def comment(comment_file_path):
     p = subprocess.run(
         comment_file_path,
