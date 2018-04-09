@@ -1,13 +1,13 @@
 # -*- mode: python; coding: utf-8 -*-
 
 def read_init_sql(cluster_descr, host_type):
-    for schemas in cluster_descr.schemas_list:
-        if schemas.schemas_type != host_type:
+    for schemas_descr in cluster_descr.schemas_list:
+        if schemas_descr.schemas_type != host_type:
             continue
         
-        init = schemas.init
+        init_descr = schemas_descr.init
         
-        if init is None:
+        if init_descr is None:
             continue
         
-        yield from init.read_sql()
+        yield from init_descr.read_sql()
