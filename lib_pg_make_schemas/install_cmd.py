@@ -10,6 +10,7 @@ from . import install
 from . import revision_sql
 from . import pg_role_path
 from . import scr_env
+from . import init_sql
 from . import install_sql
 from . import settings_sql
 
@@ -105,6 +106,19 @@ def install_cmd(args_ctx, print_func, err_print_func):
                 recv.execute(host_name, rev_sql.guard_var_revision(None))
             
             recv.execute(host_name, rev_sql.guard_func_revision(None))
+        
+        if args_ctx.init:
+            for host in hosts_descr.host_list:
+                host_name = host['name']
+                host_type = host['type']
+                
+                for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
+                    recv.execute(
+                        host_name, '{}\n\n{}\n\n;'.format(
+                            pg_role_path.pg_role_path('postgres', None),
+                            sql.rstrip(),
+                        ),
+                    )
         
         if not args_ctx.reinstall_funcs:
             for host in hosts_descr.host_list:
