@@ -19,9 +19,6 @@ def install_cmd(args_ctx, print_func, err_print_func):
 def upgrade_cmd(args_ctx, print_func, err_print_func):
     raise NotImplementedError('upgrade_cmd is not implemented yet')
 
-def install_settings_cmd(args_ctx, print_func, err_print_func):
-    raise NotImplementedError('install_settings_cmd is not implemented yet')
-
 def try_print(*args, **kwargs):
     kwargs.setdefault('flush', True)
     
@@ -69,13 +66,7 @@ def main():
         description='upgrading schemas from one of previous revisions',
     )
     
-    install_settings_parser = subparsers.add_parser(
-        'install-settings',
-        help='do fresh installing schema settings',
-        description='do fresh installing schema settings',
-    )
-    
-    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
+    for sub_parser in (init_parser, install_parser, upgrade_parser):
         sub_parser.add_argument(
             '-e',
             '--execute',
@@ -167,7 +158,7 @@ def main():
                 'or when ``--show-rev-only``/``--change-rev-only`` option is used',
     )
     
-    for sub_parser in (init_parser, install_parser, upgrade_parser, install_settings_parser):
+    for sub_parser in (init_parser, install_parser, upgrade_parser):
         sub_parser.add_argument(
             'hosts',
             help='path to the hosts file. if \'-\' is used, it is '
@@ -179,7 +170,6 @@ def main():
             init_parser: 'path to source code. will be used init files only',
             install_parser: 'path to source code. won\'t be used migration files',
             upgrade_parser: 'path to source code. will be used migration files',
-            install_settings_parser: 'path to source code',
         }
         
         arg_help = arg_help_map[sub_parser]
@@ -192,7 +182,7 @@ def main():
         del arg_help
         del arg_help_map
     
-    for sub_parser in (install_parser, upgrade_parser, install_settings_parser):
+    for sub_parser in (install_parser, upgrade_parser):
         if sub_parser in (install_parser, upgrade_parser):
             arg_nargs='*'
         else:
@@ -223,7 +213,7 @@ def main():
     
     args_ctx.command = args.command
     
-    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings'):
+    if args_ctx.command in ('init', 'install', 'upgrade'):
         args_ctx.execute = args.execute
         args_ctx.pretend = args.pretend
         args_ctx.output = args.output
@@ -240,7 +230,7 @@ def main():
         args_ctx.output = None
         args_ctx.hosts = None
     
-    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings') \
+    if args_ctx.command in ('init', 'install', 'upgrade') \
             and args.include is not None:
         args_ctx.include_list = args.include
     else:
@@ -273,12 +263,12 @@ def main():
         args_ctx.change_rev_only = False
         args_ctx.rev = None
     
-    if args_ctx.command in ('init', 'install', 'upgrade', 'install-settings'):
+    if args_ctx.command in ('init', 'install', 'upgrade'):
         args_ctx.source_code = args.source_code
     else:
         args_ctx.source_code = None
     
-    if args_ctx.command in ('install', 'upgrade', 'install-settings'):
+    if args_ctx.command in ('install', 'upgrade'):
         args_ctx.settings_source_code = args.settings_source_code
     else:
         args_ctx.settings_source_code = []
@@ -287,7 +277,6 @@ def main():
         'init': init_cmd,
         'install': install_cmd,
         'upgrade': upgrade_cmd,
-        'install-settings': install_settings_cmd,
     }
     
     cmd_func = cmd_func_map[args_ctx.command]
