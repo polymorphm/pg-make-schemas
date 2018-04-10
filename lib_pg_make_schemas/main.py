@@ -135,7 +135,7 @@ def main():
     )
     
     upgrade_parser.add_argument(
-        '--show-rev-only',
+        '--show-rev',
         action='store_true',
         help='do nothing except showing revision information. '
                 'you can use ``--rev`` option for checking ability '
@@ -143,7 +143,7 @@ def main():
     )
     
     upgrade_parser.add_argument(
-        '--change-rev-only',
+        '--change-rev',
         action='store_true',
         help='do nothing except changing revision information. '
                 'warning(!) it is dangerous feature, you can mistakenly lose real revision information '
@@ -155,7 +155,7 @@ def main():
         '--rev',
         help='do upgrading from this specific revision only. '
                 'that may be useful when the hosts file is empty '
-                'or when ``--show-rev-only``/``--change-rev-only`` option is used',
+                'or when ``--show-rev``/``--change-rev`` option is used',
     )
     
     for sub_parser in (init_parser, install_parser, upgrade_parser):
@@ -249,12 +249,12 @@ def main():
         args_ctx.init = False
     
     if args_ctx.command == 'upgrade':
-        args_ctx.show_rev_only = args.show_rev_only
-        args_ctx.change_rev_only = args.change_rev_only
+        args_ctx.show_rev = args.show_rev
+        args_ctx.change_rev = args.change_rev
         args_ctx.rev = args.rev
     else:
-        args_ctx.show_rev_only = False
-        args_ctx.change_rev_only = False
+        args_ctx.show_rev = False
+        args_ctx.change_rev = False
         args_ctx.rev = None
     
     if args_ctx.command in ('init', 'install', 'upgrade'):
