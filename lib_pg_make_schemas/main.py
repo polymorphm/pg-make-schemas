@@ -17,7 +17,9 @@ def install_cmd(args_ctx, print_func, err_print_func):
     install_cmd.install_cmd(args_ctx, print_func, err_print_func)
 
 def upgrade_cmd(args_ctx, print_func, err_print_func):
-    raise NotImplementedError('upgrade_cmd is not implemented yet')
+    from . import upgrade_cmd
+    
+    upgrade_cmd.upgrade_cmd(args_ctx, print_func, err_print_func)
 
 def try_print(*args, **kwargs):
     kwargs.setdefault('flush', True)
