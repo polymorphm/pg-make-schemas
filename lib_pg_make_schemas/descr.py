@@ -308,10 +308,68 @@ class SchemaDescr:
             self.include_list,
         )
 
+class SafeguardDescr:
+    _load_utils = LoadUtils
+    
+    file_name = 'safeguard.yaml'
+    
+    def load(self, safeguard_file_path, include_list):
+        safeguard_file_dir = os.path.dirname(safeguard_file_path)
+        
+        with self._load_utils.check_and_open_for_r(safeguard_file_path, include_list) as fd:
+            doc = self._load_utils.yaml_safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        safeguard_elem = doc['safeguard']
+        
+        if safeguard_elem is None:
+            safeguard_elem = {}
+        
+        if not isinstance(safeguard_elem, dict):
+            raise ValueError('not isinstance(safeguard_elem, dict)')
+        
+        include_elem = safeguard_elem.get('include')
+        first_elem = safeguard_elem.get('first')
+        last_elem = safeguard_elem.get('last')
+        sql = safeguard_elem.get('sql')
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        if sql is not None and not isinstance(sql, str):
+            raise ValueError('not isinstance(sql, str')
+        
+        def sql_filt_func(file_path):
+            return file_path.endswith('.sql')
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    safeguard_file_dir, include_elem, first_elem, last_elem,
+                    sql_filt_func,
+                )
+        
+        self.safeguard_file_path = safeguard_file_path
+        self.include_list = include_list
+        self.file_path_list = file_path_list
+        self.first_file_path_list = first_file_path_list
+        self.last_file_path_list = last_file_path_list
+        self.sql = sql
+    
+    def read_sql(self):
+        yield from self._load_utils.read_content(
+            self.file_path_list,
+            self.first_file_path_list,
+            self.last_file_path_list,
+            self.sql,
+            self.include_list,
+        )
+
 class SchemasDescr:
     _load_utils = LoadUtils
     _init_descr_class = InitDescr
     _schema_descr_class = SchemaDescr
+    _safeguard_descr_class = SafeguardDescr
     
     file_name = 'schemas.yaml'
     
@@ -358,8 +416,17 @@ class SchemasDescr:
             
             return os.path.isfile(schema_file_path)
         
+        def safeguard_filt_func(file_path):
+            safeguard_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._safeguard_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(safeguard_file_path)
+        
         def filt_func(file_path):
-            return init_filt_func(file_path) or schema_filt_func(file_path)
+            return init_filt_func(file_path) or schema_filt_func(file_path) or \
+                    safeguard_filt_func(file_path)
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
@@ -370,6 +437,7 @@ class SchemasDescr:
         init = None
         var_schema_list = []
         func_schema_list = []
+        safeguard = None
         schema_name_set = set()
         
         for file_path in first_file_path_list + file_path_list + last_file_path_list:
@@ -432,6 +500,29 @@ class SchemasDescr:
                             schema_file_path,
                         ),
                     )
+            elif safeguard_filt_func(file_path):
+                if safeguard is not None:
+                    raise ValueError(
+                        '{!r}: non unique safeguard'.format(
+                            safeguard_file_path,
+                        ),
+                    )
+                
+                safeguard_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._safeguard_descr_class.file_name,
+                ))
+                
+                safeguard_descr = self._safeguard_descr_class()
+                
+                try:
+                    safeguard_descr.load(safeguard_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(safeguard_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(safeguard_file_path, type(e), e)) from e
+                
+                safeguard = safeguard_descr
             else:
                 raise AssertionError
         
@@ -441,6 +532,7 @@ class SchemasDescr:
         self.init = init
         self.var_schema_list = var_schema_list
         self.func_schema_list = func_schema_list
+        self.safeguard = safeguard
 
 class SettingsDescr:
     _load_utils = LoadUtils
