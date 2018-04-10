@@ -127,7 +127,7 @@ def main():
     )
     
     install_parser.add_argument(
-        '--reinstall-funcs',
+        '--reinstall-func',
         action='store_true',
         help='it is like ``--reinstall`` option, but doesn\'t touch variable schemas. '
                 'so your data will be safe, but variable schemas '
@@ -235,11 +235,11 @@ def main():
     else:
         args_ctx.reinstall = False
     
-    if args_ctx.command == 'install' and args.reinstall_funcs:
+    if args_ctx.command == 'install' and args.reinstall_func:
         args_ctx.reinstall = True
-        args_ctx.reinstall_funcs = True
+        args_ctx.reinstall_func = True
     else:
-        args_ctx.reinstall_funcs = False
+        args_ctx.reinstall_func = False
     
     if args_ctx.command in ('install', 'upgrade'):
         args_ctx.comment = args.comment

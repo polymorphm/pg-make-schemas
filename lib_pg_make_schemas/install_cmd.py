@@ -96,17 +96,17 @@ def install_cmd(args_ctx, print_func, err_print_func):
             recv.execute(host_name, rev_sql.ensure_revision_structs())
             
             if args_ctx.reinstall:
-                if not args_ctx.reinstall_funcs:
+                if not args_ctx.reinstall_func:
                     recv.execute(host_name, rev_sql.arch_var_revision())
                 
                 recv.execute(host_name, rev_sql.arch_func_revision())
                 
-                if not args_ctx.reinstall_funcs:
+                if not args_ctx.reinstall_func:
                     recv.execute(host_name, rev_sql.drop_var_schemas(var_schemas))
                 
                 recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
             
-            if not args_ctx.reinstall_funcs:
+            if not args_ctx.reinstall_func:
                 recv.execute(host_name, rev_sql.guard_var_revision(None))
             
             recv.execute(host_name, rev_sql.guard_func_revision(None))
@@ -124,7 +124,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         ),
                     )
         
-        if not args_ctx.reinstall_funcs:
+        if not args_ctx.reinstall_func:
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
@@ -199,7 +199,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             
-            if not args_ctx.reinstall_funcs:
+            if not args_ctx.reinstall_func:
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
                     recv.execute(
@@ -214,7 +214,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     install_sql.guard_acls(schema_name, owner, grant_list),
                 )
             
-            if not args_ctx.reinstall_funcs:
+            if not args_ctx.reinstall_func:
                 recv.execute(
                     host_name,
                     rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
