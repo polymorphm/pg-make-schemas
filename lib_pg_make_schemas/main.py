@@ -183,11 +183,6 @@ def main():
         del arg_help_map
     
     for sub_parser in (install_parser, upgrade_parser):
-        if sub_parser in (install_parser, upgrade_parser):
-            arg_nargs='*'
-        else:
-            arg_nargs='+'
-        
         if sub_parser == upgrade_parser:
             arg_help='path to settings source code. will be used migration files'
         else:
@@ -195,11 +190,10 @@ def main():
         
         sub_parser.add_argument(
             'settings_source_code',
-            nargs=arg_nargs,
+            nargs='*',
             help=arg_help,
         )
         
-        del arg_nargs
         del arg_help
     
     args = parser.parse_args()
