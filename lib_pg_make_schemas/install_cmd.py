@@ -203,17 +203,18 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         host_name,
                         install_sql.guard_acls(schema_name, owner, grant_list),
                     )
-                
-                recv.execute(
-                    host_name,
-                    rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
-                )
             
             for schema_name, owner, grant_list, sql_iter in \
                     install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
                 recv.execute(
                     host_name,
                     install_sql.guard_acls(schema_name, owner, grant_list),
+                )
+            
+            if not args_ctx.reinstall_funcs:
+                recv.execute(
+                    host_name,
+                    rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
                 )
             
             recv.execute(
