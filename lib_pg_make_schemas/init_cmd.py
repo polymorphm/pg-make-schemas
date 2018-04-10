@@ -3,8 +3,8 @@
 import os, os.path
 import contextlib
 from . import descr
-from . import receivers
 from . import revision_sql
+from . import receivers
 from . import pg_role_path
 from . import scr_env
 from . import init_sql

@@ -3,11 +3,11 @@
 import os, os.path
 import contextlib
 from . import descr
-from . import settings
+from . import revision_sql
 from . import comment
 from . import receivers
 from . import install
-from . import revision_sql
+from . import settings
 from . import pg_role_path
 from . import scr_env
 from . import init_sql
