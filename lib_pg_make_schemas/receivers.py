@@ -1,5 +1,6 @@
 # -*- mode: python; coding: utf-8 -*-
 
+import itertools
 import psycopg2
 
 class ReceiversError(Exception):
@@ -14,6 +15,18 @@ class SqlFileUtils:
     @classmethod
     def write_fragment(cls, fd, fragment):
         fd.write(fragment)
+        fd.write('\n\n')
+        fd.flush()
+    
+    @classmethod
+    def write_fragment_ok_notice(cls, fd, frag_cnt):
+        fragment_i = next(frag_cnt)
+        
+        fd.write(
+            'do $do$begin raise notice \'fragment ok: %\', {}; end$do$;'.format(
+                int(fragment_i),
+            ),
+        )
         fd.write('\n\n')
         fd.flush()
     
@@ -33,12 +46,16 @@ class Receivers:
         self._output = output
         self._con_map = {}
         self._fd_map = {}
+        self._frag_cnt_map = {}
     
     def _connect(self, conninfo):
         return psycopg2.connect(conninfo)
     
     def _open(self, output_path):
         return open(output_path, 'w', encoding='utf-8', newline='\n')
+    
+    def _make_counter(self):
+        return itertools.count(1)
     
     def begin(self, hosts_descr):
         if self._execute:
@@ -87,6 +104,7 @@ class Receivers:
                 
                 fd = self._open(output_path)
                 self._fd_map[host_name] = fd
+                self._frag_cnt_map[host_name] = self._make_counter()
             
             for host in hosts_descr.host_list:
                 host_name = host['name']
@@ -104,7 +122,16 @@ class Receivers:
             
             self._sql_file_utils.write_fragment(fd, fragment)
     
+    def write_fragment_ok_notice(self, host_name):
+       if self._output is not None:
+            fd = self._fd_map[host_name]
+            frag_cnt = self._frag_cnt_map[host_name]
+            
+            self._sql_file_utils.write_fragment_ok_notice(fd, frag_cnt)
+    
     def execute(self, host_name, fragment):
+        self.write_fragment(host_name, fragment)
+        
         if self._execute:
             con = self._con_map[host_name]
             
@@ -114,7 +141,7 @@ class Receivers:
             except self.con_error as e:
                 raise ReceiversError('{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
         
-        self.write_fragment(host_name, fragment)
+        self.write_fragment_ok_notice(host_name)
     
     def done(self, hosts_descr):
         if self._execute:
