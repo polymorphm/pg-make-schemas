@@ -1,6 +1,7 @@
 # -*- mode: python; coding: utf-8 -*-
 
 import sys
+import os
 import argparse
 
 class ArgsCtx:
@@ -111,7 +112,8 @@ def main():
             action='store_true',
             help='use ``comment.sh`` shell script for getting revision comment. '
                     'warning(!) before using this option make sure the shell script '
-                    'is from a trusted origin',
+                    'is from a trusted origin. using environment variable '
+                    '``PG_MAKE_SCHEMAS_COMMENT`` implies this option',
         )
         
         sub_parser.add_argument(
@@ -246,9 +248,15 @@ def main():
     if args_ctx.command in ('install', 'upgrade'):
         args_ctx.comment = args.comment
         args_ctx.init = args.init
+        
+        args_ctx.comment_path = os.environ.get('PG_MAKE_SCHEMAS_COMMENT')
+        
+        if args_ctx.comment_path is not None:
+            args_ctx.comment = True
     else:
         args_ctx.comment = False
         args_ctx.init = False
+        args_ctx.comment_path = None
     
     if args_ctx.command == 'upgrade':
         args_ctx.show_rev = args.show_rev

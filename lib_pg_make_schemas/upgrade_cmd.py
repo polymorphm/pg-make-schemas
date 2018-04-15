@@ -52,10 +52,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
     settings_cluster_descr_list = []
     
     if args_ctx.comment:
-        comment_file_path = os.path.realpath(os.path.join(
-            args_ctx.source_code,
-            comment.COMMENT_FILE_NAME,
-        ))
+        if args_ctx.comment_path is not None:
+            comment_file_path = args_ctx.comment_path
+        else:
+            comment_file_path = os.path.realpath(os.path.join(
+                args_ctx.source_code,
+                comment.COMMENT_FILE_NAME,
+            ))
         
         com = comment.comment(comment_file_path)
     else:
