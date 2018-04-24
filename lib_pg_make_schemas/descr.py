@@ -1054,10 +1054,25 @@ class HostsDescr:
         
         host_list = []
         host_name_set = set()
+        shared = None
         
         for host_elem in hosts_elem:
             if not isinstance(host_elem, dict):
                 raise ValueError('not isinstance(host_elem, dict)')
+            
+            shared_elem = host_elem.get('shared')
+            
+            if shared_elem is not None:
+                if shared is not None:
+                    raise ValueError(
+                        '{!r}: non unique shared'.format(
+                            hosts_file_path,
+                        ),
+                    )
+                
+                shared = shared_elem
+                
+                continue
             
             host_name = host_elem['name']
             host_type = host_elem.get('type')
@@ -1096,6 +1111,7 @@ class HostsDescr:
         
         self.hosts_file_path = hosts_file_path
         self.host_list = host_list
+        self.shared = shared
     
     def load_pseudo(self, cluster_descr):
         host_list = []
@@ -1112,3 +1128,4 @@ class HostsDescr:
         
         self.hosts_file_path = '<pseudo-hosts>'
         self.host_list = host_list
+        self.shared = None
