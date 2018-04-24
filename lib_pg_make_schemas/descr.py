@@ -1047,7 +1047,7 @@ class HostsDescr:
         hosts_elem = doc['hosts']
         
         if hosts_elem is None:
-            hosts_elem = {}
+            hosts_elem = []
         
         if not isinstance(hosts_elem, list):
             raise ValueError('not isinstance(hosts_elem, list)')
