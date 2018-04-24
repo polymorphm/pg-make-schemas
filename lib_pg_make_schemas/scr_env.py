@@ -15,8 +15,6 @@ def scr_env(
         ):
     host_type = None
     host_params = None
-    host_list = []
-    host_map = {}
     
     for other_host in hosts_descr.host_list:
         other_host_name = other_host['name']
@@ -26,23 +24,14 @@ def scr_env(
         if other_host_name == host_name:
             host_type = other_host_type
             host_params = other_host_params
-        
-        host_list.append(other_host_name)
-        host_map[other_host_name] = {
-            'type': other_host_type,
-            'params': other_host_params,
-        }
     
     host_name_body = 'select {}::text'.format(pg_quote_func(host_name))
     host_type_body = 'select {}::text'.format(pg_quote_func(host_type))
     host_params_body = 'select {}::json'.format(
         pg_dollar_quote_func('json', json_dumps_func(host_params)),
     )
-    host_list_body = 'select array[{}\n]::text[]'.format(
-        ','.join('\n{}'.format(pg_quote_func(x)) for x in host_list),
-    )
-    host_map_body = 'select {}::json'.format(
-        pg_dollar_quote_func('json', json_dumps_func(host_map)),
+    shared_body = 'select {}::json'.format(
+        pg_dollar_quote_func('json', json_dumps_func(hosts_descr.shared)),
     )
     
     func_list = [
@@ -61,15 +50,10 @@ def scr_env(
                 'as {};'.format(
                     pg_dollar_quote_func('function', host_params_body),
                 ),
-        'create function pg_temp.scr_env_host_list ()\n'
-                'returns text[] language sql stable\n'
-                'as {};'.format(
-                    pg_dollar_quote_func('function', host_list_body),
-                ),
-        'create function pg_temp.scr_env_host_map ()\n'
+        'create function pg_temp.scr_env_shared ()\n'
                 'returns json language sql stable\n'
                 'as {};'.format(
-                    pg_dollar_quote_func('function', host_map_body),
+                    pg_dollar_quote_func('function', shared_body),
                 ),
     ]
     
@@ -80,8 +64,7 @@ def clean_scr_env():
         'drop function pg_temp.scr_env_host_name ();',
         'drop function pg_temp.scr_env_host_type ();',
         'drop function pg_temp.scr_env_host_params ();',
-        'drop function pg_temp.scr_env_host_list ();',
-        'drop function pg_temp.scr_env_host_map ();',
+        'drop function pg_temp.scr_env_shared ();',
     ]
     
-    return '\n\n'.join(func_list)
+    return '\n'.join(func_list)
