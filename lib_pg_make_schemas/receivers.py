@@ -57,60 +57,55 @@ class Receivers:
     def _make_counter(self):
         return itertools.count(1)
     
-    def begin(self, hosts_descr):
+    def begin_host(self, hosts_descr, host):
+        host_name = host['name']
+        host_type = host['type']
+        conninfo = host['conninfo']
+        
         if self._execute:
-            for host in hosts_descr.host_list:
-                host_name = host['name']
-                conninfo = host['conninfo']
-                
-                if host_name in self._con_map:
-                    raise ValueError(
-                        '{!r}, {!r}: non unique host_name'.format(
-                            host_name,
-                            hosts_descr.hosts_file_path,
-                        ),
-                    )
-                
-                if conninfo is None:
-                    raise ValueError(
-                        '{!r}, {!r}: unable to connect to host without its conninfo'.format(
-                            host_name,
-                            hosts_descr.hosts_file_path,
-                        ),
-                    )
-                
-                con = self._connect(conninfo)
-                self._con_map[host_name] = con
+            if host_name in self._con_map:
+                raise ValueError(
+                    '{!r}, {!r}: non unique host_name'.format(
+                        host_name,
+                        hosts_descr.hosts_file_path,
+                    ),
+                )
+            
+            if conninfo is None:
+                raise ValueError(
+                    '{!r}, {!r}: unable to connect to host without its conninfo'.format(
+                        host_name,
+                        hosts_descr.hosts_file_path,
+                    ),
+                )
+            
+            con = self._connect(conninfo)
+            self._con_map[host_name] = con
         
         if self._output is not None:
-            for host in hosts_descr.host_list:
-                host_name = host['name']
-                host_type = host['type']
-                conninfo = host['conninfo']
-                
-                if host_name in self._fd_map:
-                    raise ValueError(
-                        '{!r}, {!r}: non unique host_name'.format(
-                            host_name,
-                            hosts_descr.hosts_file_path,
-                        ),
-                    )
-                
-                output_path = '{}.{}.{}.sql'.format(
-                    self._output,
-                    host_name.replace('/', '-').replace('.', '-'),
-                    host_type.replace('/', '-').replace('.', '-'),
+            if host_name in self._fd_map:
+                raise ValueError(
+                    '{!r}, {!r}: non unique host_name'.format(
+                        host_name,
+                        hosts_descr.hosts_file_path,
+                    ),
                 )
-                
-                fd = self._open(output_path)
-                self._fd_map[host_name] = fd
-                self._frag_cnt_map[host_name] = self._make_counter()
             
-            for host in hosts_descr.host_list:
-                host_name = host['name']
-                fd = self._fd_map[host_name]
-                
-                self._sql_file_utils.write_header(fd)
+            output_path = '{}.{}.{}.sql'.format(
+                self._output,
+                host_name.replace('/', '-').replace('.', '-'),
+                host_type.replace('/', '-').replace('.', '-'),
+            )
+            
+            fd = self._open(output_path)
+            self._fd_map[host_name] = fd
+            self._frag_cnt_map[host_name] = self._make_counter()
+            
+            self._sql_file_utils.write_header(fd)
+    
+    def begin(self, hosts_descr):
+        for host in hosts_descr.host_list:
+            self.begin_host(hosts_descr, host)
     
     def get_con(self, host_name):
         if self._execute:
@@ -143,38 +138,34 @@ class Receivers:
         
         self.write_fragment_ok_notice(host_name)
     
-    def done(self, hosts_descr):
+    def done_host(self, hosts_descr, host):
+        host_name = host['name']
+        
         if self._execute:
-            for host in hosts_descr.host_list:
-                host_name = host['name']
-                con = self._con_map[host_name]
-                
-                if self._pretend:
-                    con.rollback()
-                else:
-                    con.commit()
+            con = self._con_map[host_name]
+            
+            if self._pretend:
+                con.rollback()
+            else:
+                con.commit()
         
         if self._output is not None:
-            for host in hosts_descr.host_list:
-                host_name = host['name']
-                fd = self._fd_map[host_name]
-                
-                self._sql_file_utils.write_footer(fd)
+            fd = self._fd_map[host_name]
             
-            for host in reversed(hosts_descr.host_list):
-                host_name = host['name']
-                fd = self._fd_map[host_name]
-                
-                fd.close()
-                del self._fd_map[host_name]
+            self._sql_file_utils.write_footer(fd)
+            
+            fd.close()
+            del self._fd_map[host_name]
         
         if self._execute:
-            for host in reversed(hosts_descr.host_list):
-                host_name = host['name']
-                con = self._con_map[host_name]
-                
-                con.close()
-                del self._con_map[host_name]
+            con = self._con_map[host_name]
+            
+            con.close()
+            del self._con_map[host_name]
+    
+    def done(self, hosts_descr):
+        for host in hosts_descr.host_list:
+            self.done_host(hosts_descr, host)
     
     def close(self):
         for host_name, fd in reversed(list(self._fd_map.items())):

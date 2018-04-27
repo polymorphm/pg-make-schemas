@@ -43,18 +43,15 @@ def init_cmd(args_ctx, print_func, err_print_func):
                     args_ctx.output,
                 ),
             ) as recv:
-        recv.begin(hosts_descr)
-        
         for host in hosts_descr.host_list:
             host_name = host['name']
+            host_type = host['type']
+            
+            recv.begin_host(hosts_descr, host)
             
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
             recv.execute(host_name, rev_sql.ensure_revision_structs())
-        
-        for host in hosts_descr.host_list:
-            host_name = host['name']
-            host_type = host['type']
             
             for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
                 recv.execute(
@@ -63,11 +60,8 @@ def init_cmd(args_ctx, print_func, err_print_func):
                         sql.rstrip(),
                     ),
                 )
-        
-        for host in hosts_descr.host_list:
-            host_name = host['name']
             
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.clean_scr_env())
-        
-        recv.done(hosts_descr)
+            
+            recv.done_host(hosts_descr, host)

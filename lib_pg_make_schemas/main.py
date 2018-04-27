@@ -119,7 +119,10 @@ def main():
         sub_parser.add_argument(
             '--init',
             action='store_true',
-            help='do some basic initialization. see ``init`` command',
+            help='do some basic initialization. see ``init`` command. '
+                    'pay attention that ``--init`` option might work worse than '
+                    'standalone ``init`` command works due to different '
+                    'transaction management',
         )
     
     install_parser.add_argument(
