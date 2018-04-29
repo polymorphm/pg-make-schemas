@@ -39,6 +39,8 @@ def init_cmd(args_ctx, print_func, err_print_func):
     
     verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
     
+    verb.source_code_revision(source_code_cluster_descr.revision, None)
+    
     with contextlib.closing(
                 receivers.Receivers(
                     args_ctx.execute,
