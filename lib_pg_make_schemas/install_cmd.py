@@ -230,4 +230,4 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             recv.execute(host_name, scr_env.clean_scr_env())
         
-        recv.done(hosts_descr)
+        recv.finish(hosts_descr)

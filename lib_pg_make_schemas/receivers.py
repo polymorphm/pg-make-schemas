@@ -138,7 +138,7 @@ class Receivers:
         
         self.write_fragment_ok_notice(host_name)
     
-    def done_host(self, hosts_descr, host):
+    def finish_host(self, hosts_descr, host):
         host_name = host['name']
         
         if self._execute:
@@ -163,9 +163,9 @@ class Receivers:
             con.close()
             del self._con_map[host_name]
     
-    def done(self, hosts_descr):
+    def finish(self, hosts_descr):
         for host in hosts_descr.host_list:
-            self.done_host(hosts_descr, host)
+            self.finish_host(hosts_descr, host)
     
     def close(self):
         for host_name, fd in reversed(list(self._fd_map.items())):

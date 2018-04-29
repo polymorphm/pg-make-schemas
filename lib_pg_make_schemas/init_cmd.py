@@ -64,4 +64,4 @@ def init_cmd(args_ctx, print_func, err_print_func):
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.clean_scr_env())
             
-            recv.done_host(hosts_descr, host)
+            recv.finish_host(hosts_descr, host)
