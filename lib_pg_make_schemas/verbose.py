@@ -10,7 +10,7 @@ class NonVerbose:
     def prepare_upgrade(self):
         pass
     
-    def source_code_revision(self, revision, comment):
+    def source_code_revision(self, application, revision, comment):
         pass
     
     def begin_host(self, host_name):
@@ -39,9 +39,10 @@ class Verbose:
     def prepare_upgrade(self):
         self._print_func('preparing for upgrading...')
     
-    def source_code_revision(self, revision, comment):
+    def source_code_revision(self, application, revision, comment):
         self._print_func(
-            'source code has revision {!r}{}'.format(
+            'application {!r}: source code has revision {!r}{}'.format(
+                application,
                 revision,
                 ' comment {!r}'.format(comment)
                         if comment is not None else '',

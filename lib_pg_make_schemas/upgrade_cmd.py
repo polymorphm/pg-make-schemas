@@ -96,7 +96,11 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
     func_com_map = {}
     migr_list_map = {}
     
-    verb.source_code_revision(source_code_cluster_descr.revision, com)
+    verb.source_code_revision(
+        source_code_cluster_descr.application,
+        source_code_cluster_descr.revision,
+        com,
+    )
     
     with contextlib.closing(
                 receivers.Receivers(
