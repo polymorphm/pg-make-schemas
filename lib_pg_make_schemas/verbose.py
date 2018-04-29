@@ -16,7 +16,10 @@ class NonVerbose:
     def begin_host(self, host_name):
         pass
     
-    def scr_env_rev_structs(self, host_name):
+    def scr_env(self, host_name):
+        pass
+    
+    def ensure_revision_structs(self, host_name):
         pass
     
     def guard_var_revision(self, host_name, revision):
@@ -76,13 +79,11 @@ class Verbose:
     def begin_host(self, host_name):
         self._print_func('{!r}: beginning...'.format(host_name))
     
-    def scr_env_rev_structs(self, host_name):
-        self._print_func(
-            '{!r}: making script environment and '
-                    'ensuring revision structures...'.format(
-                host_name
-            ),
-        )
+    def scr_env(self, host_name):
+        self._print_func('{!r}: making script environment...'.format(host_name))
+    
+    def ensure_revision_structs(self, host_name):
+        self._print_func('{!r}: ensuring revision structures...'.format(host_name))
     
     def guard_var_revision(self, host_name, revision):
         self._print_func(

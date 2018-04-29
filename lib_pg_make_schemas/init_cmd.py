@@ -62,10 +62,14 @@ def init_cmd(args_ctx, print_func, err_print_func):
             
             recv.begin_host(hosts_descr, host)
             
-            verb.scr_env_rev_structs(host_name)
-            
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+            
+            verb.scr_env(host_name)
+            
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
+            
+            verb.ensure_revision_structs(host_name)
+            
             recv.execute(host_name, rev_sql.ensure_revision_structs())
             
             for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
@@ -76,9 +80,10 @@ def init_cmd(args_ctx, print_func, err_print_func):
                     ),
                 )
             
+            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+            
             verb.clean_scr_env(host_name)
             
-            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.clean_scr_env())
             
             verb.finish_host(host_name)
