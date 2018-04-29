@@ -2,15 +2,19 @@
 
 import os, os.path
 import contextlib
+from . import verbose
 from . import descr
 from . import revision_sql
-from . import verbose
 from . import receivers
 from . import pg_role_path
 from . import scr_env
 from . import init_sql
 
 def init_cmd(args_ctx, print_func, err_print_func):
+    verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
+    
+    verb.prepare_init()
+    
     hosts_descr = descr.HostsDescr()
     
     if args_ctx.hosts is not None:
@@ -36,8 +40,6 @@ def init_cmd(args_ctx, print_func, err_print_func):
         hosts_descr.load_pseudo(source_code_cluster_descr)
     
     rev_sql = revision_sql.RevisionSql(source_code_cluster_descr.application)
-    
-    verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
     
     verb.source_code_revision(source_code_cluster_descr.revision, None)
     

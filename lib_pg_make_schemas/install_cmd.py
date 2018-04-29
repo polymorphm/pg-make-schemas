@@ -2,10 +2,10 @@
 
 import os, os.path
 import contextlib
+from . import verbose
 from . import descr
 from . import revision_sql
 from . import comment
-from . import verbose
 from . import receivers
 from . import install
 from . import settings
@@ -17,6 +17,10 @@ from . import settings_sql
 from . import safeguard_sql
 
 def install_cmd(args_ctx, print_func, err_print_func):
+    verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
+    
+    verb.prepare_install()
+    
     hosts_descr = descr.HostsDescr()
     
     if args_ctx.hosts is not None:
@@ -78,8 +82,6 @@ def install_cmd(args_ctx, print_func, err_print_func):
         )
         
         settings_cluster_descr_list.append(settings_cluster_descr)
-    
-    verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
     
     verb.source_code_revision(source_code_cluster_descr.revision, com)
     

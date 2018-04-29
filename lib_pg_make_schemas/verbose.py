@@ -1,6 +1,15 @@
 # -*- mode: python; coding: utf-8 -*-
 
 class NonVerbose:
+    def prepare_init(self):
+        pass
+    
+    def prepare_install(self):
+        pass
+    
+    def prepare_upgrade(self):
+        pass
+    
     def source_code_revision(self, revision, comment):
         pass
     
@@ -14,6 +23,15 @@ class Verbose:
     def __init__(self, print_func, err_print_func):
         self._print_func = print_func
         self._err_print_func = err_print_func
+    
+    def prepare_init(self):
+        self._print_func('preparing for initialization...')
+    
+    def prepare_install(self):
+        self._print_func('preparing for installing...')
+    
+    def prepare_upgrade(self):
+        self._print_func('preparing for upgrading...')
     
     def source_code_revision(self, revision, comment):
         self._print_func(
