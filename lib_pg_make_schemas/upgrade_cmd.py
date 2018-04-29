@@ -288,6 +288,9 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     for schema_name, owner, grant_list, sql_iter in \
                             install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
                         recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+                        
+                        verb.create_schema(host_name, schema_name)
+                        
                         recv.execute(
                             host_name, 
                             install_sql.create_schema(schema_name, owner, grant_list),
@@ -324,6 +327,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
+                    verb.guard_acls(host_name, schema_name)
+                    
                     recv.execute(
                         host_name,
                         install_sql.guard_acls(schema_name, owner, grant_list),
@@ -331,6 +336,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
+                    verb.guard_acls(host_name, schema_name)
+                    
                     recv.execute(
                         host_name,
                         install_sql.guard_acls(schema_name, owner, grant_list),

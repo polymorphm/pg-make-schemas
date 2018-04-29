@@ -46,6 +46,12 @@ class NonVerbose:
     def drop_func_schemas(self, host_name):
         pass
     
+    def create_schema(self, host_name, schema_name):
+        pass
+    
+    def guard_acls(self, host_name, schema_name):
+        pass
+    
     def clean_scr_env(self, host_name):
         pass
     
@@ -132,6 +138,22 @@ class Verbose:
     
     def drop_func_schemas(self, host_name):
         self._print_func('{!r}: dropping func schemas...'.format(host_name))
+    
+    def create_schema(self, host_name, schema_name):
+        self._print_func(
+            '{!r}: creating schema {!r}...'.format(
+                host_name,
+                schema_name,
+            ),
+        )
+    
+    def guard_acls(self, host_name, schema_name):
+        self._print_func(
+            '{!r}: guarding acls for schema {!r}...'.format(
+                host_name,
+                schema_name,
+            ),
+        )
     
     def clean_scr_env(self, host_name):
         self._print_func('{!r}: cleaning script environment...'.format(host_name))
