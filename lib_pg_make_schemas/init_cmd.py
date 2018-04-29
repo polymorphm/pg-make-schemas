@@ -72,7 +72,12 @@ def init_cmd(args_ctx, print_func, err_print_func):
             
             recv.execute(host_name, rev_sql.ensure_revision_structs())
             
-            for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
+            for i, sql in enumerate(
+                        init_sql.read_init_sql(source_code_cluster_descr, host_type),
+                    ):
+                if not i:
+                    verb.execute_sql(host_name, 'init_sql')
+                
                 recv.execute(
                     host_name, '{}\n\n{}\n\n;'.format(
                         pg_role_path.pg_role_path('postgres', None),

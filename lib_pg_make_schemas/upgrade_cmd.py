@@ -200,7 +200,12 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                         host_name = host['name']
                         host_type = host['type']
                         
-                        for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
+                        for i, sql in enumerate(
+                                    init_sql.read_init_sql(source_code_cluster_descr, host_type),
+                                ):
+                            if not i:
+                                verb.execute_sql(host_name, 'init_sql')
+                            
                             recv.execute(
                                 host_name, '{}\n\n{}\n\n;'.format(
                                     pg_role_path.pg_role_path('postgres', None),
@@ -217,11 +222,16 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     
                     if interm_migr_list:
                         for interm_migr in interm_migr_list:
-                            for sql in upgrade_sql.read_upgrade_sql(
-                                        source_code_cluster_descr,
-                                        host_type,
-                                        interm_migr,
+                            for i, sql in enumerate(
+                                        upgrade_sql.read_upgrade_sql(
+                                            source_code_cluster_descr,
+                                            host_type,
+                                            interm_migr,
+                                        ),
                                     ):
+                                if not i:
+                                    verb.execute_sql(host_name, 'upgrade_sql')
+                                
                                 recv.execute(
                                     host_name, '{}\n\n{}\n\n;'.format(
                                         pg_role_path.pg_role_path('postgres', None),
@@ -230,11 +240,16 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 )
                             
                             for settings_cluster_descr in settings_cluster_descr_list:
-                                for sql in upgrade_sql.read_upgrade_sql(
-                                            settings_cluster_descr,
-                                            host_type,
-                                            interm_migr,
+                                for i, sql in enumerate(
+                                            upgrade_sql.read_upgrade_sql(
+                                                settings_cluster_descr,
+                                                host_type,
+                                                interm_migr,
+                                            ),
                                         ):
+                                    if not i:
+                                        verb.execute_sql(host_name, 'settings_upgrade_sql')
+                                    
                                     recv.execute(
                                         host_name, '{}\n\n{}\n\n;'.format(
                                             pg_role_path.pg_role_path('postgres', None),
@@ -256,11 +271,16 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     if final_migr_list:
                         final_migr = final_migr_list[0]
                         
-                        for sql in upgrade_sql.read_upgrade_sql(
-                                    source_code_cluster_descr,
-                                    host_type,
-                                    final_migr,
+                        for i, sql in enumerate(
+                                    upgrade_sql.read_upgrade_sql(
+                                        source_code_cluster_descr,
+                                        host_type,
+                                        final_migr,
+                                    ),
                                 ):
+                            if not i:
+                                verb.execute_sql(host_name, 'upgrade_sql')
+                            
                             recv.execute(
                                 host_name, '{}\n\n{}\n\n;'.format(
                                     pg_role_path.pg_role_path('postgres', None),
@@ -269,11 +289,16 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             )
                         
                         for settings_cluster_descr in settings_cluster_descr_list:
-                            for sql in upgrade_sql.read_upgrade_sql(
-                                        settings_cluster_descr,
-                                        host_type,
-                                        final_migr,
+                            for i, sql in enumerate(
+                                        upgrade_sql.read_upgrade_sql(
+                                            settings_cluster_descr,
+                                            host_type,
+                                            final_migr,
+                                        ),
                                     ):
+                                if not i:
+                                    verb.execute_sql(host_name, 'settings_upgrade_sql')
+                                
                                 recv.execute(
                                     host_name, '{}\n\n{}\n\n;'.format(
                                         pg_role_path.pg_role_path('postgres', None),
@@ -296,7 +321,10 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             install_sql.create_schema(schema_name, owner, grant_list),
                         )
                         
-                        for sql in sql_iter:
+                        for i, sql in enumerate(sql_iter):
+                            if not i:
+                                verb.execute_sql(host_name, 'func_install_sql')
+                            
                             recv.execute(
                                 host_name, '{}\n\n{}\n\n;'.format(
                                     pg_role_path.pg_role_path(owner, schema_name),
@@ -308,7 +336,12 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 host_name = host['name']
                 host_type = host['type']
                 
-                for sql in safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type):
+                for i, sql in enumerate(
+                            safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type),
+                        ):
+                    if not i:
+                        verb.execute_sql(host_name, 'safeguard_sql')
+                    
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
                             pg_role_path.pg_role_path('postgres', None),

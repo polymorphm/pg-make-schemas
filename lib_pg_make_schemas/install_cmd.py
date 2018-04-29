@@ -148,7 +148,12 @@ def install_cmd(args_ctx, print_func, err_print_func):
                 host_name = host['name']
                 host_type = host['type']
                 
-                for sql in init_sql.read_init_sql(source_code_cluster_descr, host_type):
+                for i, sql in enumerate(
+                            init_sql.read_init_sql(source_code_cluster_descr, host_type),
+                        ):
+                    if not i:
+                        verb.execute_sql(host_name, 'init_sql')
+                    
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
                             pg_role_path.pg_role_path('postgres', None),
@@ -172,7 +177,10 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         install_sql.create_schema(schema_name, owner, grant_list),
                     )
                     
-                    for sql in sql_iter:
+                    for i, sql in enumerate(sql_iter):
+                        if not i:
+                            verb.execute_sql(host_name, 'var_install_sql')
+                        
                         recv.execute(
                             host_name, '{}\n\n{}\n\n;'.format(
                                 pg_role_path.pg_role_path(owner, schema_name),
@@ -185,7 +193,12 @@ def install_cmd(args_ctx, print_func, err_print_func):
                 host_name = host['name']
                 host_type = host['type']
                 
-                for sql in settings_sql.read_settings_sql(settings_cluster_descr, host_type):
+                for i, sql in enumerate(
+                            settings_sql.read_settings_sql(settings_cluster_descr, host_type),
+                        ):
+                    if not i:
+                        verb.execute_sql(host_name, 'settings_sql')
+                    
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
                             pg_role_path.pg_role_path('postgres', None),
@@ -208,7 +221,10 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     install_sql.create_schema(schema_name, owner, grant_list),
                 )
                 
-                for sql in sql_iter:
+                for i, sql in enumerate(sql_iter):
+                    if not i:
+                        verb.execute_sql(host_name, 'func_install_sql')
+                    
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
                             pg_role_path.pg_role_path(owner, schema_name),
@@ -220,7 +236,12 @@ def install_cmd(args_ctx, print_func, err_print_func):
             host_name = host['name']
             host_type = host['type']
             
-            for sql in safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type):
+            for i, sql in enumerate(
+                        safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type),
+                    ):
+                if not i:
+                    verb.execute_sql(host_name, 'safeguard_sql')
+                
                 recv.execute(
                     host_name, '{}\n\n{}\n\n;'.format(
                         pg_role_path.pg_role_path('postgres', None),

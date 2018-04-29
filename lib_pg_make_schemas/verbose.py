@@ -52,6 +52,9 @@ class NonVerbose:
     def guard_acls(self, host_name, schema_name):
         pass
     
+    def execute_sql(self, host_name, script_type):
+        pass
+    
     def clean_scr_env(self, host_name):
         pass
     
@@ -152,6 +155,24 @@ class Verbose:
             '{!r}: guarding acls for schema {!r}...'.format(
                 host_name,
                 schema_name,
+            ),
+        )
+    
+    def execute_sql(self, host_name, script_type):
+        script_title_map = {
+            'init_sql': 'initialization',
+            'var_install_sql': 'var installing',
+            'func_install_sql': 'func installing',
+            'upgrade_sql': 'upgrading',
+            'settings_sql': 'settings installing',
+            'settings_upgrade_sql': 'settings upgrading',
+            'safeguard_sql': 'safeguard',
+        }
+        
+        self._print_func(
+            '{!r}: executing {} scripts...'.format(
+                host_name,
+                script_title_map[script_type],
             ),
         )
     
