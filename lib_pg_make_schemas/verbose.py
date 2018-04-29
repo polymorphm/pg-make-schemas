@@ -19,6 +19,30 @@ class NonVerbose:
     def scr_env_rev_structs(self, host_name):
         pass
     
+    def guard_var_revision(self, host_name, revision):
+        pass
+    
+    def guard_func_revision(self, host_name, revision):
+        pass
+    
+    def arch_var_revision(self, host_name):
+        pass
+    
+    def arch_func_revision(self, host_name):
+        pass
+    
+    def push_var_revision(self, host_name, revision, comment):
+        pass
+    
+    def push_func_revision(self, host_name, revision, comment):
+        pass
+    
+    def drop_var_schemas(self, host_name):
+        pass
+    
+    def drop_func_schemas(self, host_name):
+        pass
+    
     def clean_scr_env(self, host_name):
         pass
     
@@ -53,7 +77,60 @@ class Verbose:
         self._print_func('{!r}: beginning...'.format(host_name))
     
     def scr_env_rev_structs(self, host_name):
-        self._print_func('{!r}: making script environment and ensuring revision structures...'.format(host_name))
+        self._print_func(
+            '{!r}: making script environment and '
+                    'ensuring revision structures...'.format(
+                host_name
+            ),
+        )
+    
+    def guard_var_revision(self, host_name, revision):
+        self._print_func(
+            '{!r}: guarding var revision {!r}...'.format(
+                host_name,
+                revision,
+            ),
+        )
+    
+    def guard_func_revision(self, host_name, revision):
+        self._print_func(
+            '{!r}: guarding func revision {!r}...'.format(
+                host_name,
+                revision,
+            ),
+        )
+    
+    def arch_var_revision(self, host_name):
+        self._print_func('{!r}: archiving var revision...'.format(host_name))
+    
+    def arch_func_revision(self, host_name):
+        self._print_func('{!r}: archiving func revision...'.format(host_name))
+    
+    def push_var_revision(self, host_name, revision, comment):
+        self._print_func(
+            '{!r}: pushing var revision {!r}{}...'.format(
+                host_name,
+                revision,
+                ' comment {!r}'.format(comment)
+                        if comment is not None else '',
+            ),
+        )
+    
+    def push_func_revision(self, host_name, revision, comment):
+        self._print_func(
+            '{!r}: pushing func revision {!r}{}...'.format(
+                host_name,
+                revision,
+                ' comment {!r}'.format(comment)
+                        if comment is not None else '',
+            ),
+        )
+    
+    def drop_var_schemas(self, host_name):
+        self._print_func('{!r}: dropping var schemas...'.format(host_name))
+    
+    def drop_func_schemas(self, host_name):
+        self._print_func('{!r}: dropping func schemas...'.format(host_name))
     
     def clean_scr_env(self, host_name):
         self._print_func('{!r}: cleaning script environment...'.format(host_name))

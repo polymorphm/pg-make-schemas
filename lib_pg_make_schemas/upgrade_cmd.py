@@ -153,13 +153,22 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 print_func,
             )
             
+            verb.guard_var_revision(host_name, host_var_rev)
+            
             recv.execute(host_name, rev_sql.guard_var_revision(host_var_rev))
             
             if not args_ctx.show_rev:
+                verb.arch_var_revision(host_name)
+                
                 recv.execute(host_name, rev_sql.arch_var_revision())
+                
+                verb.arch_func_revision(host_name)
+                
                 recv.execute(host_name, rev_sql.arch_func_revision())
                 
                 if not args_ctx.change_rev:
+                    verb.drop_func_schemas(host_name)
+                    
                     recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
             
             var_rev_map[host_name] = host_var_rev
@@ -229,10 +238,15 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                         ),
                                     )
                             
+                            verb.push_var_revision(host_name, interm_migr[0], None)
+                            
                             recv.execute(
                                 host_name,
                                 rev_sql.push_var_revision(interm_migr[0], None, None),
                             )
+                            
+                            verb.arch_var_revision(host_name)
+                            
                             recv.execute(host_name, rev_sql.arch_var_revision())
                     
                     if final_migr_list:
@@ -318,10 +332,15 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                         install_sql.guard_acls(schema_name, owner, grant_list),
                     )
                 
+                verb.push_var_revision(host_name, source_code_cluster_descr.revision, com)
+                
                 recv.execute(
                     host_name,
                     rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
                 )
+                
+                verb.push_func_revision(host_name, source_code_cluster_descr.revision, com)
+                
                 recv.execute(
                     host_name,
                     rev_sql.push_func_revision(source_code_cluster_descr.revision, com, func_schemas),

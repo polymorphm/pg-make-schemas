@@ -113,17 +113,29 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             if args_ctx.reinstall:
                 if not args_ctx.reinstall_func:
+                    verb.arch_var_revision(host_name)
+                    
                     recv.execute(host_name, rev_sql.arch_var_revision())
+                
+                verb.arch_func_revision(host_name)
                 
                 recv.execute(host_name, rev_sql.arch_func_revision())
                 
                 if not args_ctx.reinstall_func:
+                    verb.drop_var_schemas(host_name)
+                    
                     recv.execute(host_name, rev_sql.drop_var_schemas(var_schemas))
+                
+                verb.drop_func_schemas(host_name)
                 
                 recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
             
             if not args_ctx.reinstall_func:
+                verb.guard_var_revision(host_name, None)
+                
                 recv.execute(host_name, rev_sql.guard_var_revision(None))
+            
+            verb.guard_func_revision(host_name, None)
             
             recv.execute(host_name, rev_sql.guard_func_revision(None))
         
@@ -231,10 +243,14 @@ def install_cmd(args_ctx, print_func, err_print_func):
                 )
             
             if not args_ctx.reinstall_func:
+                verb.push_var_revision(host_name, source_code_cluster_descr.revision, com)
+                
                 recv.execute(
                     host_name,
                     rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
                 )
+            
+            verb.push_func_revision(host_name, source_code_cluster_descr.revision, com)
             
             recv.execute(
                 host_name,
