@@ -100,14 +100,14 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             if args_ctx.reinstall:
                 if not args_ctx.reinstall_func:
-                    recv.execute(host_name, rev_sql.arch_var_revision())
-                
-                recv.execute(host_name, rev_sql.arch_func_revision())
-                
-                if not args_ctx.reinstall_func:
                     recv.execute(host_name, rev_sql.drop_var_schemas(var_schemas))
                 
                 recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
+                
+                if not args_ctx.reinstall_func:
+                    recv.execute(host_name, rev_sql.arch_var_revision())
+                
+                recv.execute(host_name, rev_sql.arch_func_revision())
             
             if not args_ctx.reinstall_func:
                 recv.execute(host_name, rev_sql.guard_var_revision(None))

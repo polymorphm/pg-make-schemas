@@ -143,11 +143,11 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             recv.execute(host_name, rev_sql.guard_var_revision(host_var_rev))
             
             if not args_ctx.show_rev:
-                recv.execute(host_name, rev_sql.arch_var_revision())
-                recv.execute(host_name, rev_sql.arch_func_revision())
-                
                 if not args_ctx.change_rev:
                     recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
+                
+                recv.execute(host_name, rev_sql.arch_var_revision())
+                recv.execute(host_name, rev_sql.arch_func_revision())
             
             var_rev_map[host_name] = host_var_rev
             var_com_map[host_name] = host_var_com
