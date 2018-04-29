@@ -55,7 +55,10 @@ def init_cmd(args_ctx, print_func, err_print_func):
             host_type = host['type']
             
             verb.begin_host(host_name)
+            
             recv.begin_host(hosts_descr, host)
+            
+            verb.scr_env_rev_structs(host_name)
             
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
@@ -69,8 +72,11 @@ def init_cmd(args_ctx, print_func, err_print_func):
                     ),
                 )
             
+            verb.clean_scr_env(host_name)
+            
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.clean_scr_env())
             
             verb.finish_host(host_name)
+            
             recv.finish_host(hosts_descr, host)

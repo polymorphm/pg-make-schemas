@@ -113,6 +113,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             
             func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
             
+            verb.scr_env_rev_structs(host_name)
+            
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
             recv.execute(host_name, rev_sql.ensure_revision_structs())
@@ -320,6 +322,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     host_name,
                     rev_sql.push_func_revision(source_code_cluster_descr.revision, com, func_schemas),
                 )
+                
+                verb.clean_scr_env(host_name)
                 
                 recv.execute(host_name, scr_env.clean_scr_env())
         

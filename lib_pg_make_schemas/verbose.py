@@ -16,6 +16,12 @@ class NonVerbose:
     def begin_host(self, host_name):
         pass
     
+    def scr_env_rev_structs(self, host_name):
+        pass
+    
+    def clean_scr_env(self, host_name):
+        pass
+    
     def finish_host(self, host_name):
         pass
 
@@ -44,6 +50,12 @@ class Verbose:
     
     def begin_host(self, host_name):
         self._print_func('{!r}: beginning...'.format(host_name))
+    
+    def scr_env_rev_structs(self, host_name):
+        self._print_func('{!r}: making script environment and ensuring revision structures...'.format(host_name))
+    
+    def clean_scr_env(self, host_name):
+        self._print_func('{!r}: cleaning script environment...'.format(host_name))
     
     def finish_host(self, host_name):
         self._print_func('{!r}: finishing...'.format(host_name))
