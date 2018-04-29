@@ -71,6 +71,13 @@ def main():
     
     for sub_parser in (init_parser, install_parser, upgrade_parser):
         sub_parser.add_argument(
+            '-v',
+            '--verbose',
+            action='store_true',
+            help='be verbose. there will be every operation shown',
+        )
+        
+        sub_parser.add_argument(
             '-e',
             '--execute',
             action='store_true',
@@ -215,6 +222,7 @@ def main():
     args_ctx.command = args.command
     
     if args_ctx.command in ('init', 'install', 'upgrade'):
+        args_ctx.verbose = args.verbose
         args_ctx.execute = args.execute
         args_ctx.pretend = args.pretend
         args_ctx.output = args.output
@@ -226,6 +234,7 @@ def main():
         if args_ctx.hosts == '-':
             args_ctx.hosts = None
     else:
+        args_ctx.verbose = False
         args_ctx.execute = False
         args_ctx.pretend = False
         args_ctx.output = None

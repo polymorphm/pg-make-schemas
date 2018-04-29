@@ -4,6 +4,7 @@ import os, os.path
 import contextlib
 from . import descr
 from . import revision_sql
+from . import verbose
 from . import receivers
 from . import pg_role_path
 from . import scr_env
@@ -36,6 +37,8 @@ def init_cmd(args_ctx, print_func, err_print_func):
     
     rev_sql = revision_sql.RevisionSql(source_code_cluster_descr.application)
     
+    verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
+    
     with contextlib.closing(
                 receivers.Receivers(
                     args_ctx.execute,
@@ -47,6 +50,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
             host_name = host['name']
             host_type = host['type']
             
+            verb.begin_host(host_name)
             recv.begin_host(hosts_descr, host)
             
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
@@ -64,4 +68,5 @@ def init_cmd(args_ctx, print_func, err_print_func):
             recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
             recv.execute(host_name, scr_env.clean_scr_env())
             
+            verb.finish_host(host_name)
             recv.finish_host(hosts_descr, host)

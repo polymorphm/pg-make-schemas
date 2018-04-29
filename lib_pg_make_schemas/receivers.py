@@ -103,8 +103,13 @@ class Receivers:
             
             self._sql_file_utils.write_header(fd)
     
-    def begin(self, hosts_descr):
+    def begin(self, hosts_descr, begin_host_verb_func=None):
         for host in hosts_descr.host_list:
+            if begin_host_verb_func is not None:
+                host_name = host['name']
+                
+                begin_host_verb_func(host_name)
+            
             self.begin_host(hosts_descr, host)
     
     def get_con(self, host_name):
@@ -163,8 +168,13 @@ class Receivers:
             con.close()
             del self._con_map[host_name]
     
-    def finish(self, hosts_descr):
+    def finish(self, hosts_descr, finish_host_verb_func=None):
         for host in hosts_descr.host_list:
+            if finish_host_verb_func is not None:
+                host_name = host['name']
+                
+                finish_host_verb_func(host_name)
+            
             self.finish_host(hosts_descr, host)
     
     def close(self):

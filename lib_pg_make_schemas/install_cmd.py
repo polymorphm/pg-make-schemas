@@ -5,6 +5,7 @@ import contextlib
 from . import descr
 from . import revision_sql
 from . import comment
+from . import verbose
 from . import receivers
 from . import install
 from . import settings
@@ -78,6 +79,8 @@ def install_cmd(args_ctx, print_func, err_print_func):
         
         settings_cluster_descr_list.append(settings_cluster_descr)
     
+    verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
+    
     with contextlib.closing(
                 receivers.Receivers(
                     args_ctx.execute,
@@ -85,7 +88,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     args_ctx.output,
                 ),
             ) as recv:
-        recv.begin(hosts_descr)
+        recv.begin(hosts_descr, begin_host_verb_func=verb.begin_host)
         
         for host in hosts_descr.host_list:
             host_name = host['name']
@@ -230,4 +233,4 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             recv.execute(host_name, scr_env.clean_scr_env())
         
-        recv.finish(hosts_descr)
+        recv.finish(hosts_descr, finish_host_verb_func=verb.finish_host)
