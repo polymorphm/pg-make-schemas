@@ -11,6 +11,11 @@ _grantee text;
 _privilege_type text;
 _is_grantable boolean;
 begin
+perform 1 from pg_namespace ns
+where ns.nspname = {q_schema} and ns.nspacl is null;
+if found then
+execute format ($revoke$revoke all on schema %I from public$revoke$, {q_schema});
+end if;
 for _grantor, _grantee, _privilege_type, _is_grantable in
 select case when acl.grantor = 0 then 'public'
 else (select r.rolname from pg_roles r where oid = acl.grantor) end grantor,
