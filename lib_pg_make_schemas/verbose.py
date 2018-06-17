@@ -162,6 +162,7 @@ class Verbose:
         script_title_map = {
             'init_sql': 'initialization',
             'var_install_sql': 'var installing',
+            'late_install_sql': 'late installing',
             'func_install_sql': 'func installing',
             'upgrade_sql': 'upgrading',
             'settings_sql': 'settings installing',

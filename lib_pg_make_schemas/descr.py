@@ -308,6 +308,63 @@ class SchemaDescr:
             self.include_list,
         )
 
+class LateDescr:
+    _load_utils = LoadUtils
+    
+    file_name = 'late.yaml'
+    
+    def load(self, late_file_path, include_list):
+        late_file_dir = os.path.dirname(late_file_path)
+        
+        with self._load_utils.check_and_open_for_r(late_file_path, include_list) as fd:
+            doc = self._load_utils.yaml_safe_load(fd)
+        
+        if not isinstance(doc, dict):
+            raise ValueError('not isinstance(doc, dict)')
+        
+        late_elem = doc['late']
+        
+        if late_elem is None:
+            late_elem = {}
+        
+        if not isinstance(late_elem, dict):
+            raise ValueError('not isinstance(late_elem, dict)')
+        
+        include_elem = late_elem.get('include')
+        first_elem = late_elem.get('first')
+        last_elem = late_elem.get('last')
+        sql = late_elem.get('sql')
+        
+        self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
+        
+        if sql is not None and not isinstance(sql, str):
+            raise ValueError('not isinstance(sql, str')
+        
+        def sql_filt_func(file_path):
+            return file_path.endswith('.sql')
+        
+        file_path_list, first_file_path_list, last_file_path_list = \
+                self._load_utils.load_file_path_list(
+                    late_file_dir, include_elem, first_elem, last_elem,
+                    sql_filt_func,
+                )
+        
+        self.late_file_path = late_file_path
+        self.include_list = include_list
+        self.file_path_list = file_path_list
+        self.first_file_path_list = first_file_path_list
+        self.last_file_path_list = last_file_path_list
+        self.sql = sql
+    
+    def read_sql(self):
+        yield from self._load_utils.read_content(
+            self.file_path_list,
+            self.first_file_path_list,
+            self.last_file_path_list,
+            self.sql,
+            self.include_list,
+        )
+
 class SafeguardDescr:
     _load_utils = LoadUtils
     
@@ -369,6 +426,7 @@ class SchemasDescr:
     _load_utils = LoadUtils
     _init_descr_class = InitDescr
     _schema_descr_class = SchemaDescr
+    _late_descr_class = LateDescr
     _safeguard_descr_class = SafeguardDescr
     
     file_name = 'schemas.yaml'
@@ -416,6 +474,14 @@ class SchemasDescr:
             
             return os.path.isfile(schema_file_path)
         
+        def late_filt_func(file_path):
+            late_file_path = os.path.realpath(os.path.join(
+                file_path,
+                self._late_descr_class.file_name,
+            ))
+            
+            return os.path.isfile(late_file_path)
+        
         def safeguard_filt_func(file_path):
             safeguard_file_path = os.path.realpath(os.path.join(
                 file_path,
@@ -426,7 +492,7 @@ class SchemasDescr:
         
         def filt_func(file_path):
             return init_filt_func(file_path) or schema_filt_func(file_path) or \
-                    safeguard_filt_func(file_path)
+                    late_filt_func(file_path) or safeguard_filt_func(file_path)
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
@@ -436,6 +502,7 @@ class SchemasDescr:
         
         init = None
         var_schema_list = []
+        late = None
         func_schema_list = []
         safeguard = None
         schema_name_set = set()
@@ -500,6 +567,29 @@ class SchemasDescr:
                             schema_file_path,
                         ),
                     )
+            elif late_filt_func(file_path):
+                if late is not None:
+                    raise ValueError(
+                        '{!r}: non unique late'.format(
+                            late_file_path,
+                        ),
+                    )
+                
+                late_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._late_descr_class.file_name,
+                ))
+                
+                late_descr = self._late_descr_class()
+                
+                try:
+                    late_descr.load(late_file_path, include_list)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(late_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(late_file_path, type(e), e)) from e
+                
+                late = late_descr
             elif safeguard_filt_func(file_path):
                 if safeguard is not None:
                     raise ValueError(
@@ -531,6 +621,7 @@ class SchemasDescr:
         self.schemas_type = schemas_type
         self.init = init
         self.var_schema_list = var_schema_list
+        self.late = late
         self.func_schema_list = func_schema_list
         self.safeguard = safeguard
 

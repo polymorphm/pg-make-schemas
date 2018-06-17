@@ -187,6 +187,19 @@ def install_cmd(args_ctx, print_func, err_print_func):
                                 sql.rstrip(),
                             ),
                         )
+                
+                for i, sql in enumerate(
+                            install_sql.read_late_sql(source_code_cluster_descr, host_type),
+                        ):
+                    if not i:
+                        verb.execute_sql(host_name, 'late_install_sql')
+                    
+                    recv.execute(
+                        host_name, '{}\n\n{}\n\n;'.format(
+                            pg_role_path.pg_role_path('postgres', None),
+                            sql.rstrip(),
+                        ),
+                    )
         
         for settings_cluster_descr in settings_cluster_descr_list:
             for host in hosts_descr.host_list:

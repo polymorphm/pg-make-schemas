@@ -63,6 +63,18 @@ def read_var_install_sql(cluster_descr, host_type):
             
             yield schema_name, owner, grant_list, sql_iter
 
+def read_late_sql(cluster_descr, host_type):
+    for schemas_descr in cluster_descr.schemas_list:
+        if schemas_descr.schemas_type != host_type:
+            continue
+        
+        late_descr = schemas_descr.late
+        
+        if late_descr is None:
+            continue
+        
+        yield from late_descr.read_sql()
+
 def read_func_install_sql(cluster_descr, host_type):
     for schemas_descr in cluster_descr.schemas_list:
         if schemas_descr.schemas_type != host_type:
