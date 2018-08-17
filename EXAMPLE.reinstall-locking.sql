@@ -30,6 +30,4 @@ create event trigger XXX_YYY_ZZZ_EXAMPLE_reinstall_locking
         on ddl_command_end 
         execute procedure reinstall_locking.XXX_YYY_ZZZ_EXAMPLE_reinstall_locking ();
 
-alter event trigger XXX_YYY_ZZZ_EXAMPLE_reinstall_locking enable always;
-
 --commit;
