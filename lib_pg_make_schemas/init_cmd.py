@@ -62,7 +62,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
             
             recv.begin_host(hosts_descr, host)
             
-            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
             
             verb.scr_env(host_name)
             
@@ -80,12 +80,12 @@ def init_cmd(args_ctx, print_func, err_print_func):
                 
                 recv.execute(
                     host_name, '{}\n\n{}\n\n;'.format(
-                        pg_role_path.pg_role_path('postgres', None),
+                        pg_role_path.pg_role_path(None, None),
                         sql.rstrip(),
                     ),
                 )
             
-            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
             
             verb.clean_scr_env(host_name)
             

@@ -117,7 +117,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             
             func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
             
-            recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
             
             verb.scr_env(host_name)
             
@@ -208,7 +208,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             
                             recv.execute(
                                 host_name, '{}\n\n{}\n\n;'.format(
-                                    pg_role_path.pg_role_path('postgres', None),
+                                    pg_role_path.pg_role_path(None, None),
                                     sql.rstrip(),
                                 ),
                             )
@@ -234,7 +234,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 
                                 recv.execute(
                                     host_name, '{}\n\n{}\n\n;'.format(
-                                        pg_role_path.pg_role_path('postgres', None),
+                                        pg_role_path.pg_role_path(None, None),
                                         sql.rstrip(),
                                     ),
                                 )
@@ -252,7 +252,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                     
                                     recv.execute(
                                         host_name, '{}\n\n{}\n\n;'.format(
-                                            pg_role_path.pg_role_path('postgres', None),
+                                            pg_role_path.pg_role_path(None, None),
                                             sql.rstrip(),
                                         ),
                                     )
@@ -283,7 +283,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             
                             recv.execute(
                                 host_name, '{}\n\n{}\n\n;'.format(
-                                    pg_role_path.pg_role_path('postgres', None),
+                                    pg_role_path.pg_role_path(None, None),
                                     sql.rstrip(),
                                 ),
                             )
@@ -301,7 +301,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 
                                 recv.execute(
                                     host_name, '{}\n\n{}\n\n;'.format(
-                                        pg_role_path.pg_role_path('postgres', None),
+                                        pg_role_path.pg_role_path(None, None),
                                         sql.rstrip(),
                                     ),
                                 )
@@ -312,7 +312,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     
                     for schema_name, owner, grant_list, sql_iter in \
                             install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
-                        recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+                        recv.execute(host_name, pg_role_path.pg_role_path(None, None))
                         
                         verb.create_schema(host_name, schema_name)
                         
@@ -344,7 +344,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
-                            pg_role_path.pg_role_path('postgres', None),
+                            pg_role_path.pg_role_path(None, None),
                             sql.rstrip(),
                         ),
                     )
@@ -356,7 +356,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 var_schemas = install.var_schemas(source_code_cluster_descr, host_type)
                 func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
                 
-                recv.execute(host_name, pg_role_path.pg_role_path('postgres', None))
+                recv.execute(host_name, pg_role_path.pg_role_path(None, None))
                 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):

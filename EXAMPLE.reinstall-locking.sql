@@ -5,8 +5,8 @@
 
 --begin;
 
-set local role to "postgres";
-set local search_path to public;
+set local role to postgres;
+set local search_path to '';
 
 create schema reinstall_locking;
 grant usage on schema reinstall_locking to public;
