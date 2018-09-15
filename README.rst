@@ -17,3 +17,9 @@ Packages are required:
 * ``python >= 3``
 * ``python-psycopg2``
 * ``python-yaml``
+
+Legacy
+------
+
+See catalog ``legacy`` to get instructions how to migrate from old version of
+``pg-make-schemas``
