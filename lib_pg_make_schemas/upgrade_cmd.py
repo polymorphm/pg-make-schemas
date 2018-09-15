@@ -125,14 +125,14 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             
             verb.ensure_revision_structs(host_name)
             
-            recv.execute(host_name, rev_sql.ensure_revision_structs())
+            recv.execute(host_name, rev_sql.ensure_revision_structs(host_type))
             
             if args_ctx.rev is not None:
                 host_var_rev, host_var_com = args_ctx.rev, None
                 host_func_rev, host_func_com = args_ctx.rev, None
             else:
-                host_var_rev, host_var_com = rev_sql.fetch_var_revision(recv, host_name)
-                host_func_rev, host_func_com = rev_sql.fetch_func_revision(recv, host_name)
+                host_var_rev, host_var_com = rev_sql.fetch_var_revision(recv, host_name, host_type)
+                host_func_rev, host_func_com = rev_sql.fetch_func_revision(recv, host_name, host_type)
                 
                 upgrade.print_revision(
                     host_name,
@@ -159,21 +159,21 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             
             verb.guard_var_revision(host_name, host_var_rev)
             
-            recv.execute(host_name, rev_sql.guard_var_revision(host_var_rev))
+            recv.execute(host_name, rev_sql.guard_var_revision(host_type, host_var_rev))
             
             if not args_ctx.show_rev:
                 if not args_ctx.change_rev:
                     verb.drop_func_schemas(host_name)
                     
-                    recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
+                    recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas))
                 
-                verb.arch_var_revision(host_name)
+                verb.clean_var_revision(host_name)
                 
-                recv.execute(host_name, rev_sql.arch_var_revision())
+                recv.execute(host_name, rev_sql.clean_var_revision(host_type))
                 
-                verb.arch_func_revision(host_name)
+                verb.clean_func_revision(host_name)
                 
-                recv.execute(host_name, rev_sql.arch_func_revision())
+                recv.execute(host_name, rev_sql.clean_func_revision(host_type))
             
             var_rev_map[host_name] = host_var_rev
             var_com_map[host_name] = host_var_com
@@ -261,12 +261,12 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             
                             recv.execute(
                                 host_name,
-                                rev_sql.push_var_revision(interm_migr[0], None, None),
+                                rev_sql.push_var_revision(host_type, interm_migr[0], None, None),
                             )
                             
-                            verb.arch_var_revision(host_name)
+                            verb.clean_var_revision(host_name)
                             
-                            recv.execute(host_name, rev_sql.arch_var_revision())
+                            recv.execute(host_name, rev_sql.clean_var_revision(host_type))
                     
                     if final_migr_list:
                         final_migr = final_migr_list[0]
@@ -380,14 +380,14 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 
                 recv.execute(
                     host_name,
-                    rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
+                    rev_sql.push_var_revision(host_type, source_code_cluster_descr.revision, com, var_schemas),
                 )
                 
                 verb.push_func_revision(host_name, source_code_cluster_descr.revision, com)
                 
                 recv.execute(
                     host_name,
-                    rev_sql.push_func_revision(source_code_cluster_descr.revision, com, func_schemas),
+                    rev_sql.push_func_revision(host_type, source_code_cluster_descr.revision, com, func_schemas),
                 )
                 
                 verb.clean_scr_env(host_name)

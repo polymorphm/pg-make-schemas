@@ -70,7 +70,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
             
             verb.ensure_revision_structs(host_name)
             
-            recv.execute(host_name, rev_sql.ensure_revision_structs())
+            recv.execute(host_name, rev_sql.ensure_revision_structs(host_type))
             
             for i, sql in enumerate(
                         init_sql.read_init_sql(source_code_cluster_descr, host_type),

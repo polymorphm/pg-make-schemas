@@ -28,10 +28,10 @@ class NonVerbose:
     def guard_func_revision(self, host_name, revision):
         pass
     
-    def arch_var_revision(self, host_name):
+    def clean_var_revision(self, host_name):
         pass
     
-    def arch_func_revision(self, host_name):
+    def clean_func_revision(self, host_name):
         pass
     
     def push_var_revision(self, host_name, revision, comment):
@@ -110,11 +110,11 @@ class Verbose:
             ),
         )
     
-    def arch_var_revision(self, host_name):
-        self._print_func('{!r}: archiving var revision...'.format(host_name))
+    def clean_var_revision(self, host_name):
+        self._print_func('{!r}: cleaning var revision...'.format(host_name))
     
-    def arch_func_revision(self, host_name):
-        self._print_func('{!r}: archiving func revision...'.format(host_name))
+    def clean_func_revision(self, host_name):
+        self._print_func('{!r}: cleaning func revision...'.format(host_name))
     
     def push_var_revision(self, host_name, revision, comment):
         self._print_func(

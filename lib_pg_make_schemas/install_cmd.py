@@ -113,35 +113,35 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             verb.ensure_revision_structs(host_name)
             
-            recv.execute(host_name, rev_sql.ensure_revision_structs())
+            recv.execute(host_name, rev_sql.ensure_revision_structs(host_type))
             
             if args_ctx.reinstall:
                 if not args_ctx.reinstall_func:
                     verb.drop_var_schemas(host_name)
                     
-                    recv.execute(host_name, rev_sql.drop_var_schemas(var_schemas))
+                    recv.execute(host_name, rev_sql.drop_var_schemas(host_type, var_schemas))
                 
                 verb.drop_func_schemas(host_name)
                 
-                recv.execute(host_name, rev_sql.drop_func_schemas(func_schemas))
+                recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas))
                 
                 if not args_ctx.reinstall_func:
-                    verb.arch_var_revision(host_name)
+                    verb.clean_var_revision(host_name)
                     
-                    recv.execute(host_name, rev_sql.arch_var_revision())
+                    recv.execute(host_name, rev_sql.clean_var_revision(host_type))
                 
-                verb.arch_func_revision(host_name)
+                verb.clean_func_revision(host_name)
                 
-                recv.execute(host_name, rev_sql.arch_func_revision())
+                recv.execute(host_name, rev_sql.clean_func_revision(host_type))
             
             if not args_ctx.reinstall_func:
                 verb.guard_var_revision(host_name, None)
                 
-                recv.execute(host_name, rev_sql.guard_var_revision(None))
+                recv.execute(host_name, rev_sql.guard_var_revision(host_type, None))
             
             verb.guard_func_revision(host_name, None)
             
-            recv.execute(host_name, rev_sql.guard_func_revision(None))
+            recv.execute(host_name, rev_sql.guard_func_revision(host_type, None))
         
         if args_ctx.init:
             for host in hosts_descr.host_list:
@@ -295,14 +295,14 @@ def install_cmd(args_ctx, print_func, err_print_func):
                 
                 recv.execute(
                     host_name,
-                    rev_sql.push_var_revision(source_code_cluster_descr.revision, com, var_schemas),
+                    rev_sql.push_var_revision(host_type, source_code_cluster_descr.revision, com, var_schemas),
                 )
             
             verb.push_func_revision(host_name, source_code_cluster_descr.revision, com)
             
             recv.execute(
                 host_name,
-                rev_sql.push_func_revision(source_code_cluster_descr.revision, com, func_schemas),
+                rev_sql.push_func_revision(host_type, source_code_cluster_descr.revision, com, func_schemas),
             )
             
             verb.clean_scr_env(host_name)
