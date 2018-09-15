@@ -148,6 +148,15 @@ def main():
                 'might become incompatible with created function schemas',
     )
     
+    for sub_parser in (install_parser, upgrade_parser):
+        sub_parser.add_argument(
+            '--cascade',
+            action='store_true',
+            help='use drop with cascade when dropping schemas. '
+                    'warning(!) using this option can be dangerous, make sure '
+                    'you understand what you do and understand possible consequences'
+        )
+    
     upgrade_parser.add_argument(
         '--show-rev',
         action='store_true',
@@ -260,6 +269,7 @@ def main():
     if args_ctx.command in ('install', 'upgrade'):
         args_ctx.comment = args.comment
         args_ctx.init = args.init
+        args_ctx.cascade = args.cascade
         
         args_ctx.comment_path = os.environ.get('PG_MAKE_SCHEMAS_COMMENT')
         

@@ -72,7 +72,7 @@ select rev.application, rev.schemas_type, rev.datetime, rev.revision, rev.commen
 from ins_rev rev;\
 '''
 
-DROP_SCHEMAS_SQL ='''\
+DROP_SCHEMAS_CASCADE_SQL ='''\
 declare
 _schema text;
 begin
@@ -84,6 +84,35 @@ union
 select unnest ({q_schemas}::text[])
 loop
 execute format ($drop$drop schema if exists %I cascade$drop$, _schema);
+end loop;
+end\
+'''
+
+DROP_SCHEMAS_SAFE_SQL ='''\
+declare
+_schema text;
+_func text;
+_args text;
+begin
+for _schema in
+select unnest (rev.schemas)
+from {q_revision_schema_ident}.{q_revision_ident} rev
+where rev.application = {q_application} and rev.schemas_type = {q_schemas_type}
+union
+select unnest ({q_schemas}::text[])
+loop
+for _func, _args in
+select pr.proname, pg_get_function_identity_arguments (pr.oid)
+from pg_proc pr
+where pr.pronamespace = (select ns.oid from pg_namespace ns where ns.nspname = _schema)
+loop
+if version () ~ '^PostgreSQL\ (8|9|10)\.' then
+execute format ($drop$drop function %I.%I (%s)$drop$, _schema, _func, _args);
+else
+execute format ($drop$drop routine %I.%I (%s)$drop$, _schema, _func, _args);
+end if;
+end loop;
+execute format ($drop$drop schema if exists %I$drop$, _schema);
 end loop;
 end\
 '''
@@ -124,7 +153,8 @@ class RevisionSql:
     _guard_revision_sql = GUARD_REVISION_SQL
     _clean_revision_sql = CLEAN_REVISION_SQL
     _push_revision_sql = PUSH_REVISION_SQL
-    _drop_schemas_sql = DROP_SCHEMAS_SQL
+    _drop_schemas_cascade_sql = DROP_SCHEMAS_CASCADE_SQL
+    _drop_schemas_safe_sql = DROP_SCHEMAS_SAFE_SQL
     _revision_sql_utils = RevisionSqlUtils
     
     def __init__(self, application):
@@ -217,7 +247,7 @@ class RevisionSql:
             q_schemas=q_schemas,
         )
     
-    def _drop_schemas(self, revision_schema_ident, revision_ident, host_type, schemas):
+    def _drop_schemas_cascade(self, revision_schema_ident, revision_ident, host_type, schemas):
         if schemas is not None:
             q_schemas = 'array[{}\n]'.format(
                 ','.join('\n{}'.format(self._pg_quote(x)) for x in schemas),
@@ -225,7 +255,7 @@ class RevisionSql:
         else:
             q_schemas = 'null'
         
-        drop_schemas_body = self._drop_schemas_sql.format(
+        drop_schemas_cascade_body = self._drop_schemas_cascade_sql.format(
             q_revision_schema_ident=self._pg_ident_quote(revision_schema_ident),
             q_revision_ident=self._pg_ident_quote(revision_ident),
             q_application=self._pg_quote(self._application),
@@ -233,7 +263,25 @@ class RevisionSql:
             q_schemas=q_schemas,
         )
         
-        return 'do {};'.format(self._pg_dollar_quote('do', drop_schemas_body))
+        return 'do {};'.format(self._pg_dollar_quote('do', drop_schemas_cascade_body))
+    
+    def _drop_schemas_safe(self, revision_schema_ident, revision_ident, host_type, schemas):
+        if schemas is not None:
+            q_schemas = 'array[{}\n]'.format(
+                ','.join('\n{}'.format(self._pg_quote(x)) for x in schemas),
+            )
+        else:
+            q_schemas = 'null'
+        
+        drop_schemas_safe_body = self._drop_schemas_safe_sql.format(
+            q_revision_schema_ident=self._pg_ident_quote(revision_schema_ident),
+            q_revision_ident=self._pg_ident_quote(revision_ident),
+            q_application=self._pg_quote(self._application),
+            q_schemas_type=self._pg_quote(host_type),
+            q_schemas=q_schemas,
+        )
+        
+        return 'do {};'.format(self._pg_dollar_quote('do', drop_schemas_safe_body))
     
     def ensure_revision_structs(self, host_type):
         application_ident = self._revision_sql_utils.make_ident(self._application)
@@ -358,18 +406,26 @@ class RevisionSql:
             schemas,
         )
     
-    def drop_var_schemas(self, host_type, schemas):
+    def drop_var_schemas(self, host_type, schemas, cascade):
         application_ident = self._revision_sql_utils.make_ident(self._application)
         host_type_ident = self._revision_sql_utils.make_ident(host_type)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.var_revision_ident(host_type_ident)
         
-        return self._drop_schemas(revision_schema_ident, revision_ident, host_type, schemas)
+        if not cascade:
+            raise AssertionError('drop variable schema can not be safe')
+        
+        return self._drop_schemas_cascade(revision_schema_ident, revision_ident, host_type, schemas)
     
-    def drop_func_schemas(self, host_type, schemas):
+    def drop_func_schemas(self, host_type, schemas, cascade):
         application_ident = self._revision_sql_utils.make_ident(self._application)
         host_type_ident = self._revision_sql_utils.make_ident(host_type)
         revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
         revision_ident = self._revision_sql_utils.func_revision_ident(host_type_ident)
         
-        return self._drop_schemas(revision_schema_ident, revision_ident, host_type, schemas)
+        if cascade:
+            drop_func = self._drop_schemas_cascade
+        else:
+            drop_func = self._drop_schemas_safe
+        
+        return drop_func(revision_schema_ident, revision_ident, host_type, schemas)

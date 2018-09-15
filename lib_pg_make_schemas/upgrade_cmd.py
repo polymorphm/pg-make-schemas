@@ -163,9 +163,9 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             
             if not args_ctx.show_rev:
                 if not args_ctx.change_rev:
-                    verb.drop_func_schemas(host_name, recv.look_fragment_i(host_name))
+                    verb.drop_func_schemas(host_name, args_ctx.cascade, recv.look_fragment_i(host_name))
                     
-                    recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas))
+                    recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas, args_ctx.cascade))
                 
                 verb.clean_var_revision(host_name, recv.look_fragment_i(host_name))
                 

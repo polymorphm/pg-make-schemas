@@ -40,10 +40,10 @@ class NonVerbose:
     def push_func_revision(self, host_name, revision, comment, fragment_i):
         pass
     
-    def drop_var_schemas(self, host_name, fragment_i):
+    def drop_var_schemas(self, host_name, cascade, fragment_i):
         pass
     
-    def drop_func_schemas(self, host_name, fragment_i):
+    def drop_func_schemas(self, host_name, cascade, fragment_i):
         pass
     
     def create_schema(self, host_name, schema_name, fragment_i):
@@ -163,18 +163,20 @@ class Verbose:
             ),
         )
     
-    def drop_var_schemas(self, host_name, fragment_i):
+    def drop_var_schemas(self, host_name, cascade, fragment_i):
         self._print_func(
-            '{!r}: dropping var schemas ({})...'.format(
+            '{!r}: {} dropping var schemas ({})...'.format(
                 host_name,
+                'cascaded' if cascade else 'safe',
                 self._format_frag(fragment_i),
             ),
         )
     
-    def drop_func_schemas(self, host_name, fragment_i):
+    def drop_func_schemas(self, host_name, cascade, fragment_i):
         self._print_func(
-            '{!r}: dropping func schemas ({})...'.format(
+            '{!r}: {} dropping func schemas ({})...'.format(
                 host_name,
+                'cascaded' if cascade else 'safe',
                 self._format_frag(fragment_i),
             ),
         )

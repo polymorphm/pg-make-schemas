@@ -16,7 +16,13 @@ from . import install_sql
 from . import settings_sql
 from . import safeguard_sql
 
+class InstallCmdError(Exception):
+    pass
+
 def install_cmd(args_ctx, print_func, err_print_func):
+    if args_ctx.reinstall and not args_ctx.reinstall_func and not args_ctx.cascade:
+        raise InstallCmdError('unable to reinstall variable schemas without cascaded dropping')
+    
     verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
     
     verb.prepare_install()
@@ -117,13 +123,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             if args_ctx.reinstall:
                 if not args_ctx.reinstall_func:
-                    verb.drop_var_schemas(host_name, recv.look_fragment_i(host_name))
+                    verb.drop_var_schemas(host_name, args_ctx.cascade, recv.look_fragment_i(host_name))
                     
-                    recv.execute(host_name, rev_sql.drop_var_schemas(host_type, var_schemas))
+                    recv.execute(host_name, rev_sql.drop_var_schemas(host_type, var_schemas, args_ctx.cascade))
                 
-                verb.drop_func_schemas(host_name, recv.look_fragment_i(host_name))
+                verb.drop_func_schemas(host_name, args_ctx.cascade, recv.look_fragment_i(host_name))
                 
-                recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas))
+                recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas, args_ctx.cascade))
                 
                 if not args_ctx.reinstall_func:
                     verb.clean_var_revision(host_name, recv.look_fragment_i(host_name))
