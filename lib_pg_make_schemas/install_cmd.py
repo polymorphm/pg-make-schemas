@@ -107,39 +107,39 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             recv.execute(host_name, pg_role_path.pg_role_path(None, None))
             
-            verb.scr_env(host_name)
+            verb.scr_env(host_name, recv.look_fragment_i(host_name))
             
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
             
-            verb.ensure_revision_structs(host_name)
+            verb.ensure_revision_structs(host_name, recv.look_fragment_i(host_name))
             
             recv.execute(host_name, rev_sql.ensure_revision_structs(host_type))
             
             if args_ctx.reinstall:
                 if not args_ctx.reinstall_func:
-                    verb.drop_var_schemas(host_name)
+                    verb.drop_var_schemas(host_name, recv.look_fragment_i(host_name))
                     
                     recv.execute(host_name, rev_sql.drop_var_schemas(host_type, var_schemas))
                 
-                verb.drop_func_schemas(host_name)
+                verb.drop_func_schemas(host_name, recv.look_fragment_i(host_name))
                 
                 recv.execute(host_name, rev_sql.drop_func_schemas(host_type, func_schemas))
                 
                 if not args_ctx.reinstall_func:
-                    verb.clean_var_revision(host_name)
+                    verb.clean_var_revision(host_name, recv.look_fragment_i(host_name))
                     
                     recv.execute(host_name, rev_sql.clean_var_revision(host_type))
                 
-                verb.clean_func_revision(host_name)
+                verb.clean_func_revision(host_name, recv.look_fragment_i(host_name))
                 
                 recv.execute(host_name, rev_sql.clean_func_revision(host_type))
             
             if not args_ctx.reinstall_func:
-                verb.guard_var_revision(host_name, None)
+                verb.guard_var_revision(host_name, None, recv.look_fragment_i(host_name))
                 
                 recv.execute(host_name, rev_sql.guard_var_revision(host_type, None))
             
-            verb.guard_func_revision(host_name, None)
+            verb.guard_func_revision(host_name, None, recv.look_fragment_i(host_name))
             
             recv.execute(host_name, rev_sql.guard_func_revision(host_type, None))
         
@@ -152,7 +152,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                             init_sql.read_init_sql(source_code_cluster_descr, host_type),
                         ):
                     if not i:
-                        verb.execute_sql(host_name, 'init_sql')
+                        verb.execute_sql(host_name, 'init_sql', recv.look_fragment_i(host_name))
                     
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
@@ -170,7 +170,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
                     recv.execute(host_name, pg_role_path.pg_role_path(None, None))
                     
-                    verb.create_schema(host_name, schema_name)
+                    verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
                     
                     recv.execute(
                         host_name, 
@@ -179,7 +179,8 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     
                     for i, sql in enumerate(sql_iter):
                         if not i:
-                            verb.execute_sql(host_name, 'var_install_sql')
+                            verb.execute_sql(
+                                    host_name, 'var_install_sql', recv.look_fragment_i(host_name))
                         
                         recv.execute(
                             host_name, '{}\n\n{}\n\n;'.format(
@@ -192,7 +193,8 @@ def install_cmd(args_ctx, print_func, err_print_func):
                             install_sql.read_late_sql(source_code_cluster_descr, host_type),
                         ):
                     if not i:
-                        verb.execute_sql(host_name, 'late_install_sql')
+                        verb.execute_sql(
+                                host_name, 'late_install_sql', recv.look_fragment_i(host_name))
                     
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
@@ -210,7 +212,8 @@ def install_cmd(args_ctx, print_func, err_print_func):
                             settings_sql.read_settings_sql(settings_cluster_descr, host_type),
                         ):
                     if not i:
-                        verb.execute_sql(host_name, 'settings_sql')
+                        verb.execute_sql(
+                                host_name, 'settings_sql', recv.look_fragment_i(host_name))
                     
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
@@ -227,16 +230,17 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
                 recv.execute(host_name, pg_role_path.pg_role_path(None, None))
                 
-                verb.create_schema(host_name, schema_name)
+                verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
                 
                 recv.execute(
-                    host_name, 
+                    host_name,
                     install_sql.create_schema(schema_name, owner, grant_list),
                 )
                 
                 for i, sql in enumerate(sql_iter):
                     if not i:
-                        verb.execute_sql(host_name, 'func_install_sql')
+                        verb.execute_sql(
+                                host_name, 'func_install_sql', recv.look_fragment_i(host_name))
                     
                     recv.execute(
                         host_name, '{}\n\n{}\n\n;'.format(
@@ -253,7 +257,8 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type),
                     ):
                 if not i:
-                    verb.execute_sql(host_name, 'safeguard_sql')
+                    verb.execute_sql(
+                            host_name, 'safeguard_sql', recv.look_fragment_i(host_name))
                 
                 recv.execute(
                     host_name, '{}\n\n{}\n\n;'.format(
@@ -274,7 +279,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
             if not args_ctx.reinstall_func:
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
-                    verb.guard_acls(host_name, schema_name)
+                    verb.guard_acls(host_name, schema_name, recv.look_fragment_i(host_name))
                     
                     recv.execute(
                         host_name,
@@ -283,7 +288,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
             
             for schema_name, owner, grant_list, sql_iter in \
                     install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
-                verb.guard_acls(host_name, schema_name)
+                verb.guard_acls(host_name, schema_name, recv.look_fragment_i(host_name))
                 
                 recv.execute(
                     host_name,
@@ -291,21 +296,23 @@ def install_cmd(args_ctx, print_func, err_print_func):
                 )
             
             if not args_ctx.reinstall_func:
-                verb.push_var_revision(host_name, source_code_cluster_descr.revision, com)
+                verb.push_var_revision(
+                        host_name, source_code_cluster_descr.revision, com, recv.look_fragment_i(host_name))
                 
                 recv.execute(
                     host_name,
                     rev_sql.push_var_revision(host_type, source_code_cluster_descr.revision, com, var_schemas),
                 )
             
-            verb.push_func_revision(host_name, source_code_cluster_descr.revision, com)
+            verb.push_func_revision(
+                    host_name, source_code_cluster_descr.revision, com, recv.look_fragment_i(host_name))
             
             recv.execute(
                 host_name,
                 rev_sql.push_func_revision(host_type, source_code_cluster_descr.revision, com, func_schemas),
             )
             
-            verb.clean_scr_env(host_name)
+            verb.clean_scr_env(host_name, recv.look_fragment_i(host_name))
             
             recv.execute(host_name, scr_env.clean_scr_env())
         

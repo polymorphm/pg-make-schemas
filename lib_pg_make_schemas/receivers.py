@@ -23,7 +23,7 @@ class SqlFileUtils:
         fragment_i = next(frag_cnt)
         
         fd.write(
-            'do $do$begin raise notice \'fragment ok: %\', {}; end$do$;'.format(
+                'do $do$begin raise notice \'fragment {}: ok\'; end$do$;'.format(
                 int(fragment_i),
             ),
         )
@@ -54,8 +54,11 @@ class Receivers:
     def _open(self, output_path):
         return open(output_path, 'w', encoding='utf-8', newline='\n')
     
-    def _make_counter(self):
-        return itertools.count(1)
+    def _make_counter(self, restore_value=None):
+        if restore_value is None:
+            restore_value = 1
+        
+        return itertools.count(restore_value)
     
     def begin_host(self, hosts_descr, host):
         host_name = host['name']
@@ -115,6 +118,14 @@ class Receivers:
     def get_con(self, host_name):
         if self._execute:
             return self._con_map[host_name]
+    
+    def look_fragment_i(self, host_name):
+        frag_cnt = self._frag_cnt_map[host_name]
+        fragment_i = next(frag_cnt)
+        frag_cnt = self._make_counter(restore_value=fragment_i)
+        self._frag_cnt_map[host_name] = frag_cnt
+        
+        return fragment_i
     
     def write_fragment(self, host_name, fragment):
        if self._output is not None:
