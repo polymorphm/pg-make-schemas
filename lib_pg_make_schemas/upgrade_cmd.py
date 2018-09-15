@@ -257,6 +257,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                         ),
                                     )
                             
+                            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                            
                             verb.push_var_revision(host_name, interm_migr[0], None)
                             
                             recv.execute(
