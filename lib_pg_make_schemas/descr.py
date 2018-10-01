@@ -2,6 +2,7 @@
 
 import os, os.path
 import yaml
+import re
 
 class LoadUtils:
     @classmethod
@@ -48,6 +49,29 @@ class LoadUtils:
         return yaml.safe_load(fd)
     
     @classmethod
+    def resolve_include_ref(cls, include, include_ref_map):
+        m = re.fullmatch(
+            r'(\$\{([A-Za-z0-9_]+)\}|\$([A-Za-z0-9_]+))(.*)',
+            include,
+            flags=re.S,
+        )
+        
+        if m is None:
+            return include
+        
+        ref_name = m.group(2) if m.group(2) is not None else m.group(3)
+        other_value = m.group(4)
+        
+        ref_value = include_ref_map.get(ref_name)
+        
+        if ref_value is None:
+            raise ValueError('{!r}: undefined include-reference'.format(ref_name))
+        
+        resolved_include = '{}{}'.format(ref_value, other_value)
+        
+        return resolved_include
+    
+    @classmethod
     def check_include_elem(cls, include_elem, first_elem, last_elem):
         if include_elem is not None and not isinstance(include_elem, (list, str)):
             raise ValueError('not isinstance(include_elem, (list, str))')
@@ -62,8 +86,8 @@ class LoadUtils:
     def load_file_path_list(
                 cls,
                 file_dir,
-                include_elem, first_elem, last_elem,
-                filt_func,
+                include_elem, include_ref_map,
+                first_elem, last_elem, filt_func,
             ):
         path_list = []
         file_path_list = []
@@ -85,9 +109,14 @@ class LoadUtils:
                 if not isinstance(include_item_elem, str):
                     raise ValueError('not isinstance(include_item_elem, str)')
                 
+                resolved_include = cls.resolve_include_ref(
+                    include_item_elem,
+                    include_ref_map,
+                )
+                
                 path = os.path.realpath(os.path.join(
                     file_dir,
-                    include_item_elem,
+                    resolved_include,
                 ))
                 
                 path_list.append(path)
@@ -166,7 +195,7 @@ class InitDescr:
     
     file_name = 'init.yaml'
     
-    def load(self, init_file_path, include_list):
+    def load(self, init_file_path, include_list, include_ref_map):
         init_file_dir = os.path.dirname(init_file_path)
         
         with self._load_utils.check_and_open_for_r(init_file_path, include_list) as fd:
@@ -198,8 +227,8 @@ class InitDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    init_file_dir, include_elem, first_elem, last_elem,
-                    sql_filt_func,
+                    init_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, sql_filt_func,
                 )
         
         self.init_file_path = init_file_path
@@ -223,7 +252,7 @@ class SchemaDescr:
     
     file_name = 'schema.yaml'
     
-    def load(self, schema_file_path, include_list):
+    def load(self, schema_file_path, include_list, include_ref_map):
         schema_file_dir = os.path.dirname(schema_file_path)
         
         with self._load_utils.check_and_open_for_r(schema_file_path, include_list) as fd:
@@ -284,8 +313,8 @@ class SchemaDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    schema_file_dir, include_elem, first_elem, last_elem,
-                    sql_filt_func,
+                    schema_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, sql_filt_func,
                 )
         
         self.schema_file_path = schema_file_path
@@ -313,7 +342,7 @@ class LateDescr:
     
     file_name = 'late.yaml'
     
-    def load(self, late_file_path, include_list):
+    def load(self, late_file_path, include_list, include_ref_map):
         late_file_dir = os.path.dirname(late_file_path)
         
         with self._load_utils.check_and_open_for_r(late_file_path, include_list) as fd:
@@ -345,8 +374,8 @@ class LateDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    late_file_dir, include_elem, first_elem, last_elem,
-                    sql_filt_func,
+                    late_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, sql_filt_func,
                 )
         
         self.late_file_path = late_file_path
@@ -370,7 +399,7 @@ class SafeguardDescr:
     
     file_name = 'safeguard.yaml'
     
-    def load(self, safeguard_file_path, include_list):
+    def load(self, safeguard_file_path, include_list, include_ref_map):
         safeguard_file_dir = os.path.dirname(safeguard_file_path)
         
         with self._load_utils.check_and_open_for_r(safeguard_file_path, include_list) as fd:
@@ -402,8 +431,8 @@ class SafeguardDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    safeguard_file_dir, include_elem, first_elem, last_elem,
-                    sql_filt_func,
+                    safeguard_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, sql_filt_func,
                 )
         
         self.safeguard_file_path = safeguard_file_path
@@ -431,7 +460,7 @@ class SchemasDescr:
     
     file_name = 'schemas.yaml'
     
-    def load(self, schemas_file_path, include_list):
+    def load(self, schemas_file_path, include_list, include_ref_map):
         schemas_file_dir = os.path.dirname(schemas_file_path)
         
         with self._load_utils.check_and_open_for_r(schemas_file_path, include_list) as fd:
@@ -496,8 +525,8 @@ class SchemasDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    schemas_file_dir, include_elem, first_elem, last_elem,
-                    filt_func,
+                    schemas_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, filt_func,
                 )
         
         init = None
@@ -524,7 +553,7 @@ class SchemasDescr:
                 init_descr = self._init_descr_class()
                 
                 try:
-                    init_descr.load(init_file_path, include_list)
+                    init_descr.load(init_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(init_file_path, type(e), e)) from e
                 except OSError as e:
@@ -540,7 +569,7 @@ class SchemasDescr:
                 schema_descr = self._schema_descr_class()
                 
                 try:
-                    schema_descr.load(schema_file_path, include_list)
+                    schema_descr.load(schema_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(schema_file_path, type(e), e)) from e
                 except OSError as e:
@@ -583,7 +612,7 @@ class SchemasDescr:
                 late_descr = self._late_descr_class()
                 
                 try:
-                    late_descr.load(late_file_path, include_list)
+                    late_descr.load(late_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(late_file_path, type(e), e)) from e
                 except OSError as e:
@@ -606,7 +635,7 @@ class SchemasDescr:
                 safeguard_descr = self._safeguard_descr_class()
                 
                 try:
-                    safeguard_descr.load(safeguard_file_path, include_list)
+                    safeguard_descr.load(safeguard_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(safeguard_file_path, type(e), e)) from e
                 except OSError as e:
@@ -630,7 +659,7 @@ class SettingsDescr:
     
     file_name = 'settings.yaml'
     
-    def load(self, settings_file_path, include_list):
+    def load(self, settings_file_path, include_list, include_ref_map):
         settings_file_dir = os.path.dirname(settings_file_path)
         
         with self._load_utils.check_and_open_for_r(settings_file_path, include_list) as fd:
@@ -666,8 +695,8 @@ class SettingsDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    settings_file_dir, include_elem, first_elem, last_elem,
-                    sql_filt_func,
+                    settings_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, sql_filt_func,
                 )
         
         self.settings_file_path = settings_file_path
@@ -692,7 +721,7 @@ class UpgradeDescr:
     
     file_name = 'upgrade.yaml'
     
-    def load(self, upgrade_file_path, include_list):
+    def load(self, upgrade_file_path, include_list, include_ref_map):
         upgrade_file_dir = os.path.dirname(upgrade_file_path)
         
         with self._load_utils.check_and_open_for_r(upgrade_file_path, include_list) as fd:
@@ -728,8 +757,8 @@ class UpgradeDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    upgrade_file_dir, include_elem, first_elem, last_elem,
-                    sql_filt_func,
+                    upgrade_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, sql_filt_func,
                 )
         
         self.upgrade_file_path = upgrade_file_path
@@ -755,7 +784,7 @@ class MigrationDescr:
     
     file_name = 'migration.yaml'
     
-    def load(self, migration_file_path, include_list):
+    def load(self, migration_file_path, include_list, include_ref_map):
         migration_file_dir = os.path.dirname(migration_file_path)
         
         with self._load_utils.check_and_open_for_r(migration_file_path, include_list) as fd:
@@ -808,8 +837,8 @@ class MigrationDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    migration_file_dir, include_elem, first_elem, last_elem,
-                    upgrade_filt_func,
+                    migration_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, upgrade_filt_func,
                 )
         
         upgrade_list = []
@@ -824,7 +853,7 @@ class MigrationDescr:
             upgrade_descr = self._upgrade_descr_class()
             
             try:
-                upgrade_descr.load(upgrade_file_path, include_list)
+                upgrade_descr.load(upgrade_file_path, include_list, include_ref_map)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
             except OSError as e:
@@ -853,7 +882,7 @@ class MigrationsDescr:
     
     file_name = 'migrations.yaml'
     
-    def load(self, migrations_file_path, include_list):
+    def load(self, migrations_file_path, include_list, include_ref_map):
         migrations_file_dir = os.path.dirname(migrations_file_path)
         
         with self._load_utils.check_and_open_for_r(migrations_file_path, include_list) as fd:
@@ -886,8 +915,8 @@ class MigrationsDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    migrations_file_dir, include_elem, first_elem, last_elem,
-                    migration_filt_func,
+                    migrations_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, migration_filt_func,
                 )
         
         migration_list = []
@@ -902,7 +931,7 @@ class MigrationsDescr:
             migration_descr = self._migration_descr_class()
             
             try:
-                migration_descr.load(migration_file_path, include_list)
+                migration_descr.load(migration_file_path, include_list, include_ref_map)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(migration_file_path, type(e), e)) from e
             except OSError as e:
@@ -935,7 +964,7 @@ class ClusterDescr:
     
     file_name = 'cluster.yaml'
     
-    def load(self, cluster_file_path, include_list, settingsMode=None):
+    def load(self, cluster_file_path, include_list, include_ref_map, settingsMode=None):
         if settingsMode is None:
             settingsMode = False
         
@@ -1026,8 +1055,8 @@ class ClusterDescr:
         
         file_path_list, first_file_path_list, last_file_path_list = \
                 self._load_utils.load_file_path_list(
-                    cluster_file_dir, include_elem, first_elem, last_elem,
-                    filt_func,
+                    cluster_file_dir, include_elem, include_ref_map,
+                    first_elem, last_elem, filt_func,
                 )
         
         schemas_list = []
@@ -1046,7 +1075,7 @@ class ClusterDescr:
                 schemas_descr = self._schemas_descr_class()
                 
                 try:
-                    schemas_descr.load(schemas_file_path, include_list)
+                    schemas_descr.load(schemas_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
                 except OSError as e:
@@ -1071,7 +1100,7 @@ class ClusterDescr:
                 settings_descr = self._settings_descr_class()
                 
                 try:
-                    settings_descr.load(settings_file_path, include_list)
+                    settings_descr.load(settings_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(settings_file_path, type(e), e)) from e
                 except OSError as e:
@@ -1103,7 +1132,7 @@ class ClusterDescr:
                 migrations_descr = self._migrations_descr_class()
                 
                 try:
-                    migrations_descr.load(migrations_file_path, include_list)
+                    migrations_descr.load(migrations_file_path, include_list, include_ref_map)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(migrations_file_path, type(e), e)) from e
                 except OSError as e:

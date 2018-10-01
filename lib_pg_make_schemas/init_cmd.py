@@ -23,9 +23,14 @@ def init_cmd(args_ctx, print_func, err_print_func):
         hosts_descr.load(hosts_path)
     
     include_list = []
+    include_ref_map = {}
     
     for include in args_ctx.include_list:
         include_list.append(os.path.realpath(include))
+    
+    for include_ref_name in args_ctx.include_ref_map:
+        include_ref_map[include_ref_name] = \
+                os.path.realpath(args_ctx.include_ref_map[include_ref_name])
     
     source_code_file_path = os.path.realpath(os.path.join(
         args_ctx.source_code,
@@ -34,7 +39,8 @@ def init_cmd(args_ctx, print_func, err_print_func):
     source_code_include_list = include_list + [os.path.dirname(source_code_file_path)]
     source_code_cluster_descr = descr.ClusterDescr()
     
-    source_code_cluster_descr.load(source_code_file_path, source_code_include_list)
+    source_code_cluster_descr.load(
+            source_code_file_path, source_code_include_list, include_ref_map)
     
     if args_ctx.hosts is None:
         hosts_descr.load_pseudo(source_code_cluster_descr)

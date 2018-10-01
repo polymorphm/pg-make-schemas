@@ -109,6 +109,8 @@ def main():
             action='append',
             help='add this path to allowed list of directories which can be '
                     'refered from source code files or settings source code files. '
+                    'this option can also be used to define include-reference, '
+                    'using name=value syntax. '
                     'you can use this option many times',
         )
     
@@ -249,11 +251,19 @@ def main():
         args_ctx.output = None
         args_ctx.hosts = None
     
+    args_ctx.include_list = []
+    args_ctx.include_ref_map = {}
+    
     if args_ctx.command in ('init', 'install', 'upgrade') \
             and args.include is not None:
-        args_ctx.include_list = args.include
-    else:
-        args_ctx.include_list = []
+        for arg_inc in args.include:
+            if '=' in arg_inc:
+                arg_inc_ref_name, arg_inc_ref_val = arg_inc.split('=', 1)
+                
+                args_ctx.include_list.append(arg_inc_ref_val)
+                args_ctx.include_ref_map[arg_inc_ref_name] = arg_inc_ref_val
+            else:
+                args_ctx.include_list.append(arg_inc)
     
     if args_ctx.command == 'install' and args.reinstall:
         args_ctx.reinstall = True
