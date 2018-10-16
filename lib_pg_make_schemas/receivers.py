@@ -120,7 +120,11 @@ class Receivers:
             return self._con_map[host_name]
     
     def look_fragment_i(self, host_name):
-        frag_cnt = self._frag_cnt_map[host_name]
+        frag_cnt = self._frag_cnt_map.get(host_name)
+        
+        if frag_cnt is None:
+            return
+        
         fragment_i = next(frag_cnt)
         frag_cnt = self._make_counter(restore_value=fragment_i)
         self._frag_cnt_map[host_name] = frag_cnt
