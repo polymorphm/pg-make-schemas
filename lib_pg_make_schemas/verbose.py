@@ -67,6 +67,9 @@ class Verbose:
         self._err_print_func = err_print_func
     
     def _format_frag(self, fragment_i):
+        if fragment_i is None:
+            return 'non numbered fragment'
+        
         return 'since fragment {!r}'.format(fragment_i)
     
     def prepare_init(self):
