@@ -195,11 +195,15 @@ class InitDescr:
     
     file_name = 'init.yaml'
     
-    def load(self, init_file_path, include_list, include_ref_map):
+    def load(self, init_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         init_file_dir = os.path.dirname(init_file_path)
         
-        with self._load_utils.check_and_open_for_r(init_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(init_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -231,6 +235,7 @@ class InitDescr:
                     first_elem, last_elem, sql_filt_func,
                 )
         
+        self.virtual_doc = virtual_doc
         self.init_file_path = init_file_path
         self.include_list = include_list
         self.file_path_list = file_path_list
@@ -252,11 +257,15 @@ class SchemaDescr:
     
     file_name = 'schema.yaml'
     
-    def load(self, schema_file_path, include_list, include_ref_map):
+    def load(self, schema_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         schema_file_dir = os.path.dirname(schema_file_path)
         
-        with self._load_utils.check_and_open_for_r(schema_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(schema_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -317,6 +326,7 @@ class SchemaDescr:
                     first_elem, last_elem, sql_filt_func,
                 )
         
+        self.virtual_doc = virtual_doc
         self.schema_file_path = schema_file_path
         self.include_list = include_list
         self.schema_name = schema_name
@@ -342,11 +352,15 @@ class LateDescr:
     
     file_name = 'late.yaml'
     
-    def load(self, late_file_path, include_list, include_ref_map):
+    def load(self, late_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         late_file_dir = os.path.dirname(late_file_path)
         
-        with self._load_utils.check_and_open_for_r(late_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(late_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -378,6 +392,7 @@ class LateDescr:
                     first_elem, last_elem, sql_filt_func,
                 )
         
+        self.virtual_doc = virtual_doc
         self.late_file_path = late_file_path
         self.include_list = include_list
         self.file_path_list = file_path_list
@@ -399,11 +414,15 @@ class SafeguardDescr:
     
     file_name = 'safeguard.yaml'
     
-    def load(self, safeguard_file_path, include_list, include_ref_map):
+    def load(self, safeguard_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         safeguard_file_dir = os.path.dirname(safeguard_file_path)
         
-        with self._load_utils.check_and_open_for_r(safeguard_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(safeguard_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -435,6 +454,7 @@ class SafeguardDescr:
                     first_elem, last_elem, sql_filt_func,
                 )
         
+        self.virtual_doc = virtual_doc
         self.safeguard_file_path = safeguard_file_path
         self.include_list = include_list
         self.file_path_list = file_path_list
@@ -460,11 +480,15 @@ class SchemasDescr:
     
     file_name = 'schemas.yaml'
     
-    def load(self, schemas_file_path, include_list, include_ref_map):
+    def load(self, schemas_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         schemas_file_dir = os.path.dirname(schemas_file_path)
         
-        with self._load_utils.check_and_open_for_r(schemas_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(schemas_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -645,6 +669,7 @@ class SchemasDescr:
             else:
                 raise AssertionError
         
+        self.virtual_doc = virtual_doc
         self.schemas_file_path = schemas_file_path
         self.include_list = include_list
         self.schemas_type = schemas_type
@@ -659,11 +684,15 @@ class SettingsDescr:
     
     file_name = 'settings.yaml'
     
-    def load(self, settings_file_path, include_list, include_ref_map):
+    def load(self, settings_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         settings_file_dir = os.path.dirname(settings_file_path)
         
-        with self._load_utils.check_and_open_for_r(settings_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(settings_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -699,6 +728,7 @@ class SettingsDescr:
                     first_elem, last_elem, sql_filt_func,
                 )
         
+        self.virtual_doc = virtual_doc
         self.settings_file_path = settings_file_path
         self.include_list = include_list
         self.settings_type = settings_type
@@ -721,11 +751,15 @@ class UpgradeDescr:
     
     file_name = 'upgrade.yaml'
     
-    def load(self, upgrade_file_path, include_list, include_ref_map):
+    def load(self, upgrade_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         upgrade_file_dir = os.path.dirname(upgrade_file_path)
         
-        with self._load_utils.check_and_open_for_r(upgrade_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(upgrade_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -761,6 +795,7 @@ class UpgradeDescr:
                     first_elem, last_elem, sql_filt_func,
                 )
         
+        self.virtual_doc = virtual_doc
         self.upgrade_file_path = upgrade_file_path
         self.include_list = include_list
         self.upgrade_type = upgrade_type
@@ -784,11 +819,15 @@ class MigrationDescr:
     
     file_name = 'migration.yaml'
     
-    def load(self, migration_file_path, include_list, include_ref_map):
+    def load(self, migration_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         migration_file_dir = os.path.dirname(migration_file_path)
         
-        with self._load_utils.check_and_open_for_r(migration_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(migration_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -870,6 +909,7 @@ class MigrationDescr:
             upgrade_type_set.add(upgrade_descr.upgrade_type)
             upgrade_list.append(upgrade_descr)
         
+        self.virtual_doc = virtual_doc
         self.migration_file_path = migration_file_path
         self.include_list = include_list
         self.revision = revision
@@ -882,11 +922,15 @@ class MigrationsDescr:
     
     file_name = 'migrations.yaml'
     
-    def load(self, migrations_file_path, include_list, include_ref_map):
+    def load(self, migrations_file_path, include_list, include_ref_map,
+            virtual_doc=None):
         migrations_file_dir = os.path.dirname(migrations_file_path)
         
-        with self._load_utils.check_and_open_for_r(migrations_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(migrations_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -952,6 +996,7 @@ class MigrationsDescr:
             
             migration_list.append(migration_descr)
         
+        self.virtual_doc = virtual_doc
         self.migrations_file_path = migrations_file_path
         self.include_list = include_list
         self.migration_list = migration_list
@@ -964,14 +1009,18 @@ class ClusterDescr:
     
     file_name = 'cluster.yaml'
     
-    def load(self, cluster_file_path, include_list, include_ref_map, settingsMode=None):
+    def load(self, cluster_file_path, include_list, include_ref_map,
+            virtual_doc=None, settingsMode=None):
         if settingsMode is None:
             settingsMode = False
         
         cluster_file_dir = os.path.dirname(cluster_file_path)
         
-        with self._load_utils.check_and_open_for_r(cluster_file_path, include_list) as fd:
-            doc = self._load_utils.yaml_safe_load(fd)
+        if virtual_doc is not None:
+            doc = virtual_doc
+        else:
+            with self._load_utils.check_and_open_for_r(cluster_file_path, include_list) as fd:
+                doc = self._load_utils.yaml_safe_load(fd)
         
         if not isinstance(doc, dict):
             raise ValueError('not isinstance(doc, dict)')
@@ -1142,6 +1191,7 @@ class ClusterDescr:
             else:
                 raise AssertionError
         
+        self.virtual_doc = virtual_doc
         self.cluster_file_path = cluster_file_path
         self.include_list = include_list
         self.application = application
