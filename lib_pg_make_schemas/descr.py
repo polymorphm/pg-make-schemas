@@ -479,7 +479,7 @@ class SchemasDescr:
     file_name = 'schemas.yaml'
 
     def load(self, schemas_file_path, include_list, include_ref_map,
-            virtual_doc=None):
+            virtual_doc=None, schemas_type=None):
         schemas_file_dir = os.path.dirname(schemas_file_path)
 
         if virtual_doc is not None:
@@ -499,7 +499,7 @@ class SchemasDescr:
         if not isinstance(schemas_elem, dict):
             raise ValueError('not isinstance(schemas_elem, dict)')
 
-        schemas_type = schemas_elem['type']
+        schemas_type = schemas_elem.get('type', schemas_type)
         include_elem = schemas_elem.get('include')
         first_elem = schemas_elem.get('first')
         last_elem = schemas_elem.get('last')
@@ -683,7 +683,7 @@ class SettingsDescr:
     file_name = 'settings.yaml'
 
     def load(self, settings_file_path, include_list, include_ref_map,
-            virtual_doc=None):
+            virtual_doc=None, settings_type=None):
         settings_file_dir = os.path.dirname(settings_file_path)
 
         if virtual_doc is not None:
@@ -703,7 +703,7 @@ class SettingsDescr:
         if not isinstance(settings_elem, dict):
             raise ValueError('not isinstance(settings_elem, dict)')
 
-        settings_type = settings_elem['type']
+        settings_type = settings_elem.get('type', settings_type)
         include_elem = settings_elem.get('include')
         first_elem = settings_elem.get('first')
         last_elem = settings_elem.get('last')
@@ -818,7 +818,7 @@ class MigrationDescr:
     file_name = 'migration.yaml'
 
     def load(self, migration_file_path, include_list, include_ref_map,
-            virtual_doc=None):
+            virtual_doc=None, migration_type=None):
         migration_file_dir = os.path.dirname(migration_file_path)
 
         if virtual_doc is not None:
@@ -838,12 +838,16 @@ class MigrationDescr:
         if not isinstance(migration_elem, dict):
             raise ValueError('not isinstance(migration_elem, dict)')
 
+        migration_type = migration_elem.get('type', migration_type)
         revision = migration_elem['revision']
         compatible_elem = migration_elem['compatible']
 
         include_elem = migration_elem.get('include')
         first_elem = migration_elem.get('first')
         last_elem = migration_elem.get('last')
+
+        if migration_type is not None and not isinstance(migration_type, str):
+            raise ValueError('not isinstance(migration_type, str)')
 
         if not isinstance(revision, str):
             raise ValueError('not isinstance(revision, str)')
@@ -864,52 +868,80 @@ class MigrationDescr:
 
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
 
-        def upgrade_filt_func(file_path):
-            upgrade_file_path = os.path.realpath(os.path.join(
-                file_path,
-                self._upgrade_descr_class.file_name,
-            ))
-
-            return os.path.isfile(upgrade_file_path)
-
-        file_path_list, first_file_path_list, last_file_path_list = \
-                self._load_utils.load_file_path_list(
-                    migration_file_dir, include_elem, include_ref_map,
-                    first_elem, last_elem, upgrade_filt_func,
-                )
-
         upgrade_list = []
-        upgrade_type_set = set()
 
-        for file_path in first_file_path_list + file_path_list + last_file_path_list:
-            upgrade_file_path = os.path.realpath(os.path.join(
-                file_path,
-                self._upgrade_descr_class.file_name,
-            ))
+        if migration_type is not None:
+            upgrade_sql = migration_elem.get('sql')
+
+            upgrade_file_path = migration_file_path
+            upgrade_virtual_doc = {
+                'upgrade': {
+                    'type': migration_type,
+                    'include': include_elem,
+                    'first': first_elem,
+                    'last': last_elem,
+                    'sql': upgrade_sql,
+                }
+            }
 
             upgrade_descr = self._upgrade_descr_class()
 
             try:
-                upgrade_descr.load(upgrade_file_path, include_list, include_ref_map)
+                upgrade_descr.load(upgrade_file_path, include_list,
+                        include_ref_map, virtual_doc=upgrade_virtual_doc)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
             except OSError as e:
                 raise OSError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
 
-            if upgrade_descr.upgrade_type in upgrade_type_set:
-                raise ValueError(
-                    '{!r}, {!r}: non unique upgrade_type'.format(
-                        upgrade_descr.upgrade_type,
-                        upgrade_file_path,
-                    ),
-                )
-
-            upgrade_type_set.add(upgrade_descr.upgrade_type)
             upgrade_list.append(upgrade_descr)
+        else:
+            def upgrade_filt_func(file_path):
+                upgrade_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._upgrade_descr_class.file_name,
+                ))
+
+                return os.path.isfile(upgrade_file_path)
+
+            file_path_list, first_file_path_list, last_file_path_list = \
+                    self._load_utils.load_file_path_list(
+                        migration_file_dir, include_elem, include_ref_map,
+                        first_elem, last_elem, upgrade_filt_func,
+                    )
+
+            upgrade_type_set = set()
+
+            for file_path in first_file_path_list + file_path_list + last_file_path_list:
+                upgrade_file_path = os.path.realpath(os.path.join(
+                    file_path,
+                    self._upgrade_descr_class.file_name,
+                ))
+
+                upgrade_descr = self._upgrade_descr_class()
+
+                try:
+                    upgrade_descr.load(upgrade_file_path, include_list, include_ref_map)
+                except (LookupError, ValueError) as e:
+                    raise ValueError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
+                except OSError as e:
+                    raise OSError('{!r}: {!r}: {}'.format(upgrade_file_path, type(e), e)) from e
+
+                if upgrade_descr.upgrade_type in upgrade_type_set:
+                    raise ValueError(
+                        '{!r}, {!r}: non unique upgrade_type'.format(
+                            upgrade_descr.upgrade_type,
+                            upgrade_file_path,
+                        ),
+                    )
+
+                upgrade_type_set.add(upgrade_descr.upgrade_type)
+                upgrade_list.append(upgrade_descr)
 
         self.virtual_doc = virtual_doc
         self.migration_file_path = migration_file_path
         self.include_list = include_list
+        self.migration_type = migration_type
         self.revision = revision
         self.compatible_list = compatible_list
         self.upgrade_list = upgrade_list
@@ -921,7 +953,7 @@ class MigrationsDescr:
     file_name = 'migrations.yaml'
 
     def load(self, migrations_file_path, include_list, include_ref_map,
-            virtual_doc=None):
+            virtual_doc=None, migrations_type=None):
         migrations_file_dir = os.path.dirname(migrations_file_path)
 
         if virtual_doc is not None:
@@ -941,9 +973,13 @@ class MigrationsDescr:
         if not isinstance(migrations_elem, dict):
             raise ValueError('not isinstance(migrations_elem, dict)')
 
+        migrations_type = migrations_elem.get('type', migrations_type)
         include_elem = migrations_elem.get('include')
         first_elem = migrations_elem.get('first')
         last_elem = migrations_elem.get('last')
+
+        if migrations_type is not None and not isinstance(migrations_type, str):
+            raise ValueError('not isinstance(migrations_type, str)')
 
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
 
@@ -973,11 +1009,21 @@ class MigrationsDescr:
             migration_descr = self._migration_descr_class()
 
             try:
-                migration_descr.load(migration_file_path, include_list, include_ref_map)
+                migration_descr.load(migration_file_path, include_list,
+                        include_ref_map, migration_type=migrations_type)
             except (LookupError, ValueError) as e:
                 raise ValueError('{!r}: {!r}: {}'.format(migration_file_path, type(e), e)) from e
             except OSError as e:
                 raise OSError('{!r}: {!r}: {}'.format(migration_file_path, type(e), e)) from e
+
+            if migrations_type is not None and \
+                    migration_descr.migration_type != migrations_type:
+                raise ValueError(
+                    '{!r}, {!r}: migration_type is distinct from migrations_type'.format(
+                        migration_descr.migration_type,
+                        migration_file_path,
+                    ),
+                )
 
             for compatible in migration_descr.compatible_list:
                 migration_way = migration_descr.revision, compatible
@@ -997,6 +1043,7 @@ class MigrationsDescr:
         self.virtual_doc = virtual_doc
         self.migrations_file_path = migrations_file_path
         self.include_list = include_list
+        self.migrations_type = migrations_type
         self.migration_list = migration_list
 
 class ClusterDescr:
@@ -1008,9 +1055,9 @@ class ClusterDescr:
     file_name = 'cluster.yaml'
 
     def load(self, cluster_file_path, include_list, include_ref_map,
-            virtual_doc=None, settingsMode=None):
-        if settingsMode is None:
-            settingsMode = False
+            virtual_doc=None, cluster_type=None, settings_mode=None):
+        if settings_mode is None:
+            settings_mode = False
 
         cluster_file_dir = os.path.dirname(cluster_file_path)
 
@@ -1032,8 +1079,9 @@ class ClusterDescr:
             raise ValueError('not isinstance(cluster_elem, dict)')
 
         application = cluster_elem['application']
+        cluster_type = cluster_elem.get('type', cluster_type)
 
-        if settingsMode:
+        if settings_mode:
             revision = None
             compatible_elem = cluster_elem['compatible']
         else:
@@ -1047,7 +1095,10 @@ class ClusterDescr:
         if not isinstance(application, str):
             raise ValueError('not isinstance(application, str)')
 
-        if settingsMode:
+        if cluster_type is not None and not isinstance(cluster_type, str):
+            raise ValueError('not isinstance(cluster_type, str)')
+
+        if settings_mode:
             if not isinstance(compatible_elem, (list, str)):
                 raise ValueError('not isinstance(compatible_elem, (list, str)')
 
@@ -1093,7 +1144,7 @@ class ClusterDescr:
 
             return os.path.isfile(migrations_file_path)
 
-        if settingsMode:
+        if settings_mode:
             def filt_func(file_path):
                 return settings_filt_func(file_path) or migrations_filt_func(file_path)
         else:
@@ -1122,11 +1173,21 @@ class ClusterDescr:
                 schemas_descr = self._schemas_descr_class()
 
                 try:
-                    schemas_descr.load(schemas_file_path, include_list, include_ref_map)
+                    schemas_descr.load(schemas_file_path, include_list,
+                            include_ref_map, schemas_type=cluster_type)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
                 except OSError as e:
                     raise OSError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
+
+                if cluster_type is not None and \
+                        schemas_descr.schemas_type != cluster_type:
+                    raise ValueError(
+                        '{!r}, {!r}: schemas_type is distinct from cluster_type'.format(
+                            schemas_descr.schemas_type,
+                            schemas_file_path,
+                        ),
+                    )
 
                 if schemas_descr.schemas_type in schemas_type_set:
                     raise ValueError(
@@ -1147,11 +1208,21 @@ class ClusterDescr:
                 settings_descr = self._settings_descr_class()
 
                 try:
-                    settings_descr.load(settings_file_path, include_list, include_ref_map)
+                    settings_descr.load(settings_file_path, include_list,
+                            include_ref_map, settings_type=cluster_type)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(settings_file_path, type(e), e)) from e
                 except OSError as e:
                     raise OSError('{!r}: {!r}: {}'.format(settings_file_path, type(e), e)) from e
+
+                if cluster_type is not None and \
+                        settings_descr.settings_type != cluster_type:
+                    raise ValueError(
+                        '{!r}, {!r}: settings_type is distinct from cluster_type'.format(
+                            settings_descr.settings_type,
+                            settings_file_path,
+                        ),
+                    )
 
                 if settings_descr.settings_type in settings_type_set:
                     raise ValueError(
@@ -1179,11 +1250,21 @@ class ClusterDescr:
                 migrations_descr = self._migrations_descr_class()
 
                 try:
-                    migrations_descr.load(migrations_file_path, include_list, include_ref_map)
+                    migrations_descr.load(migrations_file_path, include_list,
+                            include_ref_map, migrations_type=cluster_type)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(migrations_file_path, type(e), e)) from e
                 except OSError as e:
                     raise OSError('{!r}: {!r}: {}'.format(migrations_file_path, type(e), e)) from e
+
+                if cluster_type is not None and \
+                        migrations_descr.migrations_type != cluster_type:
+                    raise ValueError(
+                        '{!r}, {!r}: migrations_type is distinct from cluster_type'.format(
+                            migrations_descr.migrations_type,
+                            migrations_file_path,
+                        ),
+                    )
 
                 migrations = migrations_descr
             else:
@@ -1193,6 +1274,7 @@ class ClusterDescr:
         self.cluster_file_path = cluster_file_path
         self.include_list = include_list
         self.application = application
+        self.cluster_type = cluster_type
         self.revision = revision
         self.compatible_list = compatible_list
         self.schemas_list = schemas_list

@@ -85,7 +85,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             settings_file_path,
             settings_include_list,
             include_ref_map,
-            settingsMode=True,
+            settings_mode=True,
         )
 
         settings.check_settings_compatibility(
