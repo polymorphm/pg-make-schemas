@@ -1,7 +1,8 @@
 #!/usr/bin/python
-# -*- mode: python; coding: utf-8 -*-
 
 from lib_pg_make_schemas import main
 
 if __name__ == '__main__':
     main.main()
+
+# vi:ts=4:sw=4:et

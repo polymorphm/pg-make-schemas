@@ -1,5 +1,3 @@
-# -*- mode: python; coding: utf-8 -*-
-
 def check_settings_compatibility(
             source_code_cluster_descr,
             settings_cluster_descr,
@@ -10,10 +8,12 @@ def check_settings_compatibility(
                 settings_cluster_descr.cluster_file_path
             ),
         )
-    
+
     if source_code_cluster_descr.revision not in settings_cluster_descr.compatible_list:
         raise ValueError(
             '{!r}: source_code_cluster_descr.revision not in settings_cluster_descr.compatible_list'.format(
                 settings_cluster_descr.cluster_file_path
             ),
         )
+
+# vi:ts=4:sw=4:et

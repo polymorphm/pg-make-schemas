@@ -1,5 +1,3 @@
-# -*- mode: python; coding: utf-8 -*-
-
 from . import pg_literal
 
 GUARD_ACLS_SQL = '''\
@@ -54,38 +52,38 @@ def read_var_install_sql(cluster_descr, host_type):
     for schemas_descr in cluster_descr.schemas_list:
         if schemas_descr.schemas_type != host_type:
             continue
-        
+
         for schema_descr in schemas_descr.var_schema_list:
             schema_name = schema_descr.schema_name
             owner = schema_descr.owner
             grant_list = schema_descr.grant_list
             sql_iter = schema_descr.read_sql()
-            
+
             yield schema_name, owner, grant_list, sql_iter
 
 def read_late_sql(cluster_descr, host_type):
     for schemas_descr in cluster_descr.schemas_list:
         if schemas_descr.schemas_type != host_type:
             continue
-        
+
         late_descr = schemas_descr.late
-        
+
         if late_descr is None:
             continue
-        
+
         yield from late_descr.read_sql()
 
 def read_func_install_sql(cluster_descr, host_type):
     for schemas_descr in cluster_descr.schemas_list:
         if schemas_descr.schemas_type != host_type:
             continue
-        
+
         for schema_descr in schemas_descr.func_schema_list:
             schema_name = schema_descr.schema_name
             owner = schema_descr.owner
             grant_list = schema_descr.grant_list
             sql_iter = schema_descr.read_sql()
-            
+
             yield schema_name, owner, grant_list, sql_iter
 
 def create_schema(
@@ -106,7 +104,7 @@ def create_schema(
             q_schema_ident=pg_ident_quote_func(schema_name),
         ),
     ]
-    
+
     if grant_list is not None:
         for grant in grant_list:
             sql_list.append(
@@ -115,7 +113,7 @@ def create_schema(
                     q_grant=pg_ident_quote_func(grant),
                 ),
             )
-    
+
     return '\n'.join(sql_list)
 
 def guard_acls(
@@ -127,24 +125,26 @@ def guard_acls(
             pg_dollar_quote_func=pg_literal.pg_dollar_quote,
         ):
     create_list = [owner]
-    
+
     if grant_list is not None:
         usage_list = [owner] + grant_list
     else:
         usage_list = [owner]
-    
+
     q_create_list = 'array[{}\n]'.format(
         ','.join('\n{}'.format(pg_quote_func(x)) for x in create_list),
     )
     q_usage_list = 'array[{}\n]'.format(
         ','.join('\n{}'.format(pg_quote_func(x)) for x in usage_list),
     )
-    
+
     drop_schemas_body = guard_acls_sql.format(
         q_schema=pg_quote_func(schema_name),
         q_owner=pg_quote_func(owner),
         q_create_list=q_create_list,
         q_usage_list=q_usage_list,
     )
-    
+
     return 'do {};'.format(pg_dollar_quote_func('do', drop_schemas_body))
+
+# vi:ts=4:sw=4:et

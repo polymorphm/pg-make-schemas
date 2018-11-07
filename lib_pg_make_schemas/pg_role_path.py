@@ -1,5 +1,3 @@
-# -*- mode: python; coding: utf-8 -*-
-
 from . import pg_literal
 
 def pg_role_path(
@@ -15,7 +13,7 @@ def pg_role_path(
         ]
     else:
         set_list = ['set local role to postgres;']
-    
+
     if schema_name is not None:
         set_list.append(
             'set local search_path to {};'.format(
@@ -24,5 +22,7 @@ def pg_role_path(
         )
     else:
         set_list.append('set local search_path to \'\';')
-    
+
     return '\n'.join(set_list)
+
+# vi:ts=4:sw=4:et
