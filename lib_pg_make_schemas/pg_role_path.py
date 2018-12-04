@@ -25,4 +25,6 @@ def pg_role_path(
     else:
         set_list.append('set local search_path to \'\';')
     
+    set_list.append('set local check_function_bodies to off;')
+    
     return '\n'.join(set_list)
