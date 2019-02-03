@@ -375,20 +375,24 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
-                    verb.guard_acls(host_name, schema_name, recv.look_fragment_i(host_name))
+                    verb.guard_acls(host_name, schema_name,
+                            args_ctx.weak_guard_acls, recv.look_fragment_i(host_name))
 
                     recv.execute(
                         host_name,
-                        install_sql.guard_acls(schema_name, owner, grant_list),
+                        install_sql.guard_acls(schema_name, owner, grant_list,
+                                args_ctx.weak_guard_acls),
                     )
 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
-                    verb.guard_acls(host_name, schema_name, recv.look_fragment_i(host_name))
+                    verb.guard_acls(host_name, schema_name,
+                            args_ctx.weak_guard_acls, recv.look_fragment_i(host_name))
 
                     recv.execute(
                         host_name,
-                        install_sql.guard_acls(schema_name, owner, grant_list),
+                        install_sql.guard_acls(schema_name, owner, grant_list,
+                                args_ctx.weak_guard_acls),
                     )
 
                 verb.push_var_revision(

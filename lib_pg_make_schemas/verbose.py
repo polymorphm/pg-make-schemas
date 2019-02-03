@@ -47,7 +47,7 @@ class NonVerbose:
     def create_schema(self, host_name, schema_name, fragment_i):
         pass
 
-    def guard_acls(self, host_name, schema_name, fragment_i):
+    def guard_acls(self, host_name, schema_name, weak, fragment_i):
         pass
 
     def execute_sql(self, host_name, script_type, fragment_i):
@@ -191,10 +191,11 @@ class Verbose:
             ),
         )
 
-    def guard_acls(self, host_name, schema_name, fragment_i):
+    def guard_acls(self, host_name, schema_name, weak, fragment_i):
         self._print_func(
-            '{!r}: guarding acls for schema {!r} ({})...'.format(
+            '{!r}: {} guarding acls for schema {!r} ({})...'.format(
                 host_name,
+                'weak' if weak else 'strong',
                 schema_name,
                 self._format_frag(fragment_i),
             ),

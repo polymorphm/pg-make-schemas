@@ -157,6 +157,15 @@ def main():
                     'you understand what you do and understand possible consequences'
         )
 
+        sub_parser.add_argument(
+            '-A',
+            '--weak-acls',
+            action='store_true',
+            help='use weak guarding acls for schemas instead of strong guarding. '
+                    'warning(!) obviously it would be bad if you had to using this option, '
+                    'but it is the fastest way to suppress the error ``unexpected acl: ...``'
+        )
+
     upgrade_parser.add_argument(
         '--show-rev',
         action='store_true',
@@ -278,6 +287,7 @@ def main():
         args_ctx.comment = args.comment
         args_ctx.init = args.init
         args_ctx.cascade = args.cascade
+        args_ctx.weak_guard_acls = args.weak_acls
 
         args_ctx.comment_path = os.environ.get('PG_MAKE_SCHEMAS_COMMENT')
 
@@ -286,6 +296,8 @@ def main():
     else:
         args_ctx.comment = False
         args_ctx.init = False
+        args_ctx.cascade = None
+        args_ctx.weak_guard_acls = None
         args_ctx.comment_path = None
 
     if args_ctx.command == 'upgrade':

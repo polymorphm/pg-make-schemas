@@ -33,6 +33,10 @@ _create_list := array_remove (_create_list, _grantee);
 elsif _grantor = {q_owner} and _grantee = any ({q_usage_list}::text[])
 and _privilege_type = 'USAGE' and _is_grantable = false then
 _usage_list := array_remove (_usage_list, _grantee);
+elsif {q_weak} then
+raise notice 'unexpected acl: % % % % %',
+quote_nullable ({q_schema}), quote_nullable (_grantor), quote_nullable (_grantee),
+quote_nullable (_privilege_type), quote_nullable (_is_grantable);
 else
 raise 'unexpected acl: % % % % %',
 quote_nullable ({q_schema}), quote_nullable (_grantor), quote_nullable (_grantee),
@@ -120,6 +124,7 @@ def guard_acls(
             schema_name,
             owner,
             grant_list,
+            weak,
             guard_acls_sql=GUARD_ACLS_SQL,
             pg_quote_func=pg_literal.pg_quote,
             pg_dollar_quote_func=pg_literal.pg_dollar_quote,
@@ -138,11 +143,14 @@ def guard_acls(
         ','.join('\n{}'.format(pg_quote_func(x)) for x in usage_list),
     )
 
+    q_weak = pg_quote_func('true') if weak else pg_quote_func('false')
+
     drop_schemas_body = guard_acls_sql.format(
         q_schema=pg_quote_func(schema_name),
         q_owner=pg_quote_func(owner),
         q_create_list=q_create_list,
         q_usage_list=q_usage_list,
+        q_weak=q_weak,
     )
 
     return 'do {};'.format(pg_dollar_quote_func('do', drop_schemas_body))
