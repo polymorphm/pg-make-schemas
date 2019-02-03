@@ -47,7 +47,15 @@ class Receivers:
         self._frag_cnt_map = {}
 
     def _connect(self, conninfo):
-        return psycopg2.connect(conninfo)
+        con = psycopg2.connect(conninfo)
+
+        if con.autocommit:
+            # Psycopg's http://initd.org/psycopg/docs/connection.html says:
+            #   """The default is False (manual commit) as per DBAPI specification."""
+
+            raise AssertionError('con.autocommit should not be True')
+
+        return con
 
     def _open(self, output_path):
         return open(output_path, 'w', encoding='utf-8', newline='\n')
