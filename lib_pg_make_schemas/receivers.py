@@ -1,5 +1,6 @@
 import itertools
 import psycopg2
+from . import pg_notices
 
 class ReceiversError(Exception):
     pass
@@ -17,16 +18,29 @@ class SqlFileUtils:
         fd.flush()
 
     @classmethod
-    def write_fragment_ok_notice(cls, fd, frag_cnt):
-        fragment_i = next(frag_cnt)
+    def write_notices(cls, nfd, notices):
+        for notice in notices:
+            nfd.write(notice)
+            nfd.write('\n')
+        nfd.flush()
 
+    @classmethod
+    def write_fragment_ok_notice(cls, fd, fragment_i):
         fd.write(
-                'do $do$begin raise notice \'fragment {}: ok\'; end$do$;'.format(
+            'do $do$begin raise notice \'fragment {}: ok\'; end$do$;\n\n'.format(
                 int(fragment_i),
             ),
         )
-        fd.write('\n\n')
         fd.flush()
+
+    @classmethod
+    def write_ok_notice(cls, nfd, fragment_i):
+        nfd.write(
+            '\nfragment {}: ok\n\n'.format(
+                int(fragment_i),
+            ),
+        )
+        nfd.flush()
 
     @classmethod
     def write_footer(cls, fd):
@@ -44,7 +58,10 @@ class Receivers:
         self._output = output
         self._con_map = {}
         self._fd_map = {}
+        self._nfd_map = {}
         self._frag_cnt_map = {}
+
+        self._notices = self._execute and self._output is not None
 
     def _connect(self, conninfo):
         con = psycopg2.connect(conninfo)
@@ -53,7 +70,10 @@ class Receivers:
             # Psycopg's http://initd.org/psycopg/docs/connection.html says:
             #   """The default is False (manual commit) as per DBAPI specification."""
 
-            raise AssertionError('con.autocommit should not be True')
+            raise AssertionError('con.autocommit should not be set into True')
+
+        if self._notices:
+            con.notices = pg_notices.PgNotices()
 
         return con
 
@@ -112,6 +132,23 @@ class Receivers:
 
             self._sql_file_utils.write_header(fd)
 
+        if self._notices:
+            if host_name in self._nfd_map:
+                raise ValueError(
+                    '{!r}, {!r}: non unique host_name'.format(
+                        host_name,
+                        hosts_descr.hosts_file_path,
+                    ),
+                )
+
+            notices_output_path = '{}.{}.{}.notices'.format(
+                self._output,
+                host_name.replace('/', '-').replace('.', '-'),
+                host_type.replace('/', '-').replace('.', '-'),
+            )
+
+            self._nfd_map[host_name] = self._open(notices_output_path)
+
     def begin(self, hosts_descr, begin_host_verb_func=None):
         for host in hosts_descr.host_list:
             if begin_host_verb_func is not None:
@@ -138,17 +175,30 @@ class Receivers:
         return fragment_i
 
     def write_fragment(self, host_name, fragment):
-       if self._output is not None:
+        if self._output is not None:
             fd = self._fd_map[host_name]
 
             self._sql_file_utils.write_fragment(fd, fragment)
 
+    def write_notices(self, host_name, con):
+        if self._notices:
+           nfd = self._nfd_map[host_name]
+           notices = con.notices.pop_all()
+
+           self._sql_file_utils.write_notices(nfd, notices)
+
     def write_fragment_ok_notice(self, host_name):
-       if self._output is not None:
+        if self._output is not None:
             fd = self._fd_map[host_name]
             frag_cnt = self._frag_cnt_map[host_name]
 
-            self._sql_file_utils.write_fragment_ok_notice(fd, frag_cnt)
+            fragment_i = next(frag_cnt)
+
+            self._sql_file_utils.write_fragment_ok_notice(fd, fragment_i)
+
+            if self._notices:
+                nfd = self._nfd_map[host_name]
+                self._sql_file_utils.write_ok_notice(nfd, fragment_i)
 
     def execute(self, host_name, fragment):
         self.write_fragment(host_name, fragment)
@@ -160,7 +210,10 @@ class Receivers:
                 with con.cursor() as cur:
                     cur.execute(fragment)
             except self.con_error as e:
-                raise ReceiversError('{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
+                raise ReceiversError(
+                        '{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
+            finally:
+                self.write_notices(host_name, con)
 
         self.write_fragment_ok_notice(host_name)
 
@@ -170,10 +223,19 @@ class Receivers:
         if self._execute:
             con = self._con_map[host_name]
 
-            if self._pretend:
-                con.rollback()
-            else:
-                con.commit()
+            try:
+                if self._pretend:
+                    con.rollback()
+                else:
+                    con.commit()
+            finally:
+                self.write_notices(host_name, con)
+
+        if self._notices:
+            nfd = self._nfd_map[host_name]
+
+            nfd.close()
+            del self._nfd_map[host_name]
 
         if self._output is not None:
             fd = self._fd_map[host_name]
@@ -199,6 +261,10 @@ class Receivers:
             self.finish_host(hosts_descr, host)
 
     def close(self):
+        for host_name, nfd in reversed(list(self._nfd_map.items())):
+            nfd.close()
+            del self._nfd_map[host_name]
+
         for host_name, fd in reversed(list(self._fd_map.items())):
             fd.close()
             del self._fd_map[host_name]

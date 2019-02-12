@@ -80,7 +80,9 @@ def main():
             '--execute',
             action='store_true',
             help='do database interactions. '
-                    'it is default when the ``--output`` option is not used',
+                    'it is default when the ``--output`` option is not used. '
+                    'Using ``--execute`` option with ``--output`` option '
+                    'writes notices files besides making SQL files',
         )
 
         sub_parser.add_argument(
