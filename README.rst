@@ -7,7 +7,7 @@ from a revisioned source code repository.
 Status
 ------
 
-Developer version (for master git branch).
+Release: ``pg-make-schemas-8.0.0``.
 
 Requirements
 ------------
