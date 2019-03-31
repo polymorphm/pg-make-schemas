@@ -1,5 +1,5 @@
--- this is just example how to safeguard a production database host
--- against an accidental undesirable reinstalling action with losing data
+-- this is an example how to safeguard a production database host
+-- against an accidental undesirable reinstalling action with losing data.
 
 --begin;
 
