@@ -1,5 +1,3 @@
--- -*- mode: sql; coding: utf-8 -*-
-
 -- function to migrate old revision-keeping-structures into new ones
 
 create or replace function pg_temp.pg_make_schemas_migrate_to_4_from_3 (
@@ -240,3 +238,5 @@ begin
         _application,                       -- $1
         _schemas_type;                      -- $2
 end$function$;
+
+-- vi:ts=4:sw=4:et

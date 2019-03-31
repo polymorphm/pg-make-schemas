@@ -1,5 +1,3 @@
--- -*- mode: sql; coding: utf-8 -*-
-
 -- this is just example how to safeguard a production database host
 -- against an accidental undesirable reinstalling action with losing data
 
@@ -27,7 +25,9 @@ grant execute on
         to public;
 
 create event trigger XXX_YYY_ZZZ_EXAMPLE_reinstall_locking
-        on ddl_command_end 
+        on ddl_command_end
         execute procedure reinstall_locking.XXX_YYY_ZZZ_EXAMPLE_reinstall_locking ();
 
 --commit;
+
+-- vi:ts=4:sw=4:et
