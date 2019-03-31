@@ -18,6 +18,13 @@ Packages are required:
 * ``python-psycopg2``
 * ``python-yaml``
 
+Database Admin (DBA) SQL-Snippets
+---------------------------------
+
+See catalog ``dba-sql-snippets`` to get examples of some Database
+Management receptions. They mostly are collection of safeguard tricks against
+accidental undesirable actions on production database clusters.
+
 Legacy
 ------
 
