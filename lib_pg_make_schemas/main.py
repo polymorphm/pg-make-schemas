@@ -71,8 +71,9 @@ def main():
         sub_parser.add_argument(
             '-v',
             '--verbose',
-            action='store_true',
-            help='be verbose. there will be every operation shown',
+            action='count',
+            help='be verbose. there will be every operation shown. '
+                    'use two times to show more details about executing sql',
         )
 
         sub_parser.add_argument(

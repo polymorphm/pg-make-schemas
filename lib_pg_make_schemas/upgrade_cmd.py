@@ -212,11 +212,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 verb.execute_sql(
                                         host_name, 'init_sql', recv.look_fragment_i(host_name))
 
+                            verb.execute_sql(
+                                    host_name, 'init_sql', recv.look_fragment_i(host_name),
+                                    sql=sql)
+
                             recv.execute(
-                                host_name, '{}\n\n{}\n\n;'.format(
-                                    pg_role_path.pg_role_path(None, None),
-                                    sql.rstrip(),
-                                ),
+                                host_name,
+                                pg_role_path.apply_pg_role_path(sql, None, None),
                             )
 
                 for host in hosts_descr.host_list:
@@ -239,11 +241,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                     verb.execute_sql(
                                             host_name, 'upgrade_sql', recv.look_fragment_i(host_name))
 
+                                verb.execute_sql(
+                                        host_name, 'upgrade_sql', recv.look_fragment_i(host_name),
+                                        sql=sql)
+
                                 recv.execute(
-                                    host_name, '{}\n\n{}\n\n;'.format(
-                                        pg_role_path.pg_role_path(None, None),
-                                        sql.rstrip(),
-                                    ),
+                                    host_name,
+                                    pg_role_path.apply_pg_role_path(sql, None, None),
                                 )
 
                             for settings_cluster_descr in settings_cluster_descr_list:
@@ -258,11 +262,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                         verb.execute_sql(
                                                 host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name))
 
+                                    verb.execute_sql(
+                                            host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name),
+                                            sql=sql)
+
                                     recv.execute(
-                                        host_name, '{}\n\n{}\n\n;'.format(
-                                            pg_role_path.pg_role_path(None, None),
-                                            sql.rstrip(),
-                                        ),
+                                        host_name,
+                                        pg_role_path.apply_pg_role_path(sql, None, None),
                                     )
 
                             recv.execute(host_name, pg_role_path.pg_role_path(None, None))
@@ -293,11 +299,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 verb.execute_sql(
                                         host_name, 'upgrade_sql', recv.look_fragment_i(host_name))
 
+                            verb.execute_sql(
+                                    host_name, 'upgrade_sql', recv.look_fragment_i(host_name),
+                                    sql=sql)
+
                             recv.execute(
-                                host_name, '{}\n\n{}\n\n;'.format(
-                                    pg_role_path.pg_role_path(None, None),
-                                    sql.rstrip(),
-                                ),
+                                host_name,
+                                pg_role_path.apply_pg_role_path(sql, None, None),
                             )
 
                         for settings_cluster_descr in settings_cluster_descr_list:
@@ -312,11 +320,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                     verb.execute_sql(
                                             host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name))
 
+                                verb.execute_sql(
+                                        host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name),
+                                        sql=sql)
+
                                 recv.execute(
-                                    host_name, '{}\n\n{}\n\n;'.format(
-                                        pg_role_path.pg_role_path(None, None),
-                                        sql.rstrip(),
-                                    ),
+                                    host_name,
+                                    pg_role_path.apply_pg_role_path(sql, None, None),
                                 )
 
                 for host in hosts_descr.host_list:
@@ -339,11 +349,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 verb.execute_sql(
                                         host_name, 'func_install_sql', recv.look_fragment_i(host_name))
 
+                            verb.execute_sql(
+                                    host_name, 'func_install_sql', recv.look_fragment_i(host_name),
+                                    sql=sql)
+
                             recv.execute(
-                                host_name, '{}\n\n{}\n\n;'.format(
-                                    pg_role_path.pg_role_path(owner, schema_name),
-                                    sql.rstrip(),
-                                ),
+                                host_name,
+                                pg_role_path.apply_pg_role_path(sql, owner, schema_name),
                             )
 
             for host in hosts_descr.host_list:
@@ -357,11 +369,13 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'safeguard_sql', recv.look_fragment_i(host_name))
 
+                    verb.execute_sql(
+                            host_name, 'safeguard_sql', recv.look_fragment_i(host_name),
+                            sql=sql)
+
                     recv.execute(
-                        host_name, '{}\n\n{}\n\n;'.format(
-                            pg_role_path.pg_role_path(None, None),
-                            sql.rstrip(),
-                        ),
+                        host_name,
+                        pg_role_path.apply_pg_role_path(sql, None, None),
                     )
 
             for host in hosts_descr.host_list:

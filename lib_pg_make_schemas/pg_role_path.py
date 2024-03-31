@@ -27,4 +27,16 @@ def pg_role_path(
 
     return '\n'.join(set_list)
 
+def apply_pg_role_path(
+            sql,
+            role,
+            schema_name,
+            pg_role_path_func=pg_role_path,
+            pg_ident_quote_func=pg_literal.pg_ident_quote,
+        ):
+    return '{}\n\n{}\n\n;'.format(
+        pg_role_path_func(role, schema_name, pg_ident_quote_func=pg_ident_quote_func),
+        sql.rstrip(),
+    )
+
 # vi:ts=4:sw=4:et

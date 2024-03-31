@@ -50,7 +50,7 @@ class NonVerbose:
     def guard_acls(self, host_name, schema_name, weak, fragment_i):
         pass
 
-    def execute_sql(self, host_name, script_type, fragment_i):
+    def execute_sql(self, host_name, script_type, fragment_i, sql=None):
         pass
 
     def clean_scr_env(self, host_name, fragment_i):
@@ -60,9 +60,13 @@ class NonVerbose:
         pass
 
 class Verbose:
-    def __init__(self, print_func, err_print_func):
+    def __init__(self, print_func, err_print_func, show_execute_sql_details=None):
+        if show_execute_sql_details is None:
+            show_execute_sql_details = False
+
         self._print_func = print_func
         self._err_print_func = err_print_func
+        self._show_execute_sql_details = show_execute_sql_details
 
     def _format_frag(self, fragment_i):
         if fragment_i is None:
@@ -201,7 +205,7 @@ class Verbose:
             ),
         )
 
-    def execute_sql(self, host_name, script_type, fragment_i):
+    def execute_sql(self, host_name, script_type, fragment_i, sql=None):
         script_title_map = {
             'init_sql': 'initialization',
             'var_install_sql': 'var installing',
@@ -213,13 +217,23 @@ class Verbose:
             'safeguard_sql': 'safeguard',
         }
 
-        self._print_func(
-            '{!r}: executing {} scripts ({})...'.format(
-                host_name,
-                script_title_map[script_type],
-                self._format_frag(fragment_i),
-            ),
-        )
+        if sql is None:
+            self._print_func(
+                '{!r}: executing {} scripts ({})...'.format(
+                    host_name,
+                    script_title_map[script_type],
+                    self._format_frag(fragment_i),
+                ),
+            )
+        elif self._show_execute_sql_details:
+            self._print_func(
+                '{!r}: script for {}: {!r}{}...'.format(
+                    host_name,
+                    script_title_map[script_type],
+                    'TODO___SOURCE_FILE_NAME_AND_DETAILS', # TODO
+                    ' (fragment {!r})'.format(fragment_i) if fragment_i is not None else '',
+                ),
+            )
 
     def clean_scr_env(self, host_name, fragment_i):
         self._print_func(
@@ -236,6 +250,9 @@ def make_verbose(print_func, err_print_func, verbose):
     if not verbose:
         return NonVerbose()
 
-    return Verbose(print_func, err_print_func)
+    show_execute_sql_details = verbose >= 2
+
+    return Verbose(print_func, err_print_func,
+            show_execute_sql_details=show_execute_sql_details)
 
 # vi:ts=4:sw=4:et
