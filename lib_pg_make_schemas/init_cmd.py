@@ -83,14 +83,13 @@ def init_cmd(args_ctx, print_func, err_print_func):
                     verb.execute_sql(
                             host_name, 'init_sql', recv.look_fragment_i(host_name))
 
+                sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
                 verb.execute_sql(
                         host_name, 'init_sql', recv.look_fragment_i(host_name),
                         sql=sql)
 
-                recv.execute(
-                    host_name,
-                    pg_role_path.apply_pg_role_path(sql, None, None),
-                )
+                recv.execute(host_name, sql)
 
             recv.execute(host_name, pg_role_path.pg_role_path(None, None))
 

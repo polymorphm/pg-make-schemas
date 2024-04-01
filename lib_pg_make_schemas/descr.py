@@ -167,26 +167,47 @@ class LoadUtils:
     def read_content(
                 cls,
                 file_path_list, first_file_path_list, last_file_path_list,
-                inline,
+                inline, inline_path,
                 include_list,
             ):
         if first_file_path_list is not None:
             for file_path in first_file_path_list:
+                info = {
+                    'file_path': os.path.relpath(file_path, start=include_list[-1]),
+                    'file_path_type': 'first',
+                }
+
                 with cls.check_and_open_for_r(file_path, include_list) as fd:
-                    yield fd.read()
+                    yield fd.read(), info
 
         if file_path_list is not None:
             for file_path in file_path_list:
+                info = {
+                    'file_path': os.path.relpath(file_path, start=include_list[-1]),
+                    'file_path_type': 'regular',
+                }
+
                 with cls.check_and_open_for_r(file_path, include_list) as fd:
-                    yield fd.read()
+                    yield fd.read(), info
 
         if inline is not None:
-            yield inline
+            info = {
+                'file_path': os.path.relpath(inline_path, start=include_list[-1])
+                        if inline_path is not None else None,
+                'file_path_type': 'inline',
+            }
+
+            yield inline, info
 
         if last_file_path_list is not None:
             for file_path in last_file_path_list:
+                info = {
+                    'file_path': os.path.relpath(file_path, start=include_list[-1]),
+                    'file_path_type': 'last',
+                }
+
                 with cls.check_and_open_for_r(file_path, include_list) as fd:
-                    yield fd.read()
+                    yield fd.read(), info
 
 class InitDescr:
     _load_utils = LoadUtils
@@ -246,7 +267,7 @@ class InitDescr:
             self.file_path_list,
             self.first_file_path_list,
             self.last_file_path_list,
-            self.sql,
+            self.sql, self.init_file_path,
             self.include_list,
         )
 
@@ -341,7 +362,7 @@ class SchemaDescr:
             self.file_path_list,
             self.first_file_path_list,
             self.last_file_path_list,
-            self.sql,
+            self.sql, self.schema_file_path,
             self.include_list,
         )
 
@@ -403,7 +424,7 @@ class LateDescr:
             self.file_path_list,
             self.first_file_path_list,
             self.last_file_path_list,
-            self.sql,
+            self.sql, self.late_file_path,
             self.include_list,
         )
 
@@ -465,7 +486,7 @@ class SafeguardDescr:
             self.file_path_list,
             self.first_file_path_list,
             self.last_file_path_list,
-            self.sql,
+            self.sql, self.safeguard_file_path,
             self.include_list,
         )
 
@@ -740,7 +761,7 @@ class SettingsDescr:
             self.file_path_list,
             self.first_file_path_list,
             self.last_file_path_list,
-            self.sql,
+            self.sql, self.settings_file_path,
             self.include_list,
         )
 
@@ -807,7 +828,7 @@ class UpgradeDescr:
             self.file_path_list,
             self.first_file_path_list,
             self.last_file_path_list,
-            self.sql,
+            self.sql, self.upgrade_file_path,
             self.include_list,
         )
 

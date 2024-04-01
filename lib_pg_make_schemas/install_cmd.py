@@ -165,13 +165,12 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     if not i:
                         verb.execute_sql(host_name, 'init_sql', recv.look_fragment_i(host_name))
 
+                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
                     verb.execute_sql(host_name, 'init_sql', recv.look_fragment_i(host_name),
                             sql=sql)
 
-                    recv.execute(
-                        host_name,
-                        pg_role_path.apply_pg_role_path(sql, None, None),
-                    )
+                    recv.execute(host_name, sql)
 
         if not args_ctx.reinstall_func:
             for host in hosts_descr.host_list:
@@ -194,14 +193,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
                             verb.execute_sql(
                                     host_name, 'var_install_sql', recv.look_fragment_i(host_name))
 
+                        sql = pg_role_path.apply_pg_role_path(sql, owner, schema_name)
+
                         verb.execute_sql(
                                 host_name, 'var_install_sql', recv.look_fragment_i(host_name),
                                 sql=sql)
 
-                        recv.execute(
-                            host_name,
-                            pg_role_path.apply_pg_role_path(sql, owner, schema_name),
-                        )
+                        recv.execute(host_name, sql)
 
                 for i, sql in enumerate(
                             install_sql.read_late_sql(source_code_cluster_descr, host_type),
@@ -210,14 +208,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'late_install_sql', recv.look_fragment_i(host_name))
 
+                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
                     verb.execute_sql(
                             host_name, 'late_install_sql', recv.look_fragment_i(host_name),
                             sql=sql)
 
-                    recv.execute(
-                        host_name,
-                        pg_role_path.apply_pg_role_path(sql, None, None),
-                    )
+                    recv.execute(host_name, sql)
 
         for settings_cluster_descr in settings_cluster_descr_list:
             for host in hosts_descr.host_list:
@@ -231,14 +228,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'settings_sql', recv.look_fragment_i(host_name))
 
+                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
                     verb.execute_sql(
                             host_name, 'settings_sql', recv.look_fragment_i(host_name),
                             sql=sql)
 
-                    recv.execute(
-                        host_name,
-                        pg_role_path.apply_pg_role_path(sql, None, None),
-                    )
+                    recv.execute(host_name, sql)
 
         for host in hosts_descr.host_list:
             host_name = host['name']
@@ -260,14 +256,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'func_install_sql', recv.look_fragment_i(host_name))
 
+                    sql = pg_role_path.apply_pg_role_path(sql, owner, schema_name)
+
                     verb.execute_sql(
                             host_name, 'func_install_sql', recv.look_fragment_i(host_name),
                             sql=sql)
 
-                    recv.execute(
-                        host_name,
-                        pg_role_path.apply_pg_role_path(sql, owner, schema_name),
-                    )
+                    recv.execute(host_name, sql)
 
         for host in hosts_descr.host_list:
             host_name = host['name']
@@ -280,14 +275,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     verb.execute_sql(
                             host_name, 'safeguard_sql', recv.look_fragment_i(host_name))
 
+                sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
                 verb.execute_sql(
                         host_name, 'safeguard_sql', recv.look_fragment_i(host_name),
                         sql=sql)
 
-                recv.execute(
-                    host_name,
-                    pg_role_path.apply_pg_role_path(sql, None, None),
-                )
+                recv.execute(host_name, sql)
 
         for host in hosts_descr.host_list:
             host_name = host['name']

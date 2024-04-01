@@ -226,12 +226,50 @@ class Verbose:
                 ),
             )
         elif self._show_execute_sql_details:
+            if isinstance(sql, tuple):
+                sql_str, sql_info = sql
+            elif isinstance(sql, str):
+                sql_str, sql_info = sql, {}
+            else:
+                raise TypeError
+
+            file_path = sql_info.get('file_path')
+
+            if file_path is None:
+                file_path = '<unknown-file>'
+
+            extra_detail_list = []
+
+            file_path_title_map = {
+                'first': 'first file',
+                'regular': 'regular file',
+                'inline': 'inline sql',
+                'last': 'last file',
+                None: None,
+            }
+
+            file_path_title = file_path_title_map[sql_info.get('file_path_type')]
+            pg_role = sql_info.get('pg_role')
+            pg_search_path = sql_info.get('pg_search_path')
+
+            if file_path_title is not None:
+                extra_detail_list.append(file_path_title)
+
+            if pg_role is not None:
+                extra_detail_list.append('pg_role {!r}'.format(pg_role))
+
+            if pg_search_path is not None:
+                extra_detail_list.append('pg_search_path {!r}'.format(pg_search_path))
+
+            if fragment_i is not None:
+                extra_detail_list.append('fragment {!r}'.format(fragment_i))
+
             self._print_func(
                 '{!r}: script for {}: {!r}{}...'.format(
                     host_name,
                     script_title_map[script_type],
-                    'TODO___SOURCE_FILE_NAME_AND_DETAILS', # TODO
-                    ' (fragment {!r})'.format(fragment_i) if fragment_i is not None else '',
+                    file_path,
+                    ' ({})'.format(', '.join(extra_detail_list)) if extra_detail_list else '',
                 ),
             )
 

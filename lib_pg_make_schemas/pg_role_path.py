@@ -34,9 +34,22 @@ def apply_pg_role_path(
             pg_role_path_func=pg_role_path,
             pg_ident_quote_func=pg_literal.pg_ident_quote,
         ):
+    if isinstance(sql, tuple):
+        sql_str, sql_info = sql
+    elif isinstance(sql, str):
+        sql_str, sql_info = sql, {}
+    else:
+        raise TypeError
+
+    new_sql_info = sql_info.copy()
+    new_sql_info.update({
+        'pg_role': role,
+        'pg_search_path': schema_name,
+    })
+
     return '{}\n\n{}\n\n;'.format(
         pg_role_path_func(role, schema_name, pg_ident_quote_func=pg_ident_quote_func),
-        sql.rstrip(),
-    )
+        sql_str.rstrip(),
+    ), new_sql_info
 
 # vi:ts=4:sw=4:et

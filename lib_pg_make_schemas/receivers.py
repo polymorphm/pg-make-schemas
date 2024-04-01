@@ -13,7 +13,14 @@ class SqlFileUtils:
 
     @classmethod
     def write_fragment(cls, fd, fragment):
-        fd.write(fragment)
+        if isinstance(fragment, tuple):
+            fragment_str, fragment_info = fragment
+        elif isinstance(fragment, str):
+            fragment_str, fragment_info = fragment, {}
+        else:
+            raise TypeError
+
+        fd.write(fragment_str)
         fd.write('\n\n')
         fd.flush()
 
@@ -206,12 +213,19 @@ class Receivers:
         if self._execute:
             con = self._con_map[host_name]
 
+            if isinstance(fragment, tuple):
+                fragment_str, fragment_info = fragment
+            elif isinstance(fragment, str):
+                fragment_str, fragment_info = fragment, {}
+            else:
+                raise TypeError
+
             try:
                 with con.cursor() as cur:
-                    cur.execute(fragment)
+                    cur.execute(fragment_str)
             except self.con_error as e:
                 raise ReceiversError(
-                        '{!r}: {!r}: {}'.format(host_name, type(e), e)) from e
+                        '{!r}: {!r}: {!r}: {}'.format(host_name, fragment_info, type(e), e)) from e
             finally:
                 self.write_notices(host_name, con)
 
