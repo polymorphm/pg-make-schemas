@@ -15,7 +15,7 @@ Requirements
 Packages are required:
 
 * ``python >= 3``
-* ``python-psycopg2``
+* ``psycopg2``
 * ``PyYAML``
 
 Database Admin (DBA) SQL-Snippets
