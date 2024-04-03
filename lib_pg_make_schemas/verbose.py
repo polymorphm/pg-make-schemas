@@ -227,9 +227,9 @@ class Verbose:
             )
         elif self._show_execute_sql_details:
             if isinstance(sql, tuple):
-                sql_str, sql_info = sql
+                _, sql_info = sql
             elif isinstance(sql, str):
-                sql_str, sql_info = sql, {}
+                _, sql_info = sql, {}
             else:
                 raise TypeError
 

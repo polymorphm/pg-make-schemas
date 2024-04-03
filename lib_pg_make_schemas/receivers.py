@@ -14,13 +14,21 @@ class SqlFileUtils:
     @classmethod
     def write_fragment(cls, fd, fragment):
         if isinstance(fragment, tuple):
-            fragment_str, fragment_info = fragment
+            fragment_list_or_str, fragment_info = fragment
+            if isinstance(fragment_list_or_str, list):
+                fragment_str_list = fragment_list_or_str
+            elif isinstance(fragment_list_or_str, str):
+                fragment_str_list = [fragment_list_or_str]
+            else:
+                raise TypeError
         elif isinstance(fragment, str):
             fragment_str, fragment_info = fragment, {}
+            fragment_str_list = [fragment_str]
         else:
             raise TypeError
 
-        fd.write(fragment_str)
+        for fragment_str in fragment_str_list:
+            fd.write(fragment_str)
         fd.write('\n\n')
         fd.flush()
 
@@ -214,15 +222,23 @@ class Receivers:
             con = self._con_map[host_name]
 
             if isinstance(fragment, tuple):
-                fragment_str, fragment_info = fragment
+                fragment_list_or_str, fragment_info = fragment
+                if isinstance(fragment_list_or_str, list):
+                    fragment_str_list = fragment_list_or_str
+                elif isinstance(fragment_list_or_str, str):
+                    fragment_str_list = [fragment_list_or_str]
+                else:
+                    raise TypeError
             elif isinstance(fragment, str):
                 fragment_str, fragment_info = fragment, {}
+                fragment_str_list = [fragment_str]
             else:
                 raise TypeError
 
             try:
                 with con.cursor() as cur:
-                    cur.execute(fragment_str)
+                    for fragment_str in fragment_str_list:
+                        cur.execute(fragment_str)
             except self.con_error as e:
                 raise ReceiversError(
                         '{!r}: {!r}: {!r}: {}'.format(host_name, fragment_info, type(e), e)) from e
