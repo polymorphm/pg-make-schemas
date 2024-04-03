@@ -7,7 +7,7 @@ from a revisioned source code repository.
 Status
 ------
 
-Release: ``pg-make-schemas-9.0.0``.
+Release: ``pg-make-schemas-9.0.1``.
 
 Requirements
 ------------
