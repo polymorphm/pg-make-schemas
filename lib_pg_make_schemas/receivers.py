@@ -1,5 +1,5 @@
 import itertools
-import psycopg2
+import psycopg
 from . import pg_notices
 
 class ReceiversError(Exception):
@@ -65,13 +65,14 @@ class SqlFileUtils:
 class Receivers:
     _sql_file_utils = SqlFileUtils
 
-    con_error = psycopg2.Error
+    con_error = psycopg.Error
 
     def __init__(self, execute, pretend, output):
         self._execute = execute
         self._pretend = pretend
         self._output = output
         self._con_map = {}
+        self._notice_collector_map = {}
         self._fd_map = {}
         self._nfd_map = {}
         self._frag_cnt_map = {}
@@ -79,18 +80,18 @@ class Receivers:
         self._notices = self._execute and self._output is not None
 
     def _connect(self, conninfo):
-        con = psycopg2.connect(conninfo)
+        con = psycopg.connect(conninfo)
 
         if con.autocommit:
-            # Psycopg's http://initd.org/psycopg/docs/connection.html says:
-            #   """The default is False (manual commit) as per DBAPI specification."""
-
             raise AssertionError('con.autocommit should not be set into True')
 
         if self._notices:
-            con.notices = pg_notices.PgNotices()
+            notices = pg_notices.PgNotices()
+            con.add_notice_handler(notices)
+        else:
+            notices = None
 
-        return con
+        return con, notices
 
     def _open(self, output_path):
         return open(output_path, 'w', encoding='utf-8', newline='\n')
@@ -123,8 +124,11 @@ class Receivers:
                     ),
                 )
 
-            con = self._connect(conninfo)
+            con, notices = self._connect(conninfo)
             self._con_map[host_name] = con
+
+            if notices is not None:
+                self._notice_collector_map[host_name] = notices
 
         if self._output is not None:
             if host_name in self._fd_map:
@@ -198,7 +202,7 @@ class Receivers:
     def write_notices(self, host_name, con):
         if self._notices:
            nfd = self._nfd_map[host_name]
-           notices = con.notices.pop_all()
+           notices = self._notice_collector_map[host_name].pop_all()
 
            self._sql_file_utils.write_notices(nfd, notices)
 
@@ -280,6 +284,7 @@ class Receivers:
 
             con.close()
             del self._con_map[host_name]
+            self._notice_collector_map.pop(host_name, None)
 
     def finish(self, hosts_descr, finish_host_verb_func=None):
         for host in hosts_descr.host_list:
@@ -302,5 +307,6 @@ class Receivers:
         for host_name, con in reversed(list(self._con_map.items())):
             con.close()
             del self._con_map[host_name]
+            self._notice_collector_map.pop(host_name, None)
 
 # vi:ts=4:sw=4:et
