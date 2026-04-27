@@ -1,0 +1,133 @@
+Core Concepts
+=============
+
+pg-make-schemas expects database source code to be described by small YAML
+files and SQL files. The YAML files define the tree; the SQL files define the
+database objects inside that tree.
+
+The Tool's Vocabulary
+---------------------
+
+``source_code``
+    A directory containing ``cluster.yaml``. It describes one application
+    revision.
+
+``host``
+    One target database connection from the hosts file.
+
+``host type``
+    A logical database kind. Several hosts may share the same type and receive
+    the same schema set.
+
+``var schema``
+    A schema with data-bearing or otherwise persistent objects. pg-make-schemas
+    preserves these during normal upgrades and changes them through migrations.
+
+``func schema``
+    A schema intended to be dropped and recreated from current source code
+    during an upgrade. Function/API schemas are the typical use case.
+
+``settings source code``
+    An optional second source tree containing configuration SQL and settings
+    migrations for the same application.
+
+``revision``
+    The application version declared by ``cluster.yaml``. pg-make-schemas stores
+    separate var and func revisions in the database.
+
+Why Split var and func Schemas?
+-------------------------------
+
+PostgreSQL function code often changes more often than table structure. If
+functions live in schemas that can be recreated, normal upgrades become simpler:
+
+1. Guard the current var revision.
+2. Drop existing func schemas.
+3. Apply migrations to var schemas.
+4. Recreate func schemas from current source code.
+5. Store the new var and func revision.
+
+This split is a convention, not a PostgreSQL feature. The project decides which
+objects belong in var schemas and which belong in func schemas. Tables and data
+normally belong in var schemas. APIs, read functions, write functions, and
+replaceable helper functions normally belong in func schemas.
+
+Project Revisions
+-----------------
+
+The root ``cluster.yaml`` declares:
+
+.. code-block:: yaml
+
+   cluster:
+     application: starlight-ledger
+     revision: "1.0.0"
+
+For application ``starlight-ledger`` and host type ``ledger_main``,
+pg-make-schemas creates internal objects with normalized names like:
+
+* ``starlight_ledger_revision.ledger_main_var_revision``
+* ``starlight_ledger_revision.ledger_main_func_revision``
+* ``starlight_ledger_revision.ledger_main_var_revision_history``
+* ``starlight_ledger_revision.ledger_main_func_revision_history``
+
+The exact SQL identifiers are quoted when generated. Hyphens are converted to
+underscores and names are lower-cased for these internal identifiers.
+
+Execution Context
+-----------------
+
+Before running SQL for a schema, pg-make-schemas wraps it with:
+
+.. code-block:: sql
+
+   set local role to "owner_role";
+   set local search_path to "schema_name";
+   set local check_function_bodies to off;
+
+For SQL outside a schema-specific context, it uses role ``postgres`` and an
+empty ``search_path``.
+
+Script Environment
+------------------
+
+Each host transaction gets temporary helper functions:
+
+.. code-block:: sql
+
+   pg_temp.scr_env_host_name()
+   pg_temp.scr_env_host_type()
+   pg_temp.scr_env_host_params()
+   pg_temp.scr_env_shared()
+
+Use these from SQL when behavior must depend on the target host or on values in
+the hosts file.
+
+Deterministic Ordering
+----------------------
+
+Files and child directories are discovered in sorted order. The ``first`` and
+``last`` YAML fields can move selected files or child entities to the beginning
+or end. This keeps generated SQL repeatable across machines.
+
+Source Files and Includes
+-------------------------
+
+Each YAML entity may include SQL files from its own directory and, for fields
+that support it, from additional included directories. Include paths must be
+inside the source tree or inside directories explicitly allowed with
+``--include``.
+
+Include references let a source tree point to external shared code without
+hard-coding absolute paths:
+
+.. code-block:: yaml
+
+   schema:
+     include: $COMMON_SQL/ledger-api
+
+Then pass the reference on the command line:
+
+.. code-block:: console
+
+   $ ./pg-make-schemas install -i COMMON_SQL=/opt/shared-sql ...

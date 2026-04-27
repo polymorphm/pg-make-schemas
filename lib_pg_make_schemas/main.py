@@ -39,8 +39,8 @@ def try_err_print(*args, **kwargs):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='an utility for installing and upgrading database schemas '
-                'from a revisioned source code repository.',
+        description='a utility for installing and upgrading database schemas '
+                'from a versioned source-code repository.',
     )
 
     subparsers = parser.add_subparsers(
@@ -49,22 +49,22 @@ def main():
 
     init_parser = subparsers.add_parser(
         'init',
-        help='do some basic initialization of schemas, e.g., '
-                'idempotent creation of extensions and roles',
-        description='do some basic initialization of schemas, e.g., '
-                'idempotent creation of extensions and roles',
+        help='run basic schema initialization, such as idempotent creation '
+                'of extensions and roles',
+        description='run basic schema initialization, such as idempotent '
+                'creation of extensions and roles',
     )
 
     install_parser = subparsers.add_parser(
         'install',
-        help='do fresh installing schemas',
-        description='do fresh installing schemas',
+        help='install schemas into a fresh database',
+        description='install schemas into a fresh database',
     )
 
     upgrade_parser = subparsers.add_parser(
         'upgrade',
-        help='do upgrading schemas from one of previous revisions',
-        description='upgrading schemas from one of previous revisions',
+        help='upgrade schemas from a previous revision',
+        description='upgrade schemas from a previous revision',
     )
 
     for sub_parser in (init_parser, install_parser, upgrade_parser):
@@ -72,45 +72,44 @@ def main():
             '-v',
             '--verbose',
             action='count',
-            help='be verbose. there will be every operation shown. '
-                    'use two times to show more details about executing sql',
+            help='show operations as they run. use twice to show more '
+                    'details about executed SQL',
         )
 
         sub_parser.add_argument(
             '-e',
             '--execute',
             action='store_true',
-            help='do database interactions. '
-                    'it is default when the ``--output`` option is not used. '
-                    'Using ``--execute`` option with ``--output`` option '
-                    'writes notices files besides making SQL files',
+            help='connect to databases and run SQL. this is the default when '
+                    '``--output`` is not used. when used with ``--output``, '
+                    'also writes PostgreSQL notice files next to SQL files',
         )
 
         sub_parser.add_argument(
             '-p',
             '--pretend',
             action='store_true',
-            help='use rollbacks instead of commits after doing database interactions. '
-                    'this implies ``--execute`` option',
+            help='roll back database transactions instead of committing them. '
+                    'this implies ``--execute``',
         )
 
         sub_parser.add_argument(
             '-o',
             '--output',
-            help='prefix to output SQL files. this makes output SQL files '
-                    'instead of doing database interactions (besides '
-                    'doing database interactions when the ``--execute`` option is used). '
-                    'warning(!) the result may be different from the result of database interactions. '
-                    'the output code is less smart and it can be more dangerous',
+            help='prefix for generated SQL files. without ``--execute``, '
+                    'this writes SQL files instead of connecting to databases. '
+                    'with ``--execute``, this writes SQL files as an execution '
+                    'record. warning: generated SQL may differ from live '
+                    'database execution and should be reviewed carefully',
         )
 
         sub_parser.add_argument(
             '-i',
             '--include',
             action='append',
-            help='add this path to allowed list of directories which can be '
-                    'refered from source code files or settings source code files. '
-                    'this option can also be used to define include-reference, '
+            help='add a directory to the allow-list for files referenced by '
+                    'source-code or settings source-code trees. this option '
+                    'can also define an include reference, '
                     'using name=value syntax. '
                     'you can use this option many times',
         )
@@ -120,91 +119,88 @@ def main():
             '-c',
             '--comment',
             action='store_true',
-            help='use ``comment.sh`` shell script for getting revision comment. '
-                    'warning(!) before using this option make sure the shell script '
-                    'is from a trusted origin. using environment variable '
-                    '``PG_MAKE_SCHEMAS_COMMENT`` implies this option',
+            help='run ``comment.sh`` to get the revision comment. warning: '
+                    'use this only with trusted scripts. setting the '
+                    '``PG_MAKE_SCHEMAS_COMMENT`` environment variable implies '
+                    'this option',
         )
 
         sub_parser.add_argument(
             '--init',
             action='store_true',
-            help='do some basic initialization. see ``init`` command. '
-                    'pay attention that ``--init`` option might work worse than '
-                    'standalone ``init`` command works due to different '
-                    'transaction management',
+            help='run basic initialization before install or upgrade. see the '
+                    '``init`` command. the standalone ``init`` command may be '
+                    'safer for some initialization tasks because it uses '
+                    'different transaction management',
         )
 
     install_parser.add_argument(
         '--reinstall',
         action='store_true',
-        help='do dropping schemas before creating new schemas '
-                'including variable schemas. '
-                'warning(!) your data will be deleted',
+        help='drop schemas before creating new schemas, including variable '
+                'schemas. warning: this deletes data',
     )
 
     install_parser.add_argument(
         '--reinstall-func',
         action='store_true',
-        help='it is like ``--reinstall`` option, but doesn\'t touch variable schemas. '
-                'so your data will be safe, but variable schemas '
-                'might become incompatible with created function schemas',
+        help='like ``--reinstall``, but do not touch variable schemas. this '
+                'keeps data, but variable schemas may become incompatible '
+                'with the recreated function schemas',
     )
 
     for sub_parser in (install_parser, upgrade_parser):
         sub_parser.add_argument(
             '--cascade',
             action='store_true',
-            help='use drop with cascade when dropping schemas. '
-                    'warning(!) using this option can be dangerous, make sure '
-                    'you understand what you do and understand possible consequences'
+            help='use DROP ... CASCADE when dropping schemas. warning: this '
+                    'can be dangerous; review the possible consequences first'
         )
 
         sub_parser.add_argument(
             '-A',
             '--weak-acls',
             action='store_true',
-            help='use weak guarding acls for schemas instead of strong guarding. '
-                    'warning(!) obviously it would be bad if you had to using this option, '
-                    'but it is the fastest way to suppress the error ``unexpected acl: ...``'
+            help='use weak ACL guarding for schemas instead of strict '
+                    'guarding. this turns ``unexpected acl: ...`` errors into '
+                    'notices'
         )
 
     upgrade_parser.add_argument(
         '--show-rev',
         action='store_true',
-        help='do nothing except showing revision information. '
-                'you can use ``--rev`` option for checking ability '
-                'upgrading from a specific revision',
+        help='only show revision information. use with ``--rev`` to check '
+                'whether an upgrade path exists from a specific revision',
     )
 
     upgrade_parser.add_argument(
         '--change-rev',
         action='store_true',
-        help='do nothing except changing revision information. '
-                'warning(!) it is dangerous feature, you can mistakenly lose real revision information '
-                'when the ``--rev`` option is not used',
+        help='only change stored revision information. warning: this is '
+                'dangerous; without ``--rev`` you can overwrite real revision '
+                'information',
     )
 
     upgrade_parser.add_argument(
         '-r',
         '--rev',
-        help='do upgrading from this specific revision only. '
-                'that may be useful when the hosts file is empty '
-                'or when ``--show-rev``/``--change-rev`` option is used',
+        help='upgrade from this specific revision only. this can be useful '
+                'when using pseudo-hosts with ``-`` or when '
+                '``--show-rev``/``--change-rev`` is used',
     )
 
     for sub_parser in (init_parser, install_parser, upgrade_parser):
         sub_parser.add_argument(
             'hosts',
-            help='path to the hosts file. if \'-\' is used, it is '
-                    'considered as an empty hosts file. that may be useful '
-                    'when the ``--output`` option is used',
+            help='path to the hosts file. if \'-\' is used, pseudo-hosts are '
+                    'built from source-code schema types. this is useful when '
+                    'the ``--output`` option is used',
         )
 
         arg_help_map = {
-            init_parser: 'path to source code. will be used init files only',
-            install_parser: 'path to source code. won\'t be used migration files',
-            upgrade_parser: 'path to source code. will be used migration files',
+            init_parser: 'path to source code. only init files are used',
+            install_parser: 'path to source code. migration files are not used',
+            upgrade_parser: 'path to source code. migration files are used',
         }
 
         arg_help = arg_help_map[sub_parser]
@@ -219,9 +215,9 @@ def main():
 
     for sub_parser in (install_parser, upgrade_parser):
         if sub_parser == upgrade_parser:
-            arg_help='path to settings source code. will be used migration files'
+            arg_help='path to settings source code. migration files are used'
         else:
-            arg_help='path to settings source code. won\'t be used migration files'
+            arg_help='path to settings source code. migration files are not used'
 
         sub_parser.add_argument(
             'settings_source_code',
