@@ -12,6 +12,7 @@ from . import scr_env
 from . import upgrade
 from . import init_sql
 from . import install_sql
+from . import settings_sql
 from . import upgrade_sql
 from . import safeguard_sql
 
@@ -19,6 +20,20 @@ class UpgradeCmdError(Exception):
     pass
 
 def upgrade_cmd(args_ctx, print_func, err_print_func):
+    if args_ctx.install and args_ctx.show_rev:
+        raise UpgradeCmdError('unable to use --install with --show-rev')
+
+    if args_ctx.install and args_ctx.change_rev:
+        raise UpgradeCmdError('unable to use --install with --change-rev')
+
+    if args_ctx.install and args_ctx.rev is not None:
+        raise UpgradeCmdError('unable to use --install with --rev')
+
+    if args_ctx.install and not args_ctx.execute:
+        raise UpgradeCmdError(
+            'unable to detect hosts needing install without execution',
+        )
+
     if args_ctx.rev is None and not args_ctx.execute:
         raise UpgradeCmdError('unable to upgrade without any information about revision')
 
@@ -116,6 +131,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             ) as recv:
         recv.begin(hosts_descr, begin_host_verb_func=verb.begin_host)
 
+        install_host_name_set = set()
+
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
@@ -148,6 +165,21 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     host_func_com,
                     print_func,
                 )
+
+            if args_ctx.install and host_var_rev is None:
+                verb.fallback_to_install(host_name)
+
+                verb.guard_var_revision(host_name, None, recv.look_fragment_i(host_name))
+
+                recv.execute(host_name, rev_sql.guard_var_revision(host_type, None))
+
+                verb.guard_func_revision(host_name, None, recv.look_fragment_i(host_name))
+
+                recv.execute(host_name, rev_sql.guard_func_revision(host_type, None))
+
+                install_host_name_set.add(host_name)
+
+                continue
 
             host_migr_list = upgrade.find_migr_way(
                 source_code_cluster_descr,
@@ -191,6 +223,9 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
 
+                    if host_name in install_host_name_set:
+                        continue
+
                     host_migr_list = migr_list_map[host_name]
 
                     if host_migr_list is None:
@@ -223,6 +258,80 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
+
+                    if host_name not in install_host_name_set:
+                        continue
+
+                    for schema_name, owner, grant_list, sql_iter in \
+                            install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
+                        recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+
+                        verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
+
+                        recv.execute(
+                            host_name,
+                            install_sql.create_schema(schema_name, owner, grant_list),
+                        )
+
+                        for i, sql in enumerate(sql_iter):
+                            if not i:
+                                verb.execute_sql(
+                                        host_name, 'var_install_sql', recv.look_fragment_i(host_name))
+
+                            sql = pg_role_path.apply_pg_role_path(sql, owner, schema_name)
+
+                            verb.execute_sql(
+                                    host_name, 'var_install_sql', recv.look_fragment_i(host_name),
+                                    sql=sql)
+
+                            recv.execute(host_name, sql)
+
+                    for i, sql in enumerate(
+                                install_sql.read_late_sql(source_code_cluster_descr, host_type),
+                            ):
+                        if not i:
+                            verb.execute_sql(
+                                    host_name, 'late_install_sql', recv.look_fragment_i(host_name))
+
+                        sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
+                        verb.execute_sql(
+                                host_name, 'late_install_sql', recv.look_fragment_i(host_name),
+                                sql=sql)
+
+                        recv.execute(host_name, sql)
+
+                for settings_cluster_descr in settings_cluster_descr_list:
+                    for host in hosts_descr.host_list:
+                        host_name = host['name']
+                        host_type = host['type']
+
+                        if host_name not in install_host_name_set:
+                            continue
+
+                        for i, sql in enumerate(
+                                    settings_sql.read_settings_sql(settings_cluster_descr, host_type),
+                                ):
+                            if not i:
+                                verb.execute_sql(
+                                        host_name, 'settings_sql',
+                                        recv.look_fragment_i(host_name))
+
+                            sql = pg_role_path.apply_pg_role_path(sql, None, None)
+
+                            verb.execute_sql(
+                                    host_name, 'settings_sql',
+                                    recv.look_fragment_i(host_name),
+                                    sql=sql)
+
+                            recv.execute(host_name, sql)
+
+                for host in hosts_descr.host_list:
+                    host_name = host['name']
+                    host_type = host['type']
+
+                    if host_name in install_host_name_set:
+                        continue
 
                     host_migr_list = migr_list_map[host_name]
                     interm_migr_list, final_migr_list = host_migr_list[:-1], host_migr_list[-1:]

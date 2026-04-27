@@ -8,6 +8,9 @@ class NonVerbose:
     def prepare_upgrade(self):
         pass
 
+    def fallback_to_install(self, host_name):
+        pass
+
     def source_code_revision(self, application, revision, comment):
         pass
 
@@ -82,6 +85,13 @@ class Verbose:
 
     def prepare_upgrade(self):
         self._print_func('preparing for upgrading...')
+
+    def fallback_to_install(self, host_name):
+        self._print_func(
+            '{!r}: falling back to install...'.format(
+                host_name,
+            ),
+        )
 
     def source_code_revision(self, application, revision, comment):
         self._print_func(

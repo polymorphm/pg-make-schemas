@@ -189,6 +189,13 @@ def main():
                 '``--show-rev``/``--change-rev`` is used',
     )
 
+    upgrade_parser.add_argument(
+        '--install',
+        action='store_true',
+        help='fall back to install for hosts that do not have a stored var '
+                'revision',
+    )
+
     for sub_parser in (init_parser, install_parser, upgrade_parser):
         sub_parser.add_argument(
             'hosts',
@@ -281,6 +288,11 @@ def main():
         args_ctx.reinstall_func = True
     else:
         args_ctx.reinstall_func = False
+
+    if args_ctx.command == 'upgrade':
+        args_ctx.install = args.install
+    else:
+        args_ctx.install = False
 
     if args_ctx.command in ('install', 'upgrade'):
         args_ctx.comment = args.comment
