@@ -12,7 +12,7 @@ be recreated, such as function/API schemas.
 Status
 ------
 
-Developer version (for master git branch).
+Release: ``pg-make-schemas-10.0.0``.
 
 Requirements
 ------------
