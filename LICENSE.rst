@@ -1,7 +1,8 @@
 The MIT License
 ===============
 
-Copyright 2017, 2018, 2019, 2024 Andrei Antonov <polymorphm@gmail.com>.
+Copyright 2017, 2018, 2019, 2024, 2026
+Andrei Antonov <polymorphm.mobile@gmail.com>.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
