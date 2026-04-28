@@ -23,6 +23,9 @@ class NonVerbose:
     def ensure_revision_structs(self, host_name, fragment_i):
         pass
 
+    def guard_exclusive(self, host_name, fragment_i):
+        pass
+
     def guard_var_revision(self, host_name, revision, fragment_i):
         pass
 
@@ -33,6 +36,9 @@ class NonVerbose:
         pass
 
     def clean_func_revision(self, host_name, fragment_i):
+        pass
+
+    def clean_exclusive(self, host_name, fragment_i):
         pass
 
     def push_var_revision(self, host_name, revision, comment, fragment_i):
@@ -122,6 +128,14 @@ class Verbose:
             ),
         )
 
+    def guard_exclusive(self, host_name, fragment_i):
+        self._print_func(
+            '{!r}: guarding exclusive revision schema ({})...'.format(
+                host_name,
+                self._format_frag(fragment_i),
+            ),
+        )
+
     def guard_var_revision(self, host_name, revision, fragment_i):
         self._print_func(
             '{!r}: guarding var revision {!r} ({})...'.format(
@@ -151,6 +165,14 @@ class Verbose:
     def clean_func_revision(self, host_name, fragment_i):
         self._print_func(
             '{!r}: cleaning func revision ({})...'.format(
+                host_name,
+                self._format_frag(fragment_i),
+            ),
+        )
+
+    def clean_exclusive(self, host_name, fragment_i):
+        self._print_func(
+            '{!r}: cleaning exclusive lock ({})...'.format(
                 host_name,
                 self._format_frag(fragment_i),
             ),

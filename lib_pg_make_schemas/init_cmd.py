@@ -68,6 +68,11 @@ def init_cmd(args_ctx, print_func, err_print_func):
 
             recv.execute(host_name, pg_role_path.pg_role_path(None, None))
 
+            if args_ctx.exclusive:
+                verb.guard_exclusive(host_name, recv.look_fragment_i(host_name))
+
+                recv.execute(host_name, rev_sql.guard_exclusive())
+
             verb.scr_env(host_name, recv.look_fragment_i(host_name))
 
             recv.execute(host_name, scr_env.scr_env(hosts_descr, host_name))
@@ -96,6 +101,11 @@ def init_cmd(args_ctx, print_func, err_print_func):
             verb.clean_scr_env(host_name, recv.look_fragment_i(host_name))
 
             recv.execute(host_name, scr_env.clean_scr_env())
+
+            if args_ctx.exclusive:
+                verb.clean_exclusive(host_name, recv.look_fragment_i(host_name))
+
+                recv.execute(host_name, rev_sql.clean_exclusive())
 
             verb.finish_host(host_name)
 

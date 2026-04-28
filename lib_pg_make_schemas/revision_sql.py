@@ -52,9 +52,34 @@ end if;
 end\
 '''
 
+GUARD_EXCLUSIVE_SQL ='''\
+declare
+_revision_schema text;
+begin
+create schema {q_exclusive_lock_schema_ident};
+
+select ns.nspname
+into _revision_schema
+from pg_namespace ns
+where ns.nspname like '%\\_revision' escape '\\'
+        and ns.nspname <> {q_revision_schema}
+order by ns.nspname
+limit 1;
+if _revision_schema is not null then
+raise 'another application revision schema exists: %', _revision_schema;
+end if;
+end\
+'''
+
+EXCLUSIVE_LOCK_SCHEMA_IDENT = 'make_schemas_exclusive_lock'
+
 CLEAN_REVISION_SQL ='''\
 delete from {q_revision_schema_ident}.{q_revision_ident} rev
 where rev.application = {q_application} and rev.schemas_type = {q_schemas_type};\
+'''
+
+CLEAN_EXCLUSIVE_SQL ='''\
+drop schema {q_exclusive_lock_schema_ident};\
 '''
 
 PUSH_REVISION_SQL ='''\
@@ -149,11 +174,14 @@ class RevisionSql:
     _create_revision_history_table_sql = CREATE_REVISION_HISTORY_TABLE_SQL
     _fetch_revision_sql = FETCH_REVISION_SQL
     _guard_revision_sql = GUARD_REVISION_SQL
+    _guard_exclusive_sql = GUARD_EXCLUSIVE_SQL
     _clean_revision_sql = CLEAN_REVISION_SQL
+    _clean_exclusive_sql = CLEAN_EXCLUSIVE_SQL
     _push_revision_sql = PUSH_REVISION_SQL
     _drop_schemas_cascade_sql = DROP_SCHEMAS_CASCADE_SQL
     _drop_schemas_safe_sql = DROP_SCHEMAS_SAFE_SQL
     _revision_sql_utils = RevisionSqlUtils
+    _exclusive_lock_schema_ident = EXCLUSIVE_LOCK_SCHEMA_IDENT
 
     def __init__(self, application):
         self._application = application
@@ -208,6 +236,19 @@ class RevisionSql:
         )
 
         return 'do {};'.format(self._pg_dollar_quote('do', guard_revision_body))
+
+    def guard_exclusive(self):
+        application_ident = self._revision_sql_utils.make_ident(self._application)
+        revision_schema_ident = self._revision_sql_utils.revision_schema_ident(application_ident)
+
+        guard_exclusive_body = self._guard_exclusive_sql.format(
+            q_exclusive_lock_schema_ident=self._pg_ident_quote(
+                self._exclusive_lock_schema_ident,
+            ),
+            q_revision_schema=self._pg_quote(revision_schema_ident),
+        )
+
+        return 'do {};'.format(self._pg_dollar_quote('do', guard_exclusive_body))
 
     def _clean_revision(self, revision_schema_ident, revision_ident, host_type):
         return self._clean_revision_sql.format(
@@ -369,6 +410,13 @@ class RevisionSql:
         revision_ident = self._revision_sql_utils.func_revision_ident(host_type_ident)
 
         return self._clean_revision(revision_schema_ident, revision_ident, host_type)
+
+    def clean_exclusive(self):
+        return self._clean_exclusive_sql.format(
+            q_exclusive_lock_schema_ident=self._pg_ident_quote(
+                self._exclusive_lock_schema_ident,
+            ),
+        )
 
     def push_var_revision(self, host_type, revision, comment, schemas):
         application_ident = self._revision_sql_utils.make_ident(self._application)

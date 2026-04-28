@@ -114,6 +114,14 @@ def main():
                     'you can use this option many times',
         )
 
+        sub_parser.add_argument(
+            '-X',
+            '--exclusive',
+            action='store_true',
+            help='abort if another application revision schema already '
+                    'exists in the database',
+        )
+
     for sub_parser in (install_parser, upgrade_parser):
         sub_parser.add_argument(
             '-c',
@@ -257,12 +265,15 @@ def main():
 
         if args_ctx.hosts == '-':
             args_ctx.hosts = None
+
+        args_ctx.exclusive = args.exclusive
     else:
         args_ctx.verbose = False
         args_ctx.execute = False
         args_ctx.pretend = False
         args_ctx.output = None
         args_ctx.hosts = None
+        args_ctx.exclusive = False
 
     args_ctx.include_list = []
     args_ctx.include_ref_map = {}
