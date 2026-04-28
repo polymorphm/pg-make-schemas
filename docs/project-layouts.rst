@@ -69,10 +69,16 @@ The hosts file maps physical connections to those types:
    hosts:
      - name: demo_main
        type: ledger_main
-       conninfo: dbname=postgres user=postgres password=postgres
+       conninfo: dbname=ledger_main user=postgres password=postgres
      - name: demo_archive
        type: ledger_archive
-       conninfo: dbname=postgres user=postgres password=postgres
+       conninfo: dbname=ledger_archive user=postgres password=postgres
+
+When using ``--exclusive``, keep each host on its own database. The exclusive
+guard is implemented with a transaction-held schema lock inside the target
+database, so multiple host entries that point at the same database can block
+each other. If multiple host types intentionally share one database, do not use
+``--exclusive`` for that hosts file.
 
 Shared SQL
 ----------

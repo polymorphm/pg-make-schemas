@@ -38,6 +38,14 @@ Shared Options
     contains ``=``, it defines an include reference such as
     ``COMMON=/srv/common-sql``.
 
+``-X``, ``--exclusive``
+    Abort when another application already has a ``*_revision`` schema in the
+    target database. The generated SQL takes a transaction-held schema lock
+    before checking revision schemas, so this option also works in output-only
+    SQL. Use it only when each host in the hosts file targets a different
+    database; if multiple host entries intentionally share one database, do not
+    use ``--exclusive`` for that hosts file.
+
 Output Files
 ------------
 
@@ -158,6 +166,13 @@ Upgrade options:
     Use ``REV`` as the starting revision instead of reading it from the
     database. This is useful with generated SQL, pseudo-hosts from ``HOSTS=-``,
     ``--show-rev``, and controlled revision-metadata repair.
+
+``--install``
+    Fall back to install for hosts without a stored var revision. This is for
+    mixed environments where some hosts are already installed and others are
+    fresh. It requires live execution, because the tool must read each host's
+    current revision, and it cannot be combined with ``--show-rev``,
+    ``--change-rev``, or ``--rev``.
 
 Execution Defaults
 ------------------

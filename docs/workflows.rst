@@ -89,6 +89,37 @@ Include settings source code when needed:
 
    $ ./pg-make-schemas upgrade --execute -v -o out/upgrade hosts.yaml src settings/dev
 
+Upgrade or Install Mixed Hosts
+------------------------------
+
+Use ``upgrade --install`` when one hosts file contains both already-installed
+hosts and fresh hosts:
+
+.. code-block:: console
+
+   $ ./pg-make-schemas upgrade --install --execute -v -o out/mixed hosts.yaml src
+
+For each host, pg-make-schemas reads the stored var revision. Hosts without a
+stored var revision use install phases; other hosts use upgrade phases. This
+requires live execution and cannot be used with ``--rev``, ``--show-rev``, or
+``--change-rev``.
+
+Protect an Exclusive Database
+-----------------------------
+
+Use ``--exclusive`` when a database must contain only this application's
+pg-make-schemas revision structures:
+
+.. code-block:: console
+
+   $ ./pg-make-schemas install --exclusive --execute -v -o out/install hosts.yaml src
+
+The option adds an early SQL guard that fails if any other ``*_revision`` schema
+already exists. It also creates a transaction-held lock schema while the command
+runs, so each host in the hosts file should point at a different database. If
+several host entries intentionally target the same database, do not use
+``--exclusive`` for that hosts file.
+
 Show Current Revision
 ---------------------
 
@@ -163,3 +194,27 @@ Preferred fixes:
 * update the database ACLs to match ``schema.yaml``;
 * update ``schema.yaml`` if the extra access is intentional;
 * use ``--weak-acls`` only as a temporary diagnostic or emergency workaround.
+
+Execution Order
+---------------
+
+Explicit hosts run in the order written in the hosts YAML list. A ``shared``
+entry is not a host. Pseudo-hosts from ``HOSTS=-`` follow the source tree's
+``schemas.yaml`` discovery order.
+
+Command phases are also ordered. ``init`` commits or rolls back host by host.
+``install`` and ``upgrade`` begin all hosts first, prepare revision/script
+environment per host, then run each major phase across the host list. For
+``upgrade --install``, hosts needing install use install phases inside those
+same host-list loops, while other hosts use upgrade phases.
+
+Source files are discovered in deterministic order. Include paths are scanned
+first in YAML order, then the local directory is scanned by sorted entry name.
+``first`` entries move named files or child entities to the beginning, and
+``last`` entries move them to the end. SQL content runs as ``first`` files,
+regular files, inline ``sql``, then ``last`` files.
+
+Generated SQL fragments follow the same command phase order. With ``--output``,
+each host gets its own SQL file and fragment numbering. Output-only SQL cannot
+adapt to runtime database state, so checks that normally read the database need
+explicit inputs such as ``--rev``.
