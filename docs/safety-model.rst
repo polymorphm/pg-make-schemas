@@ -52,6 +52,8 @@ Cascade Drops
 
 ``--cascade`` enables ``DROP SCHEMA ... CASCADE``. This can remove objects that
 depend on the dropped schemas, including objects outside the intended schema set.
+For example, a view, trigger, or foreign key in another schema can disappear if
+it depends on a schema being dropped.
 
 ``install --reinstall`` requires ``--cascade`` because var schemas cannot be
 dropped safely by removing functions first. Treat this as a data-deleting
@@ -59,6 +61,11 @@ operation.
 
 Function schema drops can run without ``--cascade``. In that mode,
 pg-make-schemas tries to drop routines before dropping the schema itself.
+
+Use generated SQL review, ``--pretend``, project-level ``safeguard.yaml``
+checks, and, for production databases, DBA-level guardrails before relying on a
+cascaded reinstall. See ``docs/workflows.rst`` for the destructive reinstall
+workflow.
 
 ACL Guards
 ----------
@@ -80,8 +87,24 @@ Safeguard Scripts
 important tables, functions, constraints, or environment-specific expectations
 survived the install or upgrade.
 
-Safeguard SQL runs after schemas and functions are in place, so it can call API
-functions as well as inspect data schemas.
+Safeguard SQL runs after project schemas, functions, settings SQL, and
+migrations are in place, but before ACL checks, final revision metadata, and the
+host transaction commit. If a safeguard raises an error during live execution,
+the host transaction is aborted and PostgreSQL rolls back the attempted install
+or upgrade.
+
+This matters with ``--cascade``: a safeguard does not stop
+``DROP SCHEMA ... CASCADE`` from being attempted, but it can detect a bad final
+state and force the transaction to roll back. Typical checks include:
+
+* critical tables still exist;
+* expected constraints or indexes exist;
+* API functions can be called successfully;
+* production-only settings match the target environment;
+* migration side effects are visible in data-bearing schemas.
+
+See ``docs/yaml-reference.rst`` for the ``safeguard.yaml`` file shape and a
+small example.
 
 comment.sh
 ----------
@@ -100,9 +123,27 @@ YAML ``include`` entries can read SQL from additional directories, but those
 directories must be inside the source tree or passed with ``--include``. Files
 are opened with symlink-following protections where the platform supports it.
 
-DBA Snippets
-------------
+DBA Guardrail Snippets
+----------------------
 
 The repository's ``dba-sql-snippets`` directory contains optional examples of
 administrative guardrails. They are not required by pg-make-schemas, but they
-are useful patterns for production procedures.
+are useful patterns for production procedures. They are installed separately by
+a DBA and protect the database independently of a project source tree.
+
+``dba-sql-snippets/EXAMPLE.reinstall-locking.sql`` demonstrates a database-level
+DDL guardrail for destructive reinstalls. It creates an event trigger that runs
+after DDL commands and resolves critical tables with ``::regclass``. If a
+reinstall or cascaded drop removes one of those tables, the trigger function
+raises an error. During live pg-make-schemas execution, that error aborts the
+transaction and rolls back the destructive attempt.
+
+``dba-sql-snippets/EXAMPLE.pre-revision-prevention.sql`` demonstrates a
+revision policy guardrail. It adds a ``CHECK`` constraint to the var revision
+table so production cannot record revisions matching ``PRE-*``. This is useful
+when pre-release revisions exist in development workflows but must never be
+accepted by production databases.
+
+DBA guardrails and ``safeguard.yaml`` solve different problems:
+``safeguard.yaml`` travels with the project and checks the final project state;
+DBA snippets are administrative policy installed on selected database hosts.

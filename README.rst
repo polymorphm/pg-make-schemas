@@ -43,8 +43,9 @@ Database Admin (DBA) SQL-Snippets
 ---------------------------------
 
 See the ``dba-sql-snippets`` directory for examples of database administration
-guardrails. They are mostly safeguard patterns against accidental destructive
-actions on production database clusters.
+guardrails, including destructive reinstall protection and production revision
+policy checks. They are optional patterns for production database clusters; see
+``docs/safety-model.rst`` for how they relate to project-level safeguards.
 
 Legacy
 ------

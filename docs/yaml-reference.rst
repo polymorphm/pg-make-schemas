@@ -240,7 +240,9 @@ as ``init.yaml``.
 safeguard.yaml
 --------------
 
-``safeguard.yaml`` provides SQL checks that run after installs and upgrades.
+``safeguard.yaml`` provides final SQL checks that run after installs and
+upgrades. Use it for invariants that must be true before the command records
+the new revision and commits.
 
 .. code-block:: yaml
 
@@ -250,16 +252,23 @@ safeguard.yaml
        begin
            if not exists (
                select 1
-               from information_schema.tables
-               where table_schema = 'ledger_data'
-                 and table_name = 'account'
+               from pg_constraint con
+               join pg_class rel on rel.oid = con.conrelid
+               join pg_namespace ns on ns.oid = rel.relnamespace
+               where ns.nspname = 'ledger_data'
+                 and rel.relname = 'entry'
+                 and con.conname = 'entry_account_fk'
            ) then
-               raise 'ledger_data.account is missing';
+               raise 'ledger_data.entry_account_fk is missing';
            end if;
        end $$;
 
 It supports ``include``, ``first``, ``last``, and ``sql`` with the same meaning
 as ``init.yaml``.
+
+During live execution, a safeguard error aborts the host transaction. See
+``docs/safety-model.rst`` for how safeguards fit with ``--cascade`` and DBA
+guardrails.
 
 settings.yaml
 -------------

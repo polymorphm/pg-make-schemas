@@ -70,7 +70,15 @@ This deletes data in var schemas:
    $ ./pg-make-schemas install --reinstall --cascade --execute -v -o out/reinstall hosts.yaml src
 
 Use it for disposable environments, test databases, or carefully planned
-rebuilds only.
+rebuilds only. In production procedures, combine ``--execute`` with
+``--output`` so the exact execution record is kept, and use ``safeguard.yaml``
+to assert critical final-state invariants before the transaction can commit.
+
+For database-level protection against accidental destructive DDL, review
+``dba-sql-snippets/EXAMPLE.reinstall-locking.sql``. That snippet demonstrates an
+event-trigger guardrail that can make a cascaded reinstall fail if critical
+tables disappear. See ``docs/safety-model.rst`` for the difference between
+project safeguards and DBA guardrails.
 
 Upgrade
 -------
@@ -182,6 +190,10 @@ If execution fails, the SQL file usually stops near the failing fragment. With
 ``-vv``, verbose output also includes more SQL execution detail. When
 ``--execute`` and ``--output`` are both active, notice files record PostgreSQL
 notices and fragment markers.
+
+Safeguard failures are ordinary SQL execution failures. During live execution,
+they abort the host transaction; in generated SQL, they appear near the
+``safeguard.yaml`` fragment that raised the error.
 
 Handle unexpected acl
 ---------------------
