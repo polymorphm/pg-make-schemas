@@ -17,34 +17,33 @@ Shared Options
 --------------
 
 ``-v``, ``--verbose``
-    Show high-level phases. Use twice, as ``-vv``, to include more details
-    about SQL execution.
+    Show command phases. Repeat as ``-vv`` to show SQL file execution details.
 
 ``-e``, ``--execute``
     Connect to the databases and execute SQL. This is the default when
-    ``--output`` is not used.
+    ``--output`` is not used. With ``--output``, this also writes PostgreSQL
+    notice files next to SQL files.
 
 ``-p``, ``--pretend``
-    Execute SQL but roll back transactions instead of committing. This implies
-    ``--execute``.
+    Execute SQL and roll back database transactions instead of committing them.
+    This implies ``--execute``.
 
 ``-o OUTPUT``, ``--output OUTPUT``
     Write generated SQL files using ``OUTPUT`` as the file prefix. Without
-    ``--execute``, this only writes SQL. With ``--execute``, it writes SQL files
-    as a record of the live execution and also writes notice files.
+    ``--execute``, this writes SQL files instead of connecting to databases.
+    With ``--execute``, it writes SQL files as an execution record.
 
 ``-i INCLUDE``, ``--include INCLUDE``
-    Add an allowed include directory. May be used multiple times. If the value
-    contains ``=``, it defines an include reference such as
-    ``COMMON=/srv/common-sql``.
+    Add an allowed include directory. This option may be used many times and may
+    define an include reference with ``name=value``.
 
 ``-X``, ``--exclusive``
-    Abort when another application already has a ``*_revision`` schema in the
-    target database. The generated SQL takes a transaction-held schema lock
+    Abort if a ``*_revision`` schema for another application already exists in
+    the target database. The generated SQL takes a transaction-held schema lock
     before checking revision schemas, so this option also works in output-only
-    SQL. Use it only when each host in the hosts file targets a different
-    database; if multiple host entries intentionally share one database, do not
-    use ``--exclusive`` for that hosts file.
+    SQL. Use it only when each host targets a separate database; if multiple
+    host entries intentionally share one database, do not use ``--exclusive``
+    for that hosts file.
 
 Output Files
 ------------
@@ -101,28 +100,29 @@ Syntax:
 
    $ ./pg-make-schemas install [OPTIONS] HOSTS SOURCE_CODE [SETTINGS_SOURCE_CODE ...]
 
-Install-only options:
+Install options:
 
 ``-c``, ``--comment``
-    Run ``comment.sh`` from the main source tree and store its output as the
-    revision comment. If ``PG_MAKE_SCHEMAS_COMMENT`` is set, that script path is
-    used and this option is implied.
+    Run ``comment.sh`` to get the revision comment. Use this only with trusted
+    scripts. ``PG_MAKE_SCHEMAS_COMMENT`` sets the script path and implies this
+    option.
 
 ``--init``
-    Run initialization before installing. The standalone ``init`` command may be
-    safer for initialization that touches shared database-cluster state.
+    Run basic initialization before install or upgrade. The standalone
+    ``init`` command may be safer for initialization that touches shared
+    database-cluster state.
 
 ``--reinstall``
-    Drop var schemas and func schemas before installing. This deletes data and
-    requires ``--cascade`` because var schemas cannot be dropped safely.
+    Drop variable and function schemas before installing. This deletes data and
+    requires ``--cascade``.
 
 ``--reinstall-func``
-    Drop and recreate only func schemas. Var schemas and their data are left in
-    place.
+    Drop and recreate only function schemas. Variable schemas and their data are
+    left in place.
 
 ``--cascade``
-    Use ``DROP SCHEMA ... CASCADE`` when dropping schemas. This is required for
-    ``--reinstall`` and optional for func schema drops.
+    Use ``DROP SCHEMA ... CASCADE`` when dropping schemas. This can be
+    dangerous; review the possible consequences first.
 
 ``-A``, ``--weak-acls``
     Turn unexpected ACL errors into notices during ACL guarding.
@@ -130,9 +130,9 @@ Install-only options:
 upgrade
 -------
 
-``upgrade`` upgrades an existing database from its stored var revision to the
-current source-code revision. It uses migration files from the main source tree
-and, when supplied, settings source trees.
+``upgrade`` upgrades an existing database from its stored variable revision to
+the current source-code revision. It uses migration files from the main source
+tree and, when supplied, settings source trees.
 
 Syntax:
 
@@ -146,32 +146,33 @@ Upgrade options:
     Same as for ``install``.
 
 ``--init``
-    Run initialization before migrations.
+    Run basic initialization before migrations.
 
 ``--cascade``
-    Use ``DROP SCHEMA ... CASCADE`` when dropping func schemas.
+    Use ``DROP SCHEMA ... CASCADE`` when dropping function schemas. This can be
+    dangerous; review the possible consequences first.
 
 ``-A``, ``--weak-acls``
     Turn unexpected ACL errors into notices during ACL guarding.
 
 ``--show-rev``
-    Show the stored var and func revisions, compute the migration path, and stop.
+    Show stored revision information and stop. Use with ``--rev`` to check
+    whether an upgrade path exists from a specific revision.
 
 ``--change-rev``
-    Change stored revision metadata without running migrations or recreating
-    func schemas. This is dangerous and should be used only after the database
-    has already been brought to the matching state by other means.
+    Change stored revision information and stop. This is dangerous; without
+    ``--rev``, it can overwrite real revision information.
 
 ``-r REV``, ``--rev REV``
     Use ``REV`` as the starting revision instead of reading it from the
-    database. This is useful with generated SQL, pseudo-hosts from ``HOSTS=-``,
-    ``--show-rev``, and controlled revision-metadata repair.
+    database. This is useful with pseudo-hosts, ``--show-rev``, and
+    ``--change-rev``.
 
 ``--install``
-    Fall back to install for hosts without a stored var revision. This is for
-    mixed environments where some hosts are already installed and others are
-    fresh. It requires live execution, because the tool must read each host's
-    current revision, and it cannot be combined with ``--show-rev``,
+    Fall back to install for hosts without a stored variable revision. This is
+    for mixed environments where some hosts are already installed and others
+    are fresh. It requires live execution, because the tool must read each
+    host's current revision, and it cannot be combined with ``--show-rev``,
     ``--change-rev``, or ``--rev``.
 
 Execution Defaults

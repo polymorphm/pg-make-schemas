@@ -5,6 +5,299 @@ import argparse
 class ArgsCtx:
     pass
 
+def add_shared_options(sub_parser):
+    sub_parser.add_argument(
+        '-v',
+        '--verbose',
+        action='count',
+        default=0,
+        help='show command phases. repeat as -vv to show SQL file '
+                'execution details',
+    )
+
+    sub_parser.add_argument(
+        '-e',
+        '--execute',
+        action='store_true',
+        help='connect to databases and run SQL. this is the default when '
+                '--output is not used. with --output, this also writes '
+                'PostgreSQL notice files next to SQL files',
+    )
+
+    sub_parser.add_argument(
+        '-p',
+        '--pretend',
+        action='store_true',
+        help='execute SQL and roll back database transactions instead of '
+                'committing them. this implies --execute',
+    )
+
+    sub_parser.add_argument(
+        '-o',
+        '--output',
+        metavar='OUTPUT',
+        help='write generated SQL files using OUTPUT as the file prefix. '
+                'without --execute, this writes SQL files instead of '
+                'connecting to databases. with --execute, this writes SQL '
+                'files as an execution record',
+    )
+
+    sub_parser.add_argument(
+        '-i',
+        '--include',
+        metavar='INCLUDE',
+        action='append',
+        help='add an allowed include directory. this option may be used many '
+                'times and may define an include reference with name=value',
+    )
+
+    sub_parser.add_argument(
+        '-X',
+        '--exclusive',
+        action='store_true',
+        help='abort if a *_revision schema for another application already '
+                'exists in the database. use only when each host targets a '
+                'separate database',
+    )
+
+def add_install_upgrade_options(sub_parser):
+    sub_parser.add_argument(
+        '-c',
+        '--comment',
+        action='store_true',
+        help='run comment.sh to get the revision comment. use this only with '
+                'trusted scripts. PG_MAKE_SCHEMAS_COMMENT sets the script '
+                'path and implies this option',
+    )
+
+    sub_parser.add_argument(
+        '--init',
+        action='store_true',
+        help='run basic initialization before install or upgrade. the '
+                'standalone init command may be safer for initialization '
+                'that touches shared database-cluster state',
+    )
+
+def add_drop_acl_options(sub_parser):
+    sub_parser.add_argument(
+        '--cascade',
+        action='store_true',
+        help='use DROP SCHEMA ... CASCADE when dropping schemas. this can be '
+                'dangerous; review the possible consequences first',
+    )
+
+    sub_parser.add_argument(
+        '-A',
+        '--weak-acls',
+        action='store_true',
+        help='turn unexpected ACL errors into notices during ACL guarding',
+    )
+
+def add_install_options(install_parser):
+    install_parser.add_argument(
+        '--reinstall',
+        action='store_true',
+        help='drop variable and function schemas before installing. this '
+                'deletes data and requires --cascade',
+    )
+
+    install_parser.add_argument(
+        '--reinstall-func',
+        action='store_true',
+        help='drop and recreate only function schemas. variable schemas and '
+                'their data are left in place',
+    )
+
+def add_upgrade_options(upgrade_parser):
+    upgrade_parser.add_argument(
+        '--show-rev',
+        action='store_true',
+        help='show stored revision information and stop. use with --rev to '
+                'check whether an upgrade path exists from a specific '
+                'revision',
+    )
+
+    upgrade_parser.add_argument(
+        '--change-rev',
+        action='store_true',
+        help='change stored revision information and stop. this is dangerous; '
+                'without --rev, it can overwrite real revision information',
+    )
+
+    upgrade_parser.add_argument(
+        '-r',
+        '--rev',
+        metavar='REV',
+        help='use REV as the starting revision instead of reading it from the '
+                'database. this is useful with pseudo-hosts, --show-rev, and '
+                '--change-rev',
+    )
+
+    upgrade_parser.add_argument(
+        '--install',
+        action='store_true',
+        help='fall back to install for hosts that do not have a stored '
+                'variable revision',
+    )
+
+def add_shared_positional_args(init_parser, install_parser, upgrade_parser):
+    for sub_parser in (init_parser, install_parser, upgrade_parser):
+        sub_parser.add_argument(
+            'hosts',
+            metavar='HOSTS',
+            help='path to the hosts file. use - to build pseudo-hosts from '
+                    'source tree schema types',
+        )
+
+        source_code_help_map = {
+            init_parser: 'path to the source tree. only init files are used',
+            install_parser: 'path to the source tree. migration files are '
+                    'not used',
+            upgrade_parser: 'path to the source tree. migration files are used',
+        }
+
+        sub_parser.add_argument(
+            'source_code',
+            metavar='SOURCE_CODE',
+            help=source_code_help_map[sub_parser],
+        )
+
+    for sub_parser in (install_parser, upgrade_parser):
+        settings_source_code_help_map = {
+            install_parser: 'path to a settings source tree. migration files '
+                    'are not used',
+            upgrade_parser: 'path to a settings source tree. migration files '
+                    'are used',
+        }
+
+        sub_parser.add_argument(
+            'settings_source_code',
+            metavar='SETTINGS_SOURCE_CODE',
+            nargs='*',
+            help=settings_source_code_help_map[sub_parser],
+        )
+
+def make_parser():
+    parser = argparse.ArgumentParser(
+        description='a utility for installing and upgrading database schemas '
+                'from a versioned source-code repository.',
+    )
+
+    subparsers = parser.add_subparsers(
+        dest='command',
+    )
+
+    init_parser = subparsers.add_parser(
+        'init',
+        help='run basic schema initialization, such as idempotent creation '
+                'of extensions and roles',
+        description='run basic schema initialization, such as idempotent '
+                'creation of extensions and roles',
+    )
+
+    install_parser = subparsers.add_parser(
+        'install',
+        help='install schemas into a fresh database',
+        description='install schemas into a fresh database',
+    )
+
+    upgrade_parser = subparsers.add_parser(
+        'upgrade',
+        help='upgrade schemas from a previous revision',
+        description='upgrade schemas from a previous revision',
+    )
+
+    for sub_parser in (init_parser, install_parser, upgrade_parser):
+        add_shared_options(sub_parser)
+
+    for sub_parser in (install_parser, upgrade_parser):
+        add_install_upgrade_options(sub_parser)
+
+    add_install_options(install_parser)
+
+    for sub_parser in (install_parser, upgrade_parser):
+        add_drop_acl_options(sub_parser)
+
+    add_upgrade_options(upgrade_parser)
+    add_shared_positional_args(init_parser, install_parser, upgrade_parser)
+
+    return parser
+
+def make_args_ctx(args):
+    args_ctx = ArgsCtx()
+
+    args_ctx.command = args.command
+    args_ctx.verbose = args.verbose
+    args_ctx.execute = args.execute
+    args_ctx.pretend = args.pretend
+    args_ctx.output = args.output
+    args_ctx.hosts = args.hosts
+
+    if args_ctx.pretend or args_ctx.output is None:
+        args_ctx.execute = True
+
+    if args_ctx.hosts == '-':
+        args_ctx.hosts = None
+
+    args_ctx.exclusive = args.exclusive
+
+    args_ctx.include_list = []
+    args_ctx.include_ref_map = {}
+
+    if args.include is not None:
+        for arg_inc in args.include:
+            if '=' in arg_inc:
+                arg_inc_ref_name, arg_inc_ref_val = arg_inc.split('=', 1)
+
+                args_ctx.include_list.append(arg_inc_ref_val)
+                args_ctx.include_ref_map[arg_inc_ref_name] = arg_inc_ref_val
+            else:
+                args_ctx.include_list.append(arg_inc)
+
+    args_ctx.reinstall = False
+    args_ctx.reinstall_func = False
+
+    if args_ctx.command == 'install':
+        args_ctx.reinstall = args.reinstall or args.reinstall_func
+        args_ctx.reinstall_func = args.reinstall_func
+
+    args_ctx.install = args_ctx.command == 'upgrade' and args.install
+
+    if args_ctx.command in ('install', 'upgrade'):
+        args_ctx.comment = args.comment
+        args_ctx.init = args.init
+        args_ctx.cascade = args.cascade
+        args_ctx.weak_guard_acls = args.weak_acls
+
+        args_ctx.comment_path = os.environ.get('PG_MAKE_SCHEMAS_COMMENT')
+
+        if args_ctx.comment_path is not None:
+            args_ctx.comment = True
+    else:
+        args_ctx.comment = False
+        args_ctx.init = False
+        args_ctx.cascade = None
+        args_ctx.weak_guard_acls = None
+        args_ctx.comment_path = None
+
+    if args_ctx.command == 'upgrade':
+        args_ctx.show_rev = args.show_rev
+        args_ctx.change_rev = args.change_rev
+        args_ctx.rev = args.rev
+    else:
+        args_ctx.show_rev = False
+        args_ctx.change_rev = False
+        args_ctx.rev = None
+
+    args_ctx.source_code = args.source_code
+
+    if args_ctx.command in ('install', 'upgrade'):
+        args_ctx.settings_source_code = args.settings_source_code
+    else:
+        args_ctx.settings_source_code = []
+
+    return args_ctx
+
 def init_cmd(args_ctx, print_func, err_print_func):
     from . import init_cmd
 
@@ -38,210 +331,7 @@ def try_err_print(*args, **kwargs):
         pass
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='a utility for installing and upgrading database schemas '
-                'from a versioned source-code repository.',
-    )
-
-    subparsers = parser.add_subparsers(
-        dest='command',
-    )
-
-    init_parser = subparsers.add_parser(
-        'init',
-        help='run basic schema initialization, such as idempotent creation '
-                'of extensions and roles',
-        description='run basic schema initialization, such as idempotent '
-                'creation of extensions and roles',
-    )
-
-    install_parser = subparsers.add_parser(
-        'install',
-        help='install schemas into a fresh database',
-        description='install schemas into a fresh database',
-    )
-
-    upgrade_parser = subparsers.add_parser(
-        'upgrade',
-        help='upgrade schemas from a previous revision',
-        description='upgrade schemas from a previous revision',
-    )
-
-    for sub_parser in (init_parser, install_parser, upgrade_parser):
-        sub_parser.add_argument(
-            '-v',
-            '--verbose',
-            action='count',
-            help='show operations as they run. use twice to show more '
-                    'details about executed SQL',
-        )
-
-        sub_parser.add_argument(
-            '-e',
-            '--execute',
-            action='store_true',
-            help='connect to databases and run SQL. this is the default when '
-                    '``--output`` is not used. when used with ``--output``, '
-                    'also writes PostgreSQL notice files next to SQL files',
-        )
-
-        sub_parser.add_argument(
-            '-p',
-            '--pretend',
-            action='store_true',
-            help='roll back database transactions instead of committing them. '
-                    'this implies ``--execute``',
-        )
-
-        sub_parser.add_argument(
-            '-o',
-            '--output',
-            help='prefix for generated SQL files. without ``--execute``, '
-                    'this writes SQL files instead of connecting to databases. '
-                    'with ``--execute``, this writes SQL files as an execution '
-                    'record. warning: generated SQL may differ from live '
-                    'database execution and should be reviewed carefully',
-        )
-
-        sub_parser.add_argument(
-            '-i',
-            '--include',
-            action='append',
-            help='add a directory to the allow-list for files referenced by '
-                    'source-code or settings source-code trees. this option '
-                    'can also define an include reference, '
-                    'using name=value syntax. '
-                    'you can use this option many times',
-        )
-
-        sub_parser.add_argument(
-            '-X',
-            '--exclusive',
-            action='store_true',
-            help='abort if another application revision schema already '
-                    'exists in the database',
-        )
-
-    for sub_parser in (install_parser, upgrade_parser):
-        sub_parser.add_argument(
-            '-c',
-            '--comment',
-            action='store_true',
-            help='run ``comment.sh`` to get the revision comment. warning: '
-                    'use this only with trusted scripts. setting the '
-                    '``PG_MAKE_SCHEMAS_COMMENT`` environment variable implies '
-                    'this option',
-        )
-
-        sub_parser.add_argument(
-            '--init',
-            action='store_true',
-            help='run basic initialization before install or upgrade. see the '
-                    '``init`` command. the standalone ``init`` command may be '
-                    'safer for some initialization tasks because it uses '
-                    'different transaction management',
-        )
-
-    install_parser.add_argument(
-        '--reinstall',
-        action='store_true',
-        help='drop schemas before creating new schemas, including variable '
-                'schemas. warning: this deletes data',
-    )
-
-    install_parser.add_argument(
-        '--reinstall-func',
-        action='store_true',
-        help='like ``--reinstall``, but do not touch variable schemas. this '
-                'keeps data, but variable schemas may become incompatible '
-                'with the recreated function schemas',
-    )
-
-    for sub_parser in (install_parser, upgrade_parser):
-        sub_parser.add_argument(
-            '--cascade',
-            action='store_true',
-            help='use DROP ... CASCADE when dropping schemas. warning: this '
-                    'can be dangerous; review the possible consequences first'
-        )
-
-        sub_parser.add_argument(
-            '-A',
-            '--weak-acls',
-            action='store_true',
-            help='use weak ACL guarding for schemas instead of strict '
-                    'guarding. this turns ``unexpected acl: ...`` errors into '
-                    'notices'
-        )
-
-    upgrade_parser.add_argument(
-        '--show-rev',
-        action='store_true',
-        help='only show revision information. use with ``--rev`` to check '
-                'whether an upgrade path exists from a specific revision',
-    )
-
-    upgrade_parser.add_argument(
-        '--change-rev',
-        action='store_true',
-        help='only change stored revision information. warning: this is '
-                'dangerous; without ``--rev`` you can overwrite real revision '
-                'information',
-    )
-
-    upgrade_parser.add_argument(
-        '-r',
-        '--rev',
-        help='upgrade from this specific revision only. this can be useful '
-                'when using pseudo-hosts with ``-`` or when '
-                '``--show-rev``/``--change-rev`` is used',
-    )
-
-    upgrade_parser.add_argument(
-        '--install',
-        action='store_true',
-        help='fall back to install for hosts that do not have a stored var '
-                'revision',
-    )
-
-    for sub_parser in (init_parser, install_parser, upgrade_parser):
-        sub_parser.add_argument(
-            'hosts',
-            help='path to the hosts file. if \'-\' is used, pseudo-hosts are '
-                    'built from source-code schema types. this is useful when '
-                    'the ``--output`` option is used',
-        )
-
-        arg_help_map = {
-            init_parser: 'path to source code. only init files are used',
-            install_parser: 'path to source code. migration files are not used',
-            upgrade_parser: 'path to source code. migration files are used',
-        }
-
-        arg_help = arg_help_map[sub_parser]
-
-        sub_parser.add_argument(
-            'source_code',
-            help=arg_help,
-        )
-
-        del arg_help
-        del arg_help_map
-
-    for sub_parser in (install_parser, upgrade_parser):
-        if sub_parser == upgrade_parser:
-            arg_help='path to settings source code. migration files are used'
-        else:
-            arg_help='path to settings source code. migration files are not used'
-
-        sub_parser.add_argument(
-            'settings_source_code',
-            nargs='*',
-            help=arg_help,
-        )
-
-        del arg_help
-
+    parser = make_parser()
     args = parser.parse_args()
 
     if args.command is None:
@@ -249,98 +339,7 @@ def main():
 
         return
 
-    args_ctx = ArgsCtx()
-
-    args_ctx.command = args.command
-
-    if args_ctx.command in ('init', 'install', 'upgrade'):
-        args_ctx.verbose = args.verbose
-        args_ctx.execute = args.execute
-        args_ctx.pretend = args.pretend
-        args_ctx.output = args.output
-        args_ctx.hosts = args.hosts
-
-        if args_ctx.pretend or args_ctx.output is None:
-            args_ctx.execute = True
-
-        if args_ctx.hosts == '-':
-            args_ctx.hosts = None
-
-        args_ctx.exclusive = args.exclusive
-    else:
-        args_ctx.verbose = False
-        args_ctx.execute = False
-        args_ctx.pretend = False
-        args_ctx.output = None
-        args_ctx.hosts = None
-        args_ctx.exclusive = False
-
-    args_ctx.include_list = []
-    args_ctx.include_ref_map = {}
-
-    if args_ctx.command in ('init', 'install', 'upgrade') \
-            and args.include is not None:
-        for arg_inc in args.include:
-            if '=' in arg_inc:
-                arg_inc_ref_name, arg_inc_ref_val = arg_inc.split('=', 1)
-
-                args_ctx.include_list.append(arg_inc_ref_val)
-                args_ctx.include_ref_map[arg_inc_ref_name] = arg_inc_ref_val
-            else:
-                args_ctx.include_list.append(arg_inc)
-
-    if args_ctx.command == 'install' and args.reinstall:
-        args_ctx.reinstall = True
-    else:
-        args_ctx.reinstall = False
-
-    if args_ctx.command == 'install' and args.reinstall_func:
-        args_ctx.reinstall = True
-        args_ctx.reinstall_func = True
-    else:
-        args_ctx.reinstall_func = False
-
-    if args_ctx.command == 'upgrade':
-        args_ctx.install = args.install
-    else:
-        args_ctx.install = False
-
-    if args_ctx.command in ('install', 'upgrade'):
-        args_ctx.comment = args.comment
-        args_ctx.init = args.init
-        args_ctx.cascade = args.cascade
-        args_ctx.weak_guard_acls = args.weak_acls
-
-        args_ctx.comment_path = os.environ.get('PG_MAKE_SCHEMAS_COMMENT')
-
-        if args_ctx.comment_path is not None:
-            args_ctx.comment = True
-    else:
-        args_ctx.comment = False
-        args_ctx.init = False
-        args_ctx.cascade = None
-        args_ctx.weak_guard_acls = None
-        args_ctx.comment_path = None
-
-    if args_ctx.command == 'upgrade':
-        args_ctx.show_rev = args.show_rev
-        args_ctx.change_rev = args.change_rev
-        args_ctx.rev = args.rev
-    else:
-        args_ctx.show_rev = False
-        args_ctx.change_rev = False
-        args_ctx.rev = None
-
-    if args_ctx.command in ('init', 'install', 'upgrade'):
-        args_ctx.source_code = args.source_code
-    else:
-        args_ctx.source_code = None
-
-    if args_ctx.command in ('install', 'upgrade'):
-        args_ctx.settings_source_code = args.settings_source_code
-    else:
-        args_ctx.settings_source_code = []
-
+    args_ctx = make_args_ctx(args)
     cmd_func_map = {
         'init': init_cmd,
         'install': install_cmd,

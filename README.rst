@@ -17,10 +17,10 @@ Developer version (for master git branch).
 Requirements
 ------------
 
-Packages are required:
+Runtime requirements:
 
-* ``python >= 3``
-* ``psycopg`` 3
+* Python 3
+* ``psycopg[binary]``
 * ``PyYAML``
 
 Documentation
