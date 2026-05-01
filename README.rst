@@ -26,7 +26,7 @@ Runtime requirements:
 Documentation
 -------------
 
-Start with ``docs/README.rst``.
+Start with ``docs/index.rst``.
 
 The documentation includes:
 

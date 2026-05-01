@@ -74,7 +74,7 @@ does not need its own ``type`` field.
 
 ``src/main/20-ledger-api/functions.sql``:
 
-.. code-block:: sql
+.. code-block:: text
 
    create function account_count()
    returns bigint
