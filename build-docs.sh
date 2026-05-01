@@ -16,6 +16,25 @@ build_dir="$tmp_dir/build"
 site_dir="$tmp_dir/site"
 manifest="docs-site.yaml"
 
+resolve_git_ref() {
+    local ref="$1"
+    local resolved_ref
+
+    if resolved_ref="$(git rev-parse --verify --quiet "$ref^{tree}")"; then
+        printf '%s\n' "$resolved_ref"
+        return 0
+    fi
+
+    if resolved_ref="$(git rev-parse --verify --quiet "origin/$ref^{tree}")"; then
+        printf '%s\n' "$resolved_ref"
+        return 0
+    fi
+
+    printf 'error: cannot resolve documentation ref: %s\n' "$ref" >&2
+    printf 'hint: use a local branch/tag/SHA, or fetch origin/%s before building.\n' "$ref" >&2
+    return 1
+}
+
 mkdir -p "$tmp_dir"
 
 if [ ! -x "$venv_dir/bin/python" ]; then
@@ -37,7 +56,8 @@ while IFS=$'\t' read -r key title ref output_path; do
     printf 'Building %s (%s) from %s -> %s\n' "$key" "$title" "$ref" "$output_path"
 
     mkdir -p "$ref_dir" "$output_dir"
-    git archive "$ref" README.rst docs | tar -x -C "$ref_dir"
+    resolved_ref="$(resolve_git_ref "$ref")"
+    git archive "$resolved_ref" README.rst docs | tar -x -C "$ref_dir"
 
     if [ ! -f "$docs_dir/conf.py" ] || [ ! -f "$docs_dir/index.rst" ]; then
         printf 'error: %s (%s) does not contain Sphinx-ready docs/conf.py and docs/index.rst\n' "$key" "$ref" >&2

@@ -16,19 +16,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout publishing branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Fetch documentation source refs
+        run: git fetch -f -pP origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
 
       - name: Build documentation site
         run: ./build-docs.sh
