@@ -7,22 +7,12 @@ developing:
   ref: master
   path: developing
 
-# TODO: Enable after a stable release contains Sphinx-ready docs.
-#
-# current:
-#   title: Current stable
-#   ref: pg-make-schemas-10.1.0
-#   path: current
-current: null
+current:
+  title: Current stable
+  ref: pg-make-schemas-10.1.0-0-g164e155
+  path: current
 
-# TODO: Add published releases here after their refs contain docs/conf.py and
-# docs/index.rst. Do not list refs that only have README.rst docs.
-#
-# versions:
-#   - title: pg-make-schemas 10.1.0
-#     ref: pg-make-schemas-10.1.0
-#     path: versions/10.1.0
-#   - title: pg-make-schemas 10.0.0
-#     ref: 9c3ed21
-#     path: versions/10.0.0
-versions: []
+versions:
+  - title: pg-make-schemas 10.1.0
+    ref: pg-make-schemas-10.1.0-0-g164e155
+    path: versions/10.1.0
