@@ -128,6 +128,12 @@ Fields:
     Optional string. Enables the shortened single-host-type layout and is
     inherited by child entities that need a type.
 
+``role``
+    Optional string. Default command-level PostgreSQL role for this source
+    tree. Main source ``schemas.yaml`` branches and settings source
+    ``settings.yaml`` branches can override it per host type. If no role is
+    set, command-level SQL runs as ``postgres``.
+
 ``include``, ``first``, ``last``
     Optional ordering fields for child ``schemas.yaml``, ``settings.yaml``, and
     ``migrations.yaml`` branches.
@@ -155,6 +161,12 @@ Fields:
 
 ``type``
     Required string unless inherited from ``cluster.type``.
+
+``role``
+    Optional string. Command-level PostgreSQL role for this host type. It
+    overrides ``cluster.role`` for ``init.yaml``, ``late.yaml``,
+    ``safeguard.yaml``, and migration SQL for the same host type. Schema object
+    SQL still runs as each ``schema.yaml`` ``owner``.
 
 ``include``, ``first``, ``last``
     Optional ordering fields for child ``init.yaml``, ``schema.yaml``,
@@ -292,6 +304,11 @@ Fields:
 ``type``
     Required string unless inherited from ``cluster.type``.
 
+``role``
+    Optional string. Command-level PostgreSQL role for this settings host type.
+    It overrides the settings source tree's ``cluster.role`` for
+    ``settings.yaml`` SQL.
+
 ``include``, ``first``, ``last``
     Optional ordering fields for ``*.sql`` files.
 
@@ -327,6 +344,9 @@ unique.
 Migrations describe how data-bearing var schemas move from one stored revision
 to another. During upgrade, pg-make-schemas chooses a path from the database's
 stored var revision to the source tree's current revision.
+
+Migration SQL inherits the main source role for its host type:
+``schemas.role`` if set, otherwise ``cluster.role``, otherwise ``postgres``.
 
 migration.yaml
 --------------

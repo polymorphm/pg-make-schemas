@@ -136,10 +136,11 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
+            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
             func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
 
-            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+            recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
             if args_ctx.exclusive:
                 verb.guard_exclusive(host_name, recv.look_fragment_i(host_name))
@@ -244,6 +245,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     for host in hosts_descr.host_list:
                         host_name = host['name']
                         host_type = host['type']
+                        source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                         for i, sql in enumerate(
                                     init_sql.read_init_sql(source_code_cluster_descr, host_type),
@@ -252,7 +254,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 verb.execute_sql(
                                         host_name, 'init_sql', recv.look_fragment_i(host_name))
 
-                            sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                            sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                             verb.execute_sql(
                                     host_name, 'init_sql', recv.look_fragment_i(host_name),
@@ -263,13 +265,14 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
+                    source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                     if host_name not in install_host_name_set:
                         continue
 
                     for schema_name, owner, grant_list, sql_iter in \
                             install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
-                        recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                        recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                         verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
 
@@ -298,7 +301,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             verb.execute_sql(
                                     host_name, 'late_install_sql', recv.look_fragment_i(host_name))
 
-                        sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                        sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                         verb.execute_sql(
                                 host_name, 'late_install_sql', recv.look_fragment_i(host_name),
@@ -310,6 +313,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     for host in hosts_descr.host_list:
                         host_name = host['name']
                         host_type = host['type']
+                        settings_role = install.settings_role(settings_cluster_descr, host_type)
 
                         if host_name not in install_host_name_set:
                             continue
@@ -322,7 +326,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                         host_name, 'settings_sql',
                                         recv.look_fragment_i(host_name))
 
-                            sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                            sql = pg_role_path.apply_pg_role_path(sql, settings_role, None)
 
                             verb.execute_sql(
                                     host_name, 'settings_sql',
@@ -334,6 +338,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
+                    source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                     if host_name in install_host_name_set:
                         continue
@@ -354,7 +359,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                     verb.execute_sql(
                                             host_name, 'upgrade_sql', recv.look_fragment_i(host_name))
 
-                                sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                                sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                                 verb.execute_sql(
                                         host_name, 'upgrade_sql', recv.look_fragment_i(host_name),
@@ -363,6 +368,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 recv.execute(host_name, sql)
 
                             for settings_cluster_descr in settings_cluster_descr_list:
+                                settings_role = install.settings_role(settings_cluster_descr, host_type)
+
                                 for i, sql in enumerate(
                                             upgrade_sql.read_upgrade_sql(
                                                 settings_cluster_descr,
@@ -374,7 +381,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                         verb.execute_sql(
                                                 host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name))
 
-                                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                                    sql = pg_role_path.apply_pg_role_path(sql, settings_role, None)
 
                                     verb.execute_sql(
                                             host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name),
@@ -382,7 +389,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
 
                                     recv.execute(host_name, sql)
 
-                            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                            recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                             verb.push_var_revision(
                                     host_name, interm_migr[0], None, recv.look_fragment_i(host_name))
@@ -410,7 +417,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 verb.execute_sql(
                                         host_name, 'upgrade_sql', recv.look_fragment_i(host_name))
 
-                            sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                            sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                             verb.execute_sql(
                                     host_name, 'upgrade_sql', recv.look_fragment_i(host_name),
@@ -419,6 +426,8 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             recv.execute(host_name, sql)
 
                         for settings_cluster_descr in settings_cluster_descr_list:
+                            settings_role = install.settings_role(settings_cluster_descr, host_type)
+
                             for i, sql in enumerate(
                                         upgrade_sql.read_upgrade_sql(
                                             settings_cluster_descr,
@@ -430,7 +439,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                     verb.execute_sql(
                                             host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name))
 
-                                sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                                sql = pg_role_path.apply_pg_role_path(sql, settings_role, None)
 
                                 verb.execute_sql(
                                         host_name, 'settings_upgrade_sql', recv.look_fragment_i(host_name),
@@ -441,10 +450,11 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
+                    source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                     for schema_name, owner, grant_list, sql_iter in \
                             install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
-                        recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                        recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                         verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
 
@@ -469,6 +479,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
+                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                 for i, sql in enumerate(
                             safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type),
@@ -477,7 +488,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'safeguard_sql', recv.look_fragment_i(host_name))
 
-                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                    sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                     verb.execute_sql(
                             host_name, 'safeguard_sql', recv.look_fragment_i(host_name),
@@ -488,11 +499,12 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
+                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                 var_schemas = install.var_schemas(source_code_cluster_descr, host_type)
                 func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
 
-                recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
@@ -544,8 +556,10 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
         if args_ctx.show_rev and args_ctx.exclusive:
             for host in hosts_descr.host_list:
                 host_name = host['name']
+                host_type = host['type']
+                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
-                recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                 verb.clean_scr_env(host_name, recv.look_fragment_i(host_name))
 

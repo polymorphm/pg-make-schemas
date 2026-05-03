@@ -10,6 +10,24 @@ def var_schemas(cluster_descr, host_type):
 
     return schemas
 
+def schemas_role(cluster_descr, host_type):
+    for schemas_descr in cluster_descr.schemas_list:
+        if schemas_descr.schemas_type != host_type:
+            continue
+
+        return schemas_descr.role
+
+    return cluster_descr.role
+
+def settings_role(cluster_descr, host_type):
+    for settings_descr in cluster_descr.settings_list:
+        if settings_descr.settings_type != host_type:
+            continue
+
+        return settings_descr.role
+
+    return cluster_descr.role
+
 def func_schemas(cluster_descr, host_type):
     schemas = []
 

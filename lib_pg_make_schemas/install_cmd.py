@@ -112,11 +112,12 @@ def install_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
+            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
             var_schemas = install.var_schemas(source_code_cluster_descr, host_type)
             func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
 
-            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+            recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
             if args_ctx.exclusive:
                 verb.guard_exclusive(host_name, recv.look_fragment_i(host_name))
@@ -163,6 +164,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
+                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                 for i, sql in enumerate(
                             init_sql.read_init_sql(source_code_cluster_descr, host_type),
@@ -170,7 +172,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     if not i:
                         verb.execute_sql(host_name, 'init_sql', recv.look_fragment_i(host_name))
 
-                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                    sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                     verb.execute_sql(host_name, 'init_sql', recv.look_fragment_i(host_name),
                             sql=sql)
@@ -181,10 +183,11 @@ def install_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
+                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
                 for schema_name, owner, grant_list, sql_iter in \
                         install_sql.read_var_install_sql(source_code_cluster_descr, host_type):
-                    recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                    recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                     verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
 
@@ -213,7 +216,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'late_install_sql', recv.look_fragment_i(host_name))
 
-                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                    sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                     verb.execute_sql(
                             host_name, 'late_install_sql', recv.look_fragment_i(host_name),
@@ -225,6 +228,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
+                settings_role = install.settings_role(settings_cluster_descr, host_type)
 
                 for i, sql in enumerate(
                             settings_sql.read_settings_sql(settings_cluster_descr, host_type),
@@ -233,7 +237,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                         verb.execute_sql(
                                 host_name, 'settings_sql', recv.look_fragment_i(host_name))
 
-                    sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                    sql = pg_role_path.apply_pg_role_path(sql, settings_role, None)
 
                     verb.execute_sql(
                             host_name, 'settings_sql', recv.look_fragment_i(host_name),
@@ -244,10 +248,11 @@ def install_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
+            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
             for schema_name, owner, grant_list, sql_iter in \
                     install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
-                recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+                recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
                 verb.create_schema(host_name, schema_name, recv.look_fragment_i(host_name))
 
@@ -272,6 +277,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
+            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
             for i, sql in enumerate(
                         safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type),
@@ -280,7 +286,7 @@ def install_cmd(args_ctx, print_func, err_print_func):
                     verb.execute_sql(
                             host_name, 'safeguard_sql', recv.look_fragment_i(host_name))
 
-                sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                 verb.execute_sql(
                         host_name, 'safeguard_sql', recv.look_fragment_i(host_name),
@@ -291,11 +297,12 @@ def install_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
+            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
             var_schemas = install.var_schemas(source_code_cluster_descr, host_type)
             func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
 
-            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+            recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
             if not args_ctx.reinstall_func:
                 for schema_name, owner, grant_list, sql_iter in \

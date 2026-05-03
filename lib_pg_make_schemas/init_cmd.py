@@ -4,6 +4,7 @@ from . import verbose
 from . import descr
 from . import revision_sql
 from . import receivers
+from . import install
 from . import pg_role_path
 from . import scr_env
 from . import init_sql
@@ -61,12 +62,13 @@ def init_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
+            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
 
             verb.begin_host(host_name)
 
             recv.begin_host(hosts_descr, host)
 
-            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+            recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
             if args_ctx.exclusive:
                 verb.guard_exclusive(host_name, recv.look_fragment_i(host_name))
@@ -88,7 +90,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
                     verb.execute_sql(
                             host_name, 'init_sql', recv.look_fragment_i(host_name))
 
-                sql = pg_role_path.apply_pg_role_path(sql, None, None)
+                sql = pg_role_path.apply_pg_role_path(sql, source_code_role, None)
 
                 verb.execute_sql(
                         host_name, 'init_sql', recv.look_fragment_i(host_name),
@@ -96,7 +98,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
 
                 recv.execute(host_name, sql)
 
-            recv.execute(host_name, pg_role_path.pg_role_path(None, None))
+            recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
             verb.clean_scr_env(host_name, recv.look_fragment_i(host_name))
 

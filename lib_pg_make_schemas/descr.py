@@ -500,7 +500,7 @@ class SchemasDescr:
     file_name = 'schemas.yaml'
 
     def load(self, schemas_file_path, include_list, include_ref_map,
-            virtual_doc=None, schemas_type=None):
+            virtual_doc=None, schemas_type=None, role=None):
         schemas_file_dir = os.path.dirname(schemas_file_path)
 
         if virtual_doc is not None:
@@ -521,12 +521,19 @@ class SchemasDescr:
             raise ValueError('not isinstance(schemas_elem, dict)')
 
         schemas_type = schemas_elem.get('type', schemas_type)
+        role_elem = schemas_elem.get('role')
         include_elem = schemas_elem.get('include')
         first_elem = schemas_elem.get('first')
         last_elem = schemas_elem.get('last')
 
         if not isinstance(schemas_type, str):
             raise ValueError('not isinstance(schemas_type, str)')
+
+        if role_elem is not None and not isinstance(role_elem, str):
+            raise ValueError('not isinstance(role_elem, str)')
+
+        if role_elem is not None:
+            role = role_elem
 
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
 
@@ -692,6 +699,7 @@ class SchemasDescr:
         self.schemas_file_path = schemas_file_path
         self.include_list = include_list
         self.schemas_type = schemas_type
+        self.role = role
         self.init = init
         self.var_schema_list = var_schema_list
         self.late = late
@@ -704,7 +712,7 @@ class SettingsDescr:
     file_name = 'settings.yaml'
 
     def load(self, settings_file_path, include_list, include_ref_map,
-            virtual_doc=None, settings_type=None):
+            virtual_doc=None, settings_type=None, role=None):
         settings_file_dir = os.path.dirname(settings_file_path)
 
         if virtual_doc is not None:
@@ -725,6 +733,7 @@ class SettingsDescr:
             raise ValueError('not isinstance(settings_elem, dict)')
 
         settings_type = settings_elem.get('type', settings_type)
+        role_elem = settings_elem.get('role')
         include_elem = settings_elem.get('include')
         first_elem = settings_elem.get('first')
         last_elem = settings_elem.get('last')
@@ -732,6 +741,12 @@ class SettingsDescr:
 
         if not isinstance(settings_type, str):
             raise ValueError('not isinstance(settings_type, str)')
+
+        if role_elem is not None and not isinstance(role_elem, str):
+            raise ValueError('not isinstance(role_elem, str)')
+
+        if role_elem is not None:
+            role = role_elem
 
         self._load_utils.check_include_elem(include_elem, first_elem, last_elem)
 
@@ -751,6 +766,7 @@ class SettingsDescr:
         self.settings_file_path = settings_file_path
         self.include_list = include_list
         self.settings_type = settings_type
+        self.role = role
         self.file_path_list = file_path_list
         self.first_file_path_list = first_file_path_list
         self.last_file_path_list = last_file_path_list
@@ -1101,6 +1117,7 @@ class ClusterDescr:
 
         application = cluster_elem['application']
         cluster_type = cluster_elem.get('type', cluster_type)
+        role = cluster_elem.get('role')
 
         if settings_mode:
             revision = None
@@ -1118,6 +1135,9 @@ class ClusterDescr:
 
         if cluster_type is not None and not isinstance(cluster_type, str):
             raise ValueError('not isinstance(cluster_type, str)')
+
+        if role is not None and not isinstance(role, str):
+            raise ValueError('not isinstance(role, str)')
 
         if settings_mode:
             if not isinstance(compatible_elem, (list, str)):
@@ -1195,7 +1215,7 @@ class ClusterDescr:
 
                 try:
                     schemas_descr.load(schemas_file_path, include_list,
-                            include_ref_map, schemas_type=cluster_type)
+                            include_ref_map, schemas_type=cluster_type, role=role)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(schemas_file_path, type(e), e)) from e
                 except OSError as e:
@@ -1230,7 +1250,7 @@ class ClusterDescr:
 
                 try:
                     settings_descr.load(settings_file_path, include_list,
-                            include_ref_map, settings_type=cluster_type)
+                            include_ref_map, settings_type=cluster_type, role=role)
                 except (LookupError, ValueError) as e:
                     raise ValueError('{!r}: {!r}: {}'.format(settings_file_path, type(e), e)) from e
                 except OSError as e:
@@ -1296,6 +1316,7 @@ class ClusterDescr:
         self.include_list = include_list
         self.application = application
         self.cluster_type = cluster_type
+        self.role = role
         self.revision = revision
         self.compatible_list = compatible_list
         self.schemas_list = schemas_list
