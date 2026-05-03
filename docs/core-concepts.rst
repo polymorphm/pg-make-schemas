@@ -116,7 +116,7 @@ role instead of relying on the literal ``postgres`` role.
 Script Environment
 ------------------
 
-Each host transaction gets temporary helper functions:
+Each host transaction gets temporary helper functions for host metadata:
 
 .. code-block:: sql
 
@@ -125,8 +125,26 @@ Each host transaction gets temporary helper functions:
    pg_temp.scr_env_host_params()
    pg_temp.scr_env_shared()
 
-Use these from SQL when behavior must depend on the target host or on values in
-the hosts file.
+``scr_env_host_name()`` returns the concrete host entry name from
+``hosts.yaml``. ``scr_env_host_type()`` returns the host type that selected the
+source-tree branch. ``scr_env_host_params()`` returns the current host's
+``params`` mapping as JSON. ``scr_env_shared()`` returns the hosts file's
+single ``shared`` value as JSON.
+
+Use these helpers when SQL needs deployment values without hard-coding one
+source tree per environment or host. For example, settings SQL can read the
+current environment, region, and node number:
+
+.. code-block:: sql
+
+   select pg_temp.scr_env_shared()->>'environment';
+   select pg_temp.scr_env_host_params()->>'region';
+   select (pg_temp.scr_env_host_params()->>'node')::integer;
+
+This is usually best for configuration rows, regional defaults, feature flags,
+or final assertions. Avoid using host parameters to make hidden schema
+differences between hosts unless that variation is intentional and protected by
+``safeguard.yaml``.
 
 Deterministic Ordering
 ----------------------

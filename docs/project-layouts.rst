@@ -144,6 +144,10 @@ Settings source trees also use ``cluster.yaml``. In settings mode:
 * ``settings.yaml`` provides install-time or reconfiguration SQL.
 * ``migrations.yaml`` provides settings upgrade SQL.
 
+Settings trees often pair with ``hosts.yaml`` ``params`` and ``shared`` values:
+the settings SQL stays reusable, while the hosts file supplies the current
+environment, region, node number, or deployment flags.
+
 Example:
 
 .. code-block:: text

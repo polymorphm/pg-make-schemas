@@ -150,6 +150,70 @@ Include settings source code when needed:
 
    $ ./pg-make-schemas upgrade --execute -v -o out/upgrade hosts.yaml src settings/dev
 
+Use Host Parameters in Settings SQL
+-----------------------------------
+
+Use ``hosts.yaml`` for deployment values and settings source trees for the SQL
+that applies them. This keeps the main schema source tree focused on structure
+and keeps environment-specific values out of copied SQL files.
+
+``hosts.yaml``:
+
+.. code-block:: yaml
+
+   hosts:
+     - shared:
+         environment: production
+         country: US
+     - name: main-east-1
+       type: ledger_main
+       conninfo: dbname=ledger_main_east_1 user=app_role
+       params:
+         region: us-east
+         node: 1
+         read_only: false
+     - name: main-east-2
+       type: ledger_main
+       conninfo: dbname=ledger_main_east_2 user=app_role
+       params:
+         region: us-east
+         node: 2
+         read_only: false
+     - name: main-west-1
+       type: ledger_main
+       conninfo: dbname=ledger_main_west_1 user=app_role
+       params:
+         region: us-west
+         node: 1
+         read_only: true
+
+``settings/dev/ledger-main/settings.yaml``:
+
+.. code-block:: yaml
+
+   settings:
+     type: ledger_main
+     sql: |
+       insert into ledger_data.deployment_config
+       (environment, country, region, node, read_only)
+       values (
+           pg_temp.scr_env_shared()->>'environment',
+           pg_temp.scr_env_shared()->>'country',
+           pg_temp.scr_env_host_params()->>'region',
+           (pg_temp.scr_env_host_params()->>'node')::integer,
+           (pg_temp.scr_env_host_params()->>'read_only')::boolean
+       );
+
+pg-make-schemas runs the same settings SQL in each host transaction. Each run
+sees the same ``shared`` value and its own ``params`` value, so the rows above
+can record node ``1`` for ``main-east-1``, node ``2`` for ``main-east-2``, and a
+different region and flag for ``main-west-1``.
+
+This pattern works well for regional defaults, node or shard numbers, feature
+flags, and deployment-specific seed/config rows. If a parameter affects a
+production-only assumption or destructive behavior, add a ``safeguard.yaml``
+check so the command fails before committing a bad deployment.
+
 Upgrade or Install Mixed Hosts
 ------------------------------
 

@@ -52,10 +52,13 @@ argument to every command.
    hosts:
      - shared:
          environment: demo
+         country: US
      - name: demo_main
        type: ledger_main
        conninfo: dbname=postgres user=postgres password=postgres
        params:
+         region: us-east
+         node: 1
          read_only: false
 
 Top-level field:
@@ -77,13 +80,17 @@ Host entries:
     for execution.
 
 ``params``
-    Optional mapping. Exposed to SQL as ``pg_temp.scr_env_host_params()``.
+    Optional mapping. Per-host deployment values exposed to SQL as JSON through
+    ``pg_temp.scr_env_host_params()``. Use it for values such as region, node
+    number, shard number, feature flags, or read-only flags.
 
 Shared entry:
 
 ``shared``
-    Optional value. At most one hosts list item may contain it. Exposed to SQL
-    as ``pg_temp.scr_env_shared()``.
+    Optional value. At most one hosts list item may contain it. Exposed to
+    every host transaction as JSON through ``pg_temp.scr_env_shared()``. Use it
+    for values shared by the whole hosts file, such as environment name,
+    country, deployment id, or release channel.
 
 cluster.yaml
 ------------
