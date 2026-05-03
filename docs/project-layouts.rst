@@ -74,11 +74,11 @@ The hosts file maps physical connections to those types:
        type: ledger_archive
        conninfo: dbname=ledger_archive user=postgres password=postgres
 
-When using ``--exclusive``, keep each host on its own database. The exclusive
-guard is implemented with a transaction-held schema lock inside the target
-database, so multiple host entries that point at the same database can block
-each other. If multiple host types intentionally share one database, do not use
-``--exclusive`` for that hosts file.
+``--exclusive`` is allowed only for a single-host run. After resolving
+``HOSTS``, the command must have one target host, which means one database
+connection during execution or one SQL output file during offline generation.
+For several target hosts, use separate command invocations if each database
+needs the exclusive guard.
 
 Shared SQL
 ----------

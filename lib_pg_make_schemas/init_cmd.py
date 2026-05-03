@@ -2,12 +2,15 @@ import os, os.path
 import contextlib
 from . import verbose
 from . import descr
+from . import cmd
 from . import revision_sql
 from . import receivers
-from . import install
 from . import pg_role_path
 from . import scr_env
 from . import init_sql
+
+class InitCmdError(Exception):
+    pass
 
 def init_cmd(args_ctx, print_func, err_print_func):
     verb = verbose.make_verbose(print_func, err_print_func, args_ctx.verbose)
@@ -44,6 +47,9 @@ def init_cmd(args_ctx, print_func, err_print_func):
     if args_ctx.hosts is None:
         hosts_descr.load_pseudo(source_code_cluster_descr)
 
+    if args_ctx.exclusive and not cmd.is_single_host_run(hosts_descr):
+        raise InitCmdError('unable to use --exclusive without a single-host run')
+
     rev_sql = revision_sql.RevisionSql(source_code_cluster_descr.application)
 
     verb.source_code_revision(
@@ -62,7 +68,7 @@ def init_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
-            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+            source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
             verb.begin_host(host_name)
 

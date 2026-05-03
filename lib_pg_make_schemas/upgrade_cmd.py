@@ -2,11 +2,11 @@ import os, os.path
 import contextlib
 from . import verbose
 from . import descr
+from . import cmd
 from . import settings
 from . import revision_sql
 from . import comment
 from . import receivers
-from . import install
 from . import pg_role_path
 from . import scr_env
 from . import upgrade
@@ -70,6 +70,9 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
 
     if args_ctx.hosts is None:
         hosts_descr.load_pseudo(source_code_cluster_descr)
+
+    if args_ctx.exclusive and not cmd.is_single_host_run(hosts_descr):
+        raise UpgradeCmdError('unable to use --exclusive without a single-host run')
 
     rev_sql = revision_sql.RevisionSql(source_code_cluster_descr.application)
 
@@ -136,9 +139,9 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
         for host in hosts_descr.host_list:
             host_name = host['name']
             host_type = host['type']
-            source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+            source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
-            func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
+            func_schemas = cmd.func_schemas(source_code_cluster_descr, host_type)
 
             recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
@@ -245,7 +248,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     for host in hosts_descr.host_list:
                         host_name = host['name']
                         host_type = host['type']
-                        source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                        source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
                         for i, sql in enumerate(
                                     init_sql.read_init_sql(source_code_cluster_descr, host_type),
@@ -265,7 +268,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
-                    source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                    source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
                     if host_name not in install_host_name_set:
                         continue
@@ -313,7 +316,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                     for host in hosts_descr.host_list:
                         host_name = host['name']
                         host_type = host['type']
-                        settings_role = install.settings_role(settings_cluster_descr, host_type)
+                        settings_role = cmd.settings_role(settings_cluster_descr, host_type)
 
                         if host_name not in install_host_name_set:
                             continue
@@ -338,7 +341,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
-                    source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                    source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
                     if host_name in install_host_name_set:
                         continue
@@ -368,7 +371,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                                 recv.execute(host_name, sql)
 
                             for settings_cluster_descr in settings_cluster_descr_list:
-                                settings_role = install.settings_role(settings_cluster_descr, host_type)
+                                settings_role = cmd.settings_role(settings_cluster_descr, host_type)
 
                                 for i, sql in enumerate(
                                             upgrade_sql.read_upgrade_sql(
@@ -426,7 +429,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                             recv.execute(host_name, sql)
 
                         for settings_cluster_descr in settings_cluster_descr_list:
-                            settings_role = install.settings_role(settings_cluster_descr, host_type)
+                            settings_role = cmd.settings_role(settings_cluster_descr, host_type)
 
                             for i, sql in enumerate(
                                         upgrade_sql.read_upgrade_sql(
@@ -450,7 +453,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
                 for host in hosts_descr.host_list:
                     host_name = host['name']
                     host_type = host['type']
-                    source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                    source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
                     for schema_name, owner, grant_list, sql_iter in \
                             install_sql.read_func_install_sql(source_code_cluster_descr, host_type):
@@ -479,7 +482,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
-                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
                 for i, sql in enumerate(
                             safeguard_sql.read_safeguard_sql(source_code_cluster_descr, host_type),
@@ -499,10 +502,10 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
-                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
-                var_schemas = install.var_schemas(source_code_cluster_descr, host_type)
-                func_schemas = install.func_schemas(source_code_cluster_descr, host_type)
+                var_schemas = cmd.var_schemas(source_code_cluster_descr, host_type)
+                func_schemas = cmd.func_schemas(source_code_cluster_descr, host_type)
 
                 recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 
@@ -557,7 +560,7 @@ def upgrade_cmd(args_ctx, print_func, err_print_func):
             for host in hosts_descr.host_list:
                 host_name = host['name']
                 host_type = host['type']
-                source_code_role = install.schemas_role(source_code_cluster_descr, host_type)
+                source_code_role = cmd.schemas_role(source_code_cluster_descr, host_type)
 
                 recv.execute(host_name, pg_role_path.pg_role_path(source_code_role, None))
 

@@ -43,9 +43,9 @@ Shared Options
     Abort if a ``*_revision`` schema for another application already exists in
     the target database. The generated SQL takes a transaction-held schema lock
     before checking revision schemas, so this option also works in output-only
-    SQL. Use it only when each host targets a separate database; if multiple
-    host entries intentionally share one database, do not use ``--exclusive``
-    for that hosts file.
+    SQL. It is allowed only for a single-host run: after resolving ``HOSTS``,
+    the command must have one target host, so it will make one database
+    connection or write one SQL output file.
 
 Output Files
 ------------

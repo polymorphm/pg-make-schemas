@@ -40,4 +40,7 @@ def func_schemas(cluster_descr, host_type):
 
     return schemas
 
+def is_single_host_run(hosts_descr):
+    return len(hosts_descr.host_list) == 1
+
 # vi:ts=4:sw=4:et

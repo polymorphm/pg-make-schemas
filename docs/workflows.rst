@@ -232,8 +232,8 @@ requires live execution and cannot be used with ``--rev``, ``--show-rev``, or
 Protect an Exclusive Database
 -----------------------------
 
-Use ``--exclusive`` when a database must contain only this application's
-pg-make-schemas revision structures:
+Use ``--exclusive`` during a single-host run when a database must contain only
+this application's pg-make-schemas revision structures:
 
 .. code-block:: console
 
@@ -241,9 +241,9 @@ pg-make-schemas revision structures:
 
 The option adds an early SQL guard that fails if any other ``*_revision`` schema
 already exists. It also creates a transaction-held lock schema while the command
-runs, so each host in the hosts file should point at a different database. If
-several host entries intentionally target the same database, do not use
-``--exclusive`` for that hosts file.
+runs. Because the guard is database-wide, pg-make-schemas accepts
+``--exclusive`` only when the resolved hosts list contains one host, producing
+one database connection or one SQL output file.
 
 Show Current Revision
 ---------------------

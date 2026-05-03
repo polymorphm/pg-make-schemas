@@ -56,8 +56,8 @@ def add_shared_options(sub_parser):
         '--exclusive',
         action='store_true',
         help='abort if a *_revision schema for another application already '
-                'exists in the database. use only when each host targets a '
-                'separate database',
+                'exists in the database. use only for a single-host run, '
+                'when HOSTS resolves to one target host',
     )
 
 def add_install_upgrade_options(sub_parser):
