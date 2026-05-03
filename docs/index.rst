@@ -5,6 +5,11 @@ pg-make-schemas Documentation
 tree. It is designed for projects that want database changes to be reviewable,
 repeatable, and tied to a project revision.
 
+The source tree declares a logical application revision in ``cluster.yaml``.
+At install or upgrade time, projects can also record deployment provenance with
+``--comment`` and ``comment.sh``, for example the Git commit, CI build, or
+release artifact that produced the tree.
+
 .. toctree::
    :maxdepth: 2
    :caption: User Guide

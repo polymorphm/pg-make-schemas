@@ -37,8 +37,8 @@ def add_shared_options(sub_parser):
         '--output',
         metavar='OUTPUT',
         help='write generated SQL files using OUTPUT as the file prefix. '
-                'without --execute, this writes SQL files instead of '
-                'connecting to databases. with --execute, this writes SQL '
+                'without --execute, only generate files and do not connect '
+                'to databases. with --execute, also keep SQL and notice '
                 'files as an execution record',
     )
 
@@ -47,8 +47,8 @@ def add_shared_options(sub_parser):
         '--include',
         metavar='INCLUDE',
         action='append',
-        help='add an allowed include directory. this option may be used many '
-                'times and may define an include reference with name=value',
+        help='allow SQL includes from another directory. use name=value to '
+                'define a reusable include reference; repeat as needed',
     )
 
     sub_parser.add_argument(
@@ -129,9 +129,9 @@ def add_upgrade_options(upgrade_parser):
         '-r',
         '--rev',
         metavar='REV',
-        help='use REV as the starting revision instead of reading it from the '
-                'database. this is useful with pseudo-hosts, --show-rev, and '
-                '--change-rev',
+        help='use REV as the starting revision for offline generation, '
+                '--show-rev checks, or --change-rev instead of reading the '
+                'database',
     )
 
     upgrade_parser.add_argument(

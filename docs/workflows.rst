@@ -7,7 +7,9 @@ paths and names with your project names.
 Generate SQL for Review
 -----------------------
 
-Use pseudo-hosts and an output prefix:
+Use this before a live deployment when developers or DBAs need to inspect the
+exact SQL that pg-make-schemas would produce. Pseudo-hosts and an output prefix
+keep the command offline:
 
 .. code-block:: console
 
@@ -32,7 +34,9 @@ better fit for setup that creates roles or extensions.
 Install a Fresh Database
 ------------------------
 
-Start with a pretend run:
+For a real database, the usual safe path is: run the SQL and roll it back,
+inspect any output files, then commit a reviewed execution. Start with a
+pretend run:
 
 .. code-block:: console
 
@@ -46,6 +50,22 @@ Then commit:
 
 The ``--execute`` option is important here: with ``--output`` alone,
 pg-make-schemas writes SQL files for review and does not touch the database.
+
+Record Deployment Provenance
+----------------------------
+
+Use ``--comment`` when the stored revision should also say which source
+snapshot or build produced the install or upgrade:
+
+.. code-block:: console
+
+   $ ./pg-make-schemas upgrade --comment --execute -v -o out/upgrade hosts.yaml src
+
+By default, pg-make-schemas runs ``src/comment.sh`` and stores its stdout in
+revision and revision-history tables. A project can copy
+``EXAMPLE.comment.sh`` into the source tree to record
+``git describe --dirty --long --always``. For CI or release tooling outside the
+source tree, set ``PG_MAKE_SCHEMAS_COMMENT`` to the script path.
 
 Rebuild Function Schemas
 ------------------------
@@ -150,7 +170,9 @@ Use ``--rev`` with ``--show-rev``:
    $ ./pg-make-schemas upgrade --show-rev --rev 1.0.0 -o out/check - src
 
 This is useful before asking a DBA to review generated SQL for an offline
-upgrade. The output prefix keeps this check offline when pseudo-hosts are used.
+upgrade. ``--rev`` supplies the starting database revision that live execution
+would normally read from the database. The output prefix keeps this check
+offline when pseudo-hosts are used.
 
 Generate Offline Upgrade SQL
 ----------------------------
@@ -162,7 +184,8 @@ Offline upgrade SQL needs an explicit starting revision:
    $ ./pg-make-schemas upgrade --rev 1.0.0 -o out/offline-upgrade - src
 
 Review the generated SQL carefully before running it manually. SQL generation
-cannot reproduce every live-execution check.
+cannot reproduce every live-execution check because it cannot query the target
+database while generating the file.
 
 Change Stored Revision Metadata
 -------------------------------
@@ -175,7 +198,8 @@ SQL or recreating func schemas:
    $ ./pg-make-schemas upgrade --change-rev --rev 1.0.0 hosts.yaml src
 
 Use this only when the database has already been brought to the correct state by
-other controlled steps.
+other controlled steps. Otherwise, it can make pg-make-schemas believe the
+database is at a revision that its objects and data do not actually match.
 
 Debug a Failed SQL Fragment
 ---------------------------

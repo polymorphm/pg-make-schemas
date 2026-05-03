@@ -9,6 +9,11 @@ definitions live in files, deployments are repeatable, and upgrades are driven
 by explicit migrations. It separates data-bearing schemas from schemas that can
 be recreated, such as function/API schemas.
 
+The project revision stored in ``cluster.yaml`` is the logical database
+revision. During deployment, an optional ``comment.sh`` script can add
+provenance from Git, CI, or a release artifact without making pg-make-schemas
+depend on any specific source-control system.
+
 Status
 ------
 

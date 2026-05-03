@@ -29,13 +29,15 @@ Shared Options
     This implies ``--execute``.
 
 ``-o OUTPUT``, ``--output OUTPUT``
-    Write generated SQL files using ``OUTPUT`` as the file prefix. Without
-    ``--execute``, this writes SQL files instead of connecting to databases.
-    With ``--execute``, it writes SQL files as an execution record.
+    Write generated SQL files using ``OUTPUT`` as the file prefix. Use this for
+    reviewable SQL, DBA handoff, or an execution record. Without ``--execute``,
+    this writes SQL files instead of connecting to databases. With
+    ``--execute``, it writes SQL files as an execution record.
 
 ``-i INCLUDE``, ``--include INCLUDE``
-    Add an allowed include directory. This option may be used many times and may
-    define an include reference with ``name=value``.
+    Add an allowed include directory for shared SQL outside the source tree.
+    This option may be used many times and may define an include reference with
+    ``name=value``.
 
 ``-X``, ``--exclusive``
     Abort if a ``*_revision`` schema for another application already exists in
@@ -126,7 +128,8 @@ Install options:
     dangerous; review the possible consequences first.
 
 ``-A``, ``--weak-acls``
-    Turn unexpected ACL errors into notices during ACL guarding.
+    Turn unexpected ACL errors into notices during ACL guarding. Use this as a
+    temporary diagnostic or emergency workaround, not as normal policy.
 
 upgrade
 -------
@@ -145,7 +148,8 @@ Upgrade options:
 
 ``-c``, ``--comment``
     Same as for ``install``: run ``comment.sh`` from ``SOURCE_CODE`` or the
-    script named by ``PG_MAKE_SCHEMAS_COMMENT`` to get the revision comment.
+    script named by ``PG_MAKE_SCHEMAS_COMMENT`` to record source or deployment
+    provenance with the revision metadata.
 
 ``--init``
     Run basic initialization before migrations.
@@ -155,7 +159,8 @@ Upgrade options:
     dangerous; review the possible consequences first.
 
 ``-A``, ``--weak-acls``
-    Turn unexpected ACL errors into notices during ACL guarding.
+    Turn unexpected ACL errors into notices during ACL guarding. Use this as a
+    temporary diagnostic or emergency workaround, not as normal policy.
 
 ``--show-rev``
     Show stored revision information and stop. Use with ``--rev`` to check
@@ -163,12 +168,14 @@ Upgrade options:
 
 ``--change-rev``
     Change stored revision information and stop. This is dangerous; without
-    ``--rev``, it can overwrite real revision information.
+    ``--rev``, it can overwrite real revision information. Use it only after
+    the database has been brought to the target state by other controlled
+    steps.
 
 ``-r REV``, ``--rev REV``
     Use ``REV`` as the starting revision instead of reading it from the
-    database. This is useful with pseudo-hosts, ``--show-rev``, and
-    ``--change-rev``.
+    database. This is useful for offline generated SQL, pseudo-host
+    ``--show-rev`` checks, and deliberate ``--change-rev`` operations.
 
 ``--install``
     Fall back to install for hosts without a stored variable revision. This is

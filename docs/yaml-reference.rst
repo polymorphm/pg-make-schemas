@@ -12,7 +12,8 @@ Several entities support:
 
 ``include``
     A string or list of strings naming additional directories to scan before
-    the entity's own directory.
+    the entity's own directory. Use this for shared SQL that should be reused
+    without copying it into each schema directory.
 
 ``first``
     A string or list of strings naming files or child entity directories that
@@ -115,11 +116,13 @@ Fields:
     Required string. Must match between main source and settings source.
 
 ``revision``
-    Required string in main source-code mode. Stored in revision tables.
+    Required string in main source-code mode. Stored in revision tables as the
+    logical application revision.
 
 ``compatible``
     Required string or list of strings in settings source-code mode. The main
-    source revision must be included.
+    source revision must be included. This prevents accidentally applying a
+    settings tree to an application revision it was not written for.
 
 ``type``
     Optional string. Enables the shortened single-host-type layout and is
@@ -295,6 +298,10 @@ Fields:
 ``sql``
     Optional string. Inline SQL.
 
+Use settings trees for environment-specific or deployment-specific SQL that
+should be versioned separately from the main schema source tree, such as seed
+data, local configuration, or per-environment reconfiguration.
+
 migrations.yaml
 ---------------
 
@@ -316,6 +323,10 @@ Fields:
 
 Each migration way, defined by ``(revision, compatible_revision)``, must be
 unique.
+
+Migrations describe how data-bearing var schemas move from one stored revision
+to another. During upgrade, pg-make-schemas chooses a path from the database's
+stored var revision to the source tree's current revision.
 
 migration.yaml
 --------------
