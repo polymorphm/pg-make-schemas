@@ -38,6 +38,45 @@ DBA applies a file manually, it should normally be wrapped in an explicit
 transaction so ``set local`` statements and rollback behavior match the intended
 execution model.
 
+Roles and Privileges
+--------------------
+
+By default, command-level SQL runs as ``postgres``. Projects that run databases
+under an application-owned role can avoid that dependency by configuring a
+source-tree role and connecting as a role that may use it.
+
+A typical single-role setup is:
+
+.. code-block:: console
+
+   $ createdb -O app_role app_db
+
+.. code-block:: yaml
+
+   hosts:
+     - name: app
+       conninfo: dbname=app_db user=app_role
+
+.. code-block:: yaml
+
+   cluster:
+     application: app
+     revision: "1.0"
+     role: app_role
+
+With that layout, pg-make-schemas' built-in technical SQL does not require the
+literal ``postgres`` role. The configured role still needs ordinary privileges
+for the work being done: creating and dropping managed schemas, creating the
+revision schema and revision tables, creating temporary helper functions,
+altering managed schemas to their declared owners, checking ACLs, and running
+project SQL.
+
+This is not a way to bypass PostgreSQL privileges. Project SQL may still need
+DBA or superuser work, especially when it creates extensions, creates or alters
+roles, changes shared database-cluster state, or touches objects outside the
+configured role's ownership. Keep that setup in a DBA-controlled step or in a
+carefully reviewed ``init`` workflow.
+
 Revision Guards
 ---------------
 

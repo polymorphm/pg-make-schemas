@@ -93,7 +93,8 @@ installed it?" Keeping those separate lets a project use version names such as
 Execution Context
 -----------------
 
-Before running SQL for a schema, pg-make-schemas wraps it with:
+pg-make-schemas uses two role contexts. SQL that belongs to a managed
+``schema.yaml`` runs as that schema's declared ``owner``:
 
 .. code-block:: sql
 
@@ -101,8 +102,16 @@ Before running SQL for a schema, pg-make-schemas wraps it with:
    set local search_path to "schema_name";
    set local check_function_bodies to off;
 
-For SQL outside a schema-specific context, it uses role ``postgres`` and an
-empty ``search_path``.
+Command-level SQL runs with an empty ``search_path`` and the effective source
+tree role. For the main source tree, that role is ``schemas.role`` for the host
+type, then ``cluster.role``, then the default ``postgres``. For a settings
+source tree, it is ``settings.role`` for the host type, then that settings
+tree's ``cluster.role``, then ``postgres``.
+
+Command-level SQL includes pg-make-schemas revision metadata, script
+environment setup, init, late, safeguard, migration, and settings SQL. The
+``role`` fields let a deployment run that SQL as an application-owned database
+role instead of relying on the literal ``postgres`` role.
 
 Script Environment
 ------------------

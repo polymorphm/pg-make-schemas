@@ -132,7 +132,9 @@ Fields:
     Optional string. Default command-level PostgreSQL role for this source
     tree. Main source ``schemas.yaml`` branches and settings source
     ``settings.yaml`` branches can override it per host type. If no role is
-    set, command-level SQL runs as ``postgres``.
+    set, command-level SQL runs as ``postgres``. This controls the role used for
+    pg-make-schemas' own metadata and non-schema scripts; it does not change
+    the owner of managed schemas.
 
 ``include``, ``first``, ``last``
     Optional ordering fields for child ``schemas.yaml``, ``settings.yaml``, and
@@ -166,7 +168,8 @@ Fields:
     Optional string. Command-level PostgreSQL role for this host type. It
     overrides ``cluster.role`` for ``init.yaml``, ``late.yaml``,
     ``safeguard.yaml``, and migration SQL for the same host type. Schema object
-    SQL still runs as each ``schema.yaml`` ``owner``.
+    SQL still runs as each ``schema.yaml`` ``owner``. Use this when one source
+    tree targets several host types that are owned by different database roles.
 
 ``include``, ``first``, ``last``
     Optional ordering fields for child ``init.yaml``, ``schema.yaml``,
@@ -225,6 +228,9 @@ Fields:
 
 ``owner``
     Required string. Role that owns the schema and runs the schema SQL.
+    This is intentionally separate from ``cluster.role`` and ``schemas.role``:
+    the source-tree role runs command-level SQL, while ``owner`` runs SQL inside
+    this schema's ``search_path``.
 
 ``grant``
     Optional string or list of strings. Roles that receive ``USAGE`` on the
@@ -307,7 +313,8 @@ Fields:
 ``role``
     Optional string. Command-level PostgreSQL role for this settings host type.
     It overrides the settings source tree's ``cluster.role`` for
-    ``settings.yaml`` SQL.
+    ``settings.yaml`` SQL. Use it when settings SQL must run as a different
+    deployment role than the main schema source tree.
 
 ``include``, ``first``, ``last``
     Optional ordering fields for ``*.sql`` files.

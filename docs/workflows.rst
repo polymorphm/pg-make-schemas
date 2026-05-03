@@ -51,6 +51,39 @@ Then commit:
 The ``--execute`` option is important here: with ``--output`` alone,
 pg-make-schemas writes SQL files for review and does not touch the database.
 
+Run Without the postgres Role
+-----------------------------
+
+If the database is owned by an application role, pg-make-schemas can run its
+command-level SQL through that role instead of depending on ``postgres``.
+Create the database for the role, connect as that role, and set ``cluster.role``
+in the source tree:
+
+.. code-block:: console
+
+   $ createdb -O app_role app_db
+
+.. code-block:: yaml
+
+   hosts:
+     - name: app
+       conninfo: dbname=app_db user=app_role
+
+.. code-block:: yaml
+
+   cluster:
+     application: app
+     revision: "1.0"
+     role: app_role
+
+Use ``schemas.role`` when different host types in the same source tree need
+different command-level roles. Settings source trees have the same pattern:
+``settings.role`` overrides their ``cluster.role`` for settings SQL.
+
+The role still needs the PostgreSQL privileges required by the generated and
+project SQL. Extensions, role management, and shared cluster setup may still
+belong in a DBA-controlled step or a separate ``init`` workflow.
+
 Record Deployment Provenance
 ----------------------------
 
