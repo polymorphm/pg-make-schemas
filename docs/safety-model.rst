@@ -109,12 +109,38 @@ small example.
 comment.sh
 ----------
 
-``--comment`` runs a shell script and stores its output in revision tables. The
-default script name is ``comment.sh`` in the main source tree. If
-``PG_MAKE_SCHEMAS_COMMENT`` is set, that path is used instead and ``--comment``
-is implied.
+Use ``--comment`` when stored pg-make-schemas revision metadata should also
+carry deployment provenance, such as the Git tag, commit hash, dirty-tree
+marker, CI build id, or release artifact id used for an install or upgrade.
+This helps answer which source snapshot produced the database state, while
+keeping pg-make-schemas independent from any specific source-control system.
 
-Only use trusted scripts. They run as local programs before database work.
+``install --comment`` and ``upgrade --comment`` run a shell script and store
+its output as the revision comment in revision and revision-history tables. The
+default script path is ``comment.sh`` inside the main source tree passed as
+``SOURCE_CODE``. If ``PG_MAKE_SCHEMAS_COMMENT`` is set, that path is used
+instead and ``--comment`` is implied.
+
+The script runs as a local program before database work. Standard input is
+``/dev/null``. Standard output is captured, decoded as text, and stripped of
+trailing whitespace. A non-zero exit status aborts the command.
+
+Only use trusted scripts. A typical project can copy or adapt
+``EXAMPLE.comment.sh`` as ``comment.sh`` in its source tree:
+
+.. code-block:: console
+
+   $ cp EXAMPLE.comment.sh src/comment.sh
+
+That example emits ``git describe --dirty --long --always`` when Git metadata
+is available, falls back to ``git-describe.txt``, and finally emits
+``{no-git-rev}``.
+
+For a script outside the source tree, set ``PG_MAKE_SCHEMAS_COMMENT``:
+
+.. code-block:: console
+
+   $ PG_MAKE_SCHEMAS_COMMENT=/path/to/comment.sh ./pg-make-schemas install --execute hosts.yaml src
 
 Include Path Restrictions
 -------------------------

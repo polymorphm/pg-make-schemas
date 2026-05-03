@@ -65,9 +65,10 @@ def add_install_upgrade_options(sub_parser):
         '-c',
         '--comment',
         action='store_true',
-        help='run comment.sh to get the revision comment. use this only with '
-                'trusted scripts. PG_MAKE_SCHEMAS_COMMENT sets the script '
-                'path and implies this option',
+        help='run comment.sh to record source/deployment provenance with '
+                'revision metadata. use this only with trusted scripts. '
+                'PG_MAKE_SCHEMAS_COMMENT sets the script path and implies '
+                'this option',
     )
 
     sub_parser.add_argument(

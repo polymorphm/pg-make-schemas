@@ -103,9 +103,10 @@ Syntax:
 Install options:
 
 ``-c``, ``--comment``
-    Run ``comment.sh`` to get the revision comment. Use this only with trusted
-    scripts. ``PG_MAKE_SCHEMAS_COMMENT`` sets the script path and implies this
-    option.
+    Run ``comment.sh`` from ``SOURCE_CODE`` to record source or deployment
+    provenance with the revision metadata. ``PG_MAKE_SCHEMAS_COMMENT`` sets
+    another script path and implies this option. Use only trusted scripts; see
+    ``docs/safety-model.rst`` for the execution model.
 
 ``--init``
     Run basic initialization before install or upgrade. The standalone
@@ -143,7 +144,8 @@ Syntax:
 Upgrade options:
 
 ``-c``, ``--comment``
-    Same as for ``install``.
+    Same as for ``install``: run ``comment.sh`` from ``SOURCE_CODE`` or the
+    script named by ``PG_MAKE_SCHEMAS_COMMENT`` to get the revision comment.
 
 ``--init``
     Run basic initialization before migrations.
