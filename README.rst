@@ -17,15 +17,20 @@ depend on any specific source-control system.
 Highlights
 ----------
 
-* Generate reviewable SQL without connecting to PostgreSQL by using
-  pseudo-hosts from the source tree.
-* Run live installs and upgrades with ``--pretend`` first, then keep SQL and
-  notice files as an execution record.
-* Avoid depending on the literal ``postgres`` role by configuring source-tree
-  roles and connecting as application-owned database roles.
-* Target one database from a larger hosts file with ``--host-name`` and
-  single-host run options such as ``--conninfo``, ``--host-define``, and
-  ``--exclusive``.
+* Keep PostgreSQL schemas, migrations, safeguards, and settings in reviewable
+  source trees next to application code.
+* Keep migrations shorter by migrating persistent var schemas explicitly and
+  recreating function/API schemas from current source.
+* Generate SQL for review, CI artifacts, or DBA-controlled execution before
+  touching a database.
+* Guard live installs and upgrades with stored revisions, migration path checks,
+  safeguard SQL, ACL checks, and ``--pretend`` runs.
+* Run one database or a multi-host fleet from the same source model, with
+  targeted single-host runs when one database needs focused work.
+* Run technical SQL through application-owned roles when databases should not
+  depend on the literal ``postgres`` role.
+* Feed reusable settings SQL with deployment values from ``hosts.yaml`` instead
+  of copying SQL per environment.
 
 Status
 ------
