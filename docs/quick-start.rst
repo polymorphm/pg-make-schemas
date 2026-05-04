@@ -93,10 +93,11 @@ Run ``install`` with ``hosts`` set to ``-`` and an output prefix:
 
    $ ./pg-make-schemas install -o /tmp/starlight-ledger/install - -- /tmp/starlight-ledger/src
 
-The ``-`` hosts argument means "use pseudo-hosts from the source tree". This is
-useful for SQL generation because no database connection string is needed. For
-live single-host runs, pseudo-hosts can connect through ``--conninfo`` or
-libpq environment defaults.
+The ``-`` hosts argument means "use pseudo-hosts from the source tree". Because
+this example uses ``cluster.type``, there is one pseudo-host named
+``ledger_main``. That is useful for SQL generation because no connection string
+is needed; for live execution, the same single-host run can connect through
+``--conninfo`` or libpq environment defaults.
 
 The command writes a file named like this:
 

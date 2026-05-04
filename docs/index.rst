@@ -35,5 +35,5 @@ as ``ledger_main``, ``ledger_archive``, ``demo_main``, and ``ledger_api`` are
 only example names. They are not keywords.
 
 Actual pg-make-schemas terms are written literally, for example ``host``,
-``host type``, ``schema type``, ``var schema``, ``func schema``, ``cluster``,
-``migration``, and ``upgrade``.
+``host type``, ``single-host run``, ``schema type``, ``var schema``, ``func
+schema``, ``cluster``, ``migration``, and ``upgrade``.

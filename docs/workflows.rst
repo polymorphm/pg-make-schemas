@@ -209,6 +209,18 @@ sees the same ``shared`` value and its own ``params`` value, so the rows above
 can record node ``1`` for ``main-east-1``, node ``2`` for ``main-east-2``, and a
 different region and flag for ``main-west-1``.
 
+For one-off targeted work, select a host and override deployment values from
+the command line:
+
+.. code-block:: console
+
+   $ ./pg-make-schemas upgrade --host-name main-east-1 \
+       --define environment=staging --host-define node=10 \
+       --execute -v -o out/targeted hosts.yaml src settings/dev
+
+``--define`` updates the shared value seen by SQL. ``--host-define`` updates
+only the selected host params value, so it requires a single-host run.
+
 This pattern works well for regional defaults, node or shard numbers, feature
 flags, and deployment-specific seed/config rows. If a parameter affects a
 production-only assumption or destructive behavior, add a ``safeguard.yaml``
@@ -241,10 +253,8 @@ this application's pg-make-schemas revision structures:
 
 The option adds an early SQL guard that fails if any other ``*_revision`` schema
 already exists. It also creates a transaction-held lock schema while the command
-runs. Because the guard is database-wide, pg-make-schemas accepts
-``--exclusive`` only when the resolved hosts list contains one host after any
-``--host-name`` selection is applied, producing one database connection or one
-SQL output file.
+runs. Because the guard is database-wide, ``--exclusive`` requires a
+single-host run.
 
 Show Current Revision
 ---------------------

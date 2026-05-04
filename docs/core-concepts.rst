@@ -24,6 +24,14 @@ The Tool's Vocabulary
     A logical database kind. Several hosts may share the same type and receive
     the same schema set.
 
+``single-host run``
+    A command run whose resolved host list contains exactly one host after
+    reading ``HOSTS`` and applying options such as ``--host-name``. Single-host
+    runs are useful for targeted work on one database or for producing one SQL
+    output file. Some options require this because their meaning is
+    database-wide, such as ``--exclusive``, or because they override one host's
+    connection or params.
+
 ``var schema``
     A schema with data-bearing or otherwise persistent objects. pg-make-schemas
     preserves these during normal upgrades and changes them through migrations.
@@ -89,6 +97,25 @@ The declared revision answers "which logical database version is this?" The
 optional revision comment answers "which source snapshot or deployment artifact
 installed it?" Keeping those separate lets a project use version names such as
 ``1.0.0`` while still recording lower-level provenance when needed.
+
+Single-Host Source Trees
+------------------------
+
+Many applications deploy one schema set to one database type. In that case,
+``cluster.type`` keeps descriptors shorter:
+
+.. code-block:: yaml
+
+   cluster:
+     application: starlight-ledger
+     revision: "1.0.0"
+     type: ledger_main
+
+Child ``schemas.yaml``, ``settings.yaml``, and migration descriptors can inherit
+that host type instead of repeating it. When ``HOSTS`` is ``-``, this layout also
+produces one pseudo-host, so generated SQL naturally becomes a single-host run.
+For live execution, that pseudo-host can connect through ``--conninfo`` or libpq
+environment defaults.
 
 Execution Context
 -----------------

@@ -132,8 +132,11 @@ Fields:
     settings tree to an application revision it was not written for.
 
 ``type``
-    Optional string. Enables the shortened single-host-type layout and is
-    inherited by child entities that need a type.
+    Optional string. Declares the source tree's default host type. Child
+    ``schemas.yaml``, ``settings.yaml``, and migration descriptors inherit this
+    value when they do not declare their own ``type``. This keeps single-type
+    source trees concise and makes ``HOSTS=-`` resolve to one pseudo-host: a
+    single-host run.
 
 ``role``
     Optional string. Default command-level PostgreSQL role for this source

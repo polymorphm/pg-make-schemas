@@ -36,7 +36,10 @@ Use ``cluster.type`` to make this a shortened single-type tree:
      type: ledger_main
 
 In this mode, child ``schemas.yaml``, ``migrations.yaml``, and ``settings.yaml``
-files can inherit the type.
+files can inherit the type. With ``HOSTS=-``, the source tree produces one
+pseudo-host named ``ledger_main``. That makes offline SQL generation naturally
+single-host, and live execution can use ``--conninfo`` or libpq environment
+defaults without writing a separate hosts file.
 
 Multiple Host Types
 -------------------
@@ -74,11 +77,9 @@ The hosts file maps physical connections to those types:
        type: ledger_archive
        conninfo: dbname=ledger_archive user=postgres password=postgres
 
-``--exclusive`` is allowed only for a single-host run. After resolving
-``HOSTS`` and applying options such as ``--host-name``, the command must have
-one target host, which means one database connection during execution or one SQL
-output file during offline generation. For several target hosts, use separate
-command invocations if each database needs the exclusive guard.
+Some options, including ``--exclusive``, require a single-host run. With several
+target hosts, select one with ``--host-name`` or use separate command
+invocations when each database needs its own targeted run.
 
 Shared SQL
 ----------

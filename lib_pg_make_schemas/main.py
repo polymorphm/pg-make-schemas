@@ -54,15 +54,15 @@ def add_shared_options(sub_parser):
     sub_parser.add_argument(
         '--host-name',
         metavar='HOST_NAME',
-        help='use only the resolved host whose name is HOST_NAME',
+        help='use only the resolved host whose name is HOST_NAME. this can '
+                'make a single-host run from a larger hosts list',
     )
 
     sub_parser.add_argument(
         '-C',
         '--conninfo',
         metavar='CONNINFO',
-        help='use CONNINFO for the target host. this is a single-host run '
-                'option',
+        help='use CONNINFO for the target host. requires a single-host run',
     )
 
     sub_parser.add_argument(
@@ -80,8 +80,7 @@ def add_shared_options(sub_parser):
         metavar='NAME=VALUE',
         action='append',
         help='set a string value in the selected host params script '
-                'environment. repeat as needed. this is a single-host run '
-                'option',
+                'environment. repeat as needed. requires a single-host run',
     )
 
     sub_parser.add_argument(
@@ -89,8 +88,7 @@ def add_shared_options(sub_parser):
         '--exclusive',
         action='store_true',
         help='abort if a *_revision schema for another application already '
-                'exists in the database. use only for a single-host run, '
-                'when HOSTS and optional --host-name select one target host',
+                'exists in the database. requires a single-host run',
     )
 
 def add_install_upgrade_options(sub_parser):
