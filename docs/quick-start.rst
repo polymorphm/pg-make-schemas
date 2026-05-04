@@ -109,8 +109,16 @@ The command writes a file named like this:
 Run Against a Local Database
 ----------------------------
 
-For a real execution, create a hosts file. This example assumes a local
-database named ``ledger_local`` and a role named ``ledger_owner`` already exist:
+For a real execution, create a database owned by the application role. The exact
+administrative command depends on the local PostgreSQL setup; on many developer
+machines this is enough:
+
+.. code-block:: console
+
+   $ createuser ledger_owner
+   $ createdb -O ledger_owner ledger_local
+
+Then create a hosts file:
 
 .. code-block:: yaml
 

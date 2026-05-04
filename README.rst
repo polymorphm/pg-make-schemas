@@ -14,6 +14,19 @@ revision. During deployment, an optional ``comment.sh`` script can add
 provenance from Git, CI, or a release artifact without making pg-make-schemas
 depend on any specific source-control system.
 
+Highlights
+----------
+
+* Generate reviewable SQL without connecting to PostgreSQL by using
+  pseudo-hosts from the source tree.
+* Run live installs and upgrades with ``--pretend`` first, then keep SQL and
+  notice files as an execution record.
+* Avoid depending on the literal ``postgres`` role by configuring source-tree
+  roles and connecting as application-owned database roles.
+* Target one database from a larger hosts file with ``--host-name`` and
+  single-host run options such as ``--conninfo``, ``--host-define``, and
+  ``--exclusive``.
+
 Status
 ------
 
@@ -31,7 +44,8 @@ Runtime requirements:
 Documentation
 -------------
 
-Start with ``docs/index.rst``.
+Start with ``docs/quick-start.rst`` for a first source tree, then read
+``docs/index.rst`` for the full guide.
 
 The documentation includes:
 

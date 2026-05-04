@@ -6,7 +6,9 @@ class ArgsCtx:
     pass
 
 def add_shared_options(sub_parser):
-    sub_parser.add_argument(
+    common_group = sub_parser.add_argument_group('common options')
+
+    common_group.add_argument(
         '-v',
         '--verbose',
         action='count',
@@ -15,7 +17,7 @@ def add_shared_options(sub_parser):
                 'execution details',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-e',
         '--execute',
         action='store_true',
@@ -24,7 +26,7 @@ def add_shared_options(sub_parser):
                 'PostgreSQL notice files next to SQL files',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-p',
         '--pretend',
         action='store_true',
@@ -32,7 +34,7 @@ def add_shared_options(sub_parser):
                 'committing them. this implies --execute',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-o',
         '--output',
         metavar='OUTPUT',
@@ -42,7 +44,7 @@ def add_shared_options(sub_parser):
                 'files as an execution record',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-i',
         '--include',
         metavar='INCLUDE',
@@ -51,21 +53,21 @@ def add_shared_options(sub_parser):
                 'define a reusable include reference; repeat as needed',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '--host-name',
         metavar='HOST_NAME',
         help='use only the resolved host whose name is HOST_NAME. this can '
                 'make a single-host run from a larger hosts list',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-C',
         '--conninfo',
         metavar='CONNINFO',
         help='use CONNINFO for the target host. requires a single-host run',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-D',
         '--define',
         metavar='NAME=VALUE',
@@ -74,7 +76,7 @@ def add_shared_options(sub_parser):
                 'repeat as needed',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-d',
         '--host-define',
         metavar='NAME=VALUE',
@@ -83,7 +85,7 @@ def add_shared_options(sub_parser):
                 'needed. requires a single-host run',
     )
 
-    sub_parser.add_argument(
+    common_group.add_argument(
         '-X',
         '--exclusive',
         action='store_true',
@@ -92,7 +94,9 @@ def add_shared_options(sub_parser):
     )
 
 def add_install_upgrade_options(sub_parser):
-    sub_parser.add_argument(
+    install_upgrade_group = sub_parser.add_argument_group('install/upgrade options')
+
+    install_upgrade_group.add_argument(
         '-c',
         '--comment',
         action='store_true',
@@ -102,7 +106,7 @@ def add_install_upgrade_options(sub_parser):
                 'this option',
     )
 
-    sub_parser.add_argument(
+    install_upgrade_group.add_argument(
         '--init',
         action='store_true',
         help='run basic initialization before install or upgrade. the '
@@ -111,14 +115,16 @@ def add_install_upgrade_options(sub_parser):
     )
 
 def add_drop_acl_options(sub_parser):
-    sub_parser.add_argument(
+    drop_acl_group = sub_parser.add_argument_group('drop and ACL options')
+
+    drop_acl_group.add_argument(
         '--cascade',
         action='store_true',
         help='use DROP SCHEMA ... CASCADE when dropping schemas. this can be '
                 'dangerous; review the possible consequences first',
     )
 
-    sub_parser.add_argument(
+    drop_acl_group.add_argument(
         '-A',
         '--weak-acls',
         action='store_true',
@@ -126,14 +132,16 @@ def add_drop_acl_options(sub_parser):
     )
 
 def add_install_options(install_parser):
-    install_parser.add_argument(
+    install_group = install_parser.add_argument_group('install options')
+
+    install_group.add_argument(
         '--reinstall',
         action='store_true',
         help='drop variable and function schemas before installing. this '
                 'deletes data and requires --cascade',
     )
 
-    install_parser.add_argument(
+    install_group.add_argument(
         '--reinstall-func',
         action='store_true',
         help='drop and recreate only function schemas. variable schemas and '
@@ -141,7 +149,9 @@ def add_install_options(install_parser):
     )
 
 def add_upgrade_options(upgrade_parser):
-    upgrade_parser.add_argument(
+    upgrade_group = upgrade_parser.add_argument_group('upgrade options')
+
+    upgrade_group.add_argument(
         '--show-rev',
         action='store_true',
         help='show stored revision information and stop. use with --rev to '
@@ -149,14 +159,14 @@ def add_upgrade_options(upgrade_parser):
                 'revision',
     )
 
-    upgrade_parser.add_argument(
+    upgrade_group.add_argument(
         '--change-rev',
         action='store_true',
         help='change stored revision information and stop. this is dangerous; '
                 'without --rev, it can overwrite real revision information',
     )
 
-    upgrade_parser.add_argument(
+    upgrade_group.add_argument(
         '-r',
         '--rev',
         metavar='REV',
@@ -165,7 +175,7 @@ def add_upgrade_options(upgrade_parser):
                 'database',
     )
 
-    upgrade_parser.add_argument(
+    upgrade_group.add_argument(
         '--install',
         action='store_true',
         help='fall back to install for hosts that do not have a stored '
