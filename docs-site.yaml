@@ -9,10 +9,13 @@ developing:
 
 current:
   title: Current stable
-  ref: pg-make-schemas-10.1.0-0-g164e155
+  ref: pg-make-schemas-11.0.0-0-g351e03e
   path: current
 
 versions:
+  - title: pg-make-schemas 11.0.0
+    ref: pg-make-schemas-11.0.0-0-g351e03e
+    path: versions/11.0.0
   - title: pg-make-schemas 10.1.0
     ref: pg-make-schemas-10.1.0-0-g164e155
     path: versions/10.1.0
