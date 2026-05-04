@@ -30,7 +30,7 @@ Highlights
 Status
 ------
 
-Developer version (for master git branch).
+Release: ``pg-make-schemas-11.0.0``.
 
 Requirements
 ------------
