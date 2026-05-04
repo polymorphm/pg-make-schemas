@@ -35,6 +35,7 @@ Create this directory structure in a temporary workspace:
      application: starlight-ledger
      revision: "1.0.0"
      type: ledger_main
+     role: ledger_owner
 
 ``src/main/schemas.yaml``:
 
@@ -52,7 +53,7 @@ does not need its own ``type`` field.
    schema:
      name: ledger_data
      type: var
-     owner: postgres
+     owner: ledger_owner
 
 ``src/main/10-ledger-data/tables.sql``:
 
@@ -70,7 +71,7 @@ does not need its own ``type`` field.
    schema:
      name: ledger_api
      type: func
-     owner: postgres
+     owner: ledger_owner
 
 ``src/main/20-ledger-api/functions.sql``:
 
@@ -108,14 +109,15 @@ The command writes a file named like this:
 Run Against a Local Database
 ----------------------------
 
-For a real execution, create a hosts file:
+For a real execution, create a hosts file. This example assumes a local
+database named ``ledger_local`` and a role named ``ledger_owner`` already exist:
 
 .. code-block:: yaml
 
    hosts:
      - name: local_main
        type: ledger_main
-       conninfo: dbname=postgres user=postgres password=postgres
+       conninfo: dbname=ledger_local user=ledger_owner
 
 Then run a pretend install first:
 

@@ -31,7 +31,7 @@ number of hosts.
 For live pseudo-host execution, use a single-host run and provide connection
 details with ``--conninfo`` or libpq environment variables.
 
-Shared Options
+Common Options
 --------------
 
 ``-v``, ``--verbose``
@@ -69,15 +69,14 @@ Shared Options
     defaults and environment variables.
 
 ``-D NAME=VALUE``, ``--define NAME=VALUE``
-    Set a string value in the hosts shared script environment. This updates
+    Set a string value in the shared script environment. This updates
     ``pg_temp.scr_env_shared()``. Repeat as needed; later values override
     earlier values with the same name.
 
 ``-d NAME=VALUE``, ``--host-define NAME=VALUE``
-    Set a string value in the selected host params script environment. This
-    updates ``pg_temp.scr_env_host_params()``. Repeat as needed; later values
-    override earlier values with the same name. This requires a single-host
-    run.
+    Set a string value in the selected host's params mapping. This updates
+    ``pg_temp.scr_env_host_params()``. Repeat as needed; later values override
+    earlier values with the same name. This requires a single-host run.
 
 ``-X``, ``--exclusive``
     Abort if a ``*_revision`` schema for another application already exists in
@@ -126,7 +125,7 @@ Syntax:
 
    $ ./pg-make-schemas init [OPTIONS] HOSTS SOURCE_CODE
 
-``init`` supports the shared options only.
+``init`` supports the common options only.
 
 install
 -------

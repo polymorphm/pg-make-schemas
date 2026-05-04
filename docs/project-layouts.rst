@@ -4,7 +4,7 @@ Project Layouts
 pg-make-schemas does not require one exact directory layout. It requires specific
 YAML file names and uses sorted directory traversal plus explicit ordering rules.
 
-Single Host Type Layout
+Single-Type Source Tree
 -----------------------
 
 For many projects, one database type is enough:
@@ -37,9 +37,9 @@ Use ``cluster.type`` to make this a shortened single-type tree:
 
 In this mode, child ``schemas.yaml``, ``migrations.yaml``, and ``settings.yaml``
 files can inherit the type. With ``HOSTS=-``, the source tree produces one
-pseudo-host named ``ledger_main``. That makes offline SQL generation naturally
-single-host, and live execution can use ``--conninfo`` or libpq environment
-defaults without writing a separate hosts file.
+pseudo-host named ``ledger_main``. That makes offline SQL generation concise,
+and it gives live single-host runs the option to use ``--conninfo`` or libpq
+environment defaults without writing a separate hosts file.
 
 Multiple Host Types
 -------------------
@@ -72,14 +72,10 @@ The hosts file maps physical connections to those types:
    hosts:
      - name: demo_main
        type: ledger_main
-       conninfo: dbname=ledger_main user=postgres password=postgres
+       conninfo: dbname=ledger_main user=ledger_owner
      - name: demo_archive
        type: ledger_archive
-       conninfo: dbname=ledger_archive user=postgres password=postgres
-
-Some options, including ``--exclusive``, require a single-host run. With several
-target hosts, select one with ``--host-name`` or use separate command
-invocations when each database needs its own targeted run.
+       conninfo: dbname=ledger_archive user=ledger_owner
 
 Shared SQL
 ----------
@@ -104,7 +100,7 @@ If two schemas need shared SQL, keep it outside either schema and include it:
    schema:
      name: ledger_api
      type: func
-     owner: postgres
+     owner: ledger_owner
      include: ../../shared
      first: timestamp-functions.sql
 

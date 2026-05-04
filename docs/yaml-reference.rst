@@ -55,7 +55,7 @@ argument to every command.
          country: US
      - name: demo_main
        type: ledger_main
-       conninfo: dbname=postgres user=postgres password=postgres
+       conninfo: dbname=ledger_main user=ledger_owner
        params:
          region: us-east
          node: 1
@@ -76,8 +76,10 @@ Host entries:
     ``settings`` branch applies.
 
 ``conninfo``
-    Optional string. PostgreSQL connection string passed to Psycopg. Required
-    for execution.
+    Optional string. PostgreSQL connection string passed to Psycopg. Live
+    execution needs connection details from host ``conninfo``, from
+    ``--conninfo`` during a single-host run, or from libpq defaults and
+    environment variables.
 
 ``params``
     Optional mapping. Per-host deployment values exposed to SQL as JSON through
@@ -224,7 +226,7 @@ schema.yaml
    schema:
      name: ledger_api
      type: func
-     owner: postgres
+     owner: ledger_owner
      grant:
        - app_reader
 

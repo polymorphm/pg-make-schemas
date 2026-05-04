@@ -70,7 +70,7 @@ def add_shared_options(sub_parser):
         '--define',
         metavar='NAME=VALUE',
         action='append',
-        help='set a string value in the hosts shared script environment. '
+        help='set NAME=VALUE in the shared script environment. '
                 'repeat as needed',
     )
 
@@ -79,8 +79,8 @@ def add_shared_options(sub_parser):
         '--host-define',
         metavar='NAME=VALUE',
         action='append',
-        help='set a string value in the selected host params script '
-                'environment. repeat as needed. requires a single-host run',
+        help='set NAME=VALUE in the selected host params mapping. repeat as '
+                'needed. requires a single-host run',
     )
 
     sub_parser.add_argument(

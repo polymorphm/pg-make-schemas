@@ -209,6 +209,14 @@ sees the same ``shared`` value and its own ``params`` value, so the rows above
 can record node ``1`` for ``main-east-1``, node ``2`` for ``main-east-2``, and a
 different region and flag for ``main-west-1``.
 
+This pattern works well for regional defaults, node or shard numbers, feature
+flags, and deployment-specific seed/config rows. If a parameter affects a
+production-only assumption or destructive behavior, add a ``safeguard.yaml``
+check so the command fails before committing a bad deployment.
+
+Override Host Values for One Run
+--------------------------------
+
 For one-off targeted work, select a host and override deployment values from
 the command line:
 
@@ -220,11 +228,6 @@ the command line:
 
 ``--define`` updates the shared value seen by SQL. ``--host-define`` updates
 only the selected host params value, so it requires a single-host run.
-
-This pattern works well for regional defaults, node or shard numbers, feature
-flags, and deployment-specific seed/config rows. If a parameter affects a
-production-only assumption or destructive behavior, add a ``safeguard.yaml``
-check so the command fails before committing a bad deployment.
 
 Upgrade or Install Mixed Hosts
 ------------------------------
