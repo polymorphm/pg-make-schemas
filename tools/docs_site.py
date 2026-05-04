@@ -8,6 +8,38 @@ import sys
 import yaml
 
 
+ASSETS_DIR = pathlib.Path(__file__).with_name("docs_site_assets")
+PLACEHOLDER_RE = re.compile(r"{{\s*([A-Za-z0-9_]+)\s*}}")
+
+
+def read_asset(name):
+    return (ASSETS_DIR / name).read_text(encoding="utf-8")
+
+
+def render_template(template, values):
+    placeholders = set(PLACEHOLDER_RE.findall(template))
+    missing = placeholders - set(values)
+    extra = set(values) - placeholders
+
+    if missing:
+        raise SystemExit("missing template values: " + ", ".join(sorted(missing)))
+    if extra:
+        raise SystemExit("unused template values: " + ", ".join(sorted(extra)))
+
+    def replace(match):
+        return values[match.group(1)]
+
+    return PLACEHOLDER_RE.sub(replace, template)
+
+
+def html_text(value):
+    return html.escape(value)
+
+
+def html_attr(value):
+    return html.escape(value, quote=True)
+
+
 def load_manifest(path):
     with open(path, "r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh) or {}
@@ -122,6 +154,27 @@ def link_prefix(output_path):
     return "../" * depth
 
 
+def write_asset(target, name):
+    target.write_text(read_asset(name), encoding="utf-8")
+
+
+def render_doc_card(label, description, entry):
+    return f"""        <article class="doc-card">
+          <p class="card-label">{html_text(label)}</p>
+          <h2><a href="{html_attr(entry["path"])}/">{html_text(entry["title"])}</a></h2>
+          <p>{html_text(description)}</p>
+          <span>{html_text(entry["ref"])}</span>
+        </article>"""
+
+
+def render_version_link(entry):
+    return (
+        f'          <li><a href="{html_attr(entry["path"])}/">'
+        f'{html_text(entry["title"])}</a>'
+        f'<span>{html_text(entry["ref"])}</span></li>'
+    )
+
+
 def command_prepare_build(manifest, key, docs_dir):
     data = load_manifest(manifest)
     validate(data)
@@ -138,38 +191,8 @@ def command_prepare_build(manifest, key, docs_dir):
     links = [{"title": item["title"], "url": prefix + item["path"] + "/"} for item in all_entries]
     root_url = prefix + "index.html"
 
-    (templates_dir / "layout.html").write_text(
-        """{% extends "!layout.html" %}
-{% block body %}
-<div class="version-switcher">
-  <strong>{{ docs_site_current_title }}</strong>
-  <a href="{{ docs_site_root_url }}">All versions</a>
-  {% for item in docs_site_versions %}
-  <a href="{{ item.url }}">{{ item.title }}</a>
-  {% endfor %}
-</div>
-{{ super() }}
-{% endblock %}
-""",
-        encoding="utf-8",
-    )
-
-    (static_dir / "version-switcher.css").write_text(
-        """.version-switcher {
-  border-bottom: 1px solid var(--color-background-border);
-  font-size: 0.875rem;
-  margin: 0 0 1.25rem;
-  padding: 0.75rem 0;
-}
-.version-switcher strong {
-  margin-right: 1rem;
-}
-.version-switcher a {
-  margin-right: 1rem;
-}
-""",
-        encoding="utf-8",
-    )
+    write_asset(templates_dir / "page.html", "page.html")
+    write_asset(static_dir / "version-switcher.css", "version-switcher.css")
 
     with open(docs_path / "conf.py", "a", encoding="utf-8") as fh:
         fh.write(
@@ -197,87 +220,49 @@ def command_render_index(manifest, site_dir):
     validate(data)
     site = data["site"]
     all_entries = entries(data)
+    if not all_entries:
+        raise SystemExit("at least one documentation entry is required")
 
     site_path = pathlib.Path(site_dir)
     site_path.mkdir(parents=True, exist_ok=True)
 
-    links = "\n".join(
-        f'        <li><a href="{html.escape(entry["path"], quote=True)}/">'
-        f'{html.escape(entry["title"])}</a>'
-        f'<span>{html.escape(entry["ref"])}</span></li>'
-        for entry in all_entries
+    developing = data.get("developing")
+    current = data.get("current")
+    developing_entry = entry_from_mapping("developing", developing) if developing is not None else None
+    current_entry = entry_from_mapping("current", current) if current is not None else None
+
+    primary_entries = [
+        ("Development docs", "Latest work on the master branch.", developing_entry),
+        ("Current stable docs", "Recommended documentation for production users.", current_entry),
+    ]
+    primary_cards = "\n".join(
+        render_doc_card(label, description, entry)
+        for label, description, entry in primary_entries
+        if entry is not None
+    )
+
+    version_links = "\n".join(
+        render_version_link(entry) for entry in all_entries
     )
 
     description = site.get("description", "")
-    page = f"""<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{html.escape(site["title"])}</title>
-    <style>
-      body {{
-        color: #1f2937;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.5;
-        margin: 0;
-      }}
-      main {{
-        margin: 0 auto;
-        max-width: 52rem;
-        padding: 4rem 1.5rem;
-      }}
-      h1 {{
-        font-size: 2rem;
-        font-weight: 650;
-        letter-spacing: 0;
-        margin: 0 0 0.75rem;
-      }}
-      p {{
-        color: #4b5563;
-        margin: 0 0 2rem;
-      }}
-      ul {{
-        border-top: 1px solid #d1d5db;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-      }}
-      li {{
-        align-items: baseline;
-        border-bottom: 1px solid #d1d5db;
-        display: flex;
-        gap: 1rem;
-        justify-content: space-between;
-        padding: 1rem 0;
-      }}
-      a {{
-        color: #005ea8;
-        font-weight: 650;
-        text-decoration: none;
-      }}
-      a:hover {{
-        text-decoration: underline;
-      }}
-      span {{
-        color: #6b7280;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 0.875rem;
-      }}
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>{html.escape(site["title"])}</h1>
-      <p>{html.escape(description)}</p>
-      <ul>
-{links}
-      </ul>
-    </main>
-  </body>
-</html>
-"""
+    fallback_entry = all_entries[0]
+    developing_url = (developing_entry or fallback_entry)["path"]
+    current_url = (current_entry or fallback_entry)["path"]
+
+    page = render_template(
+        read_asset("docs-home.html"),
+        {
+            "site_title_html": html_text(site["title"]),
+            "site_description_html": html_text(description),
+            "developing_url_attr": html_attr(developing_url),
+            "current_url_attr": html_attr(current_url),
+            "primary_cards_raw": primary_cards,
+            "version_links_raw": version_links,
+        },
+    )
     (site_path / "index.html").write_text(page, encoding="utf-8")
+    write_asset(site_path / "docs-home.css", "docs-home.css")
     (site_path / ".nojekyll").write_text("", encoding="utf-8")
 
 

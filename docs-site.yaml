@@ -1,6 +1,6 @@
 site:
   title: pg-make-schemas documentation
-  description: Select documentation for the development branch or a published release.
+  description: Turn one database or a multi-host PostgreSQL fleet into Git-reviewed source trees with short migrations, generated SQL, and guarded upgrades.
 
 developing:
   title: Developing

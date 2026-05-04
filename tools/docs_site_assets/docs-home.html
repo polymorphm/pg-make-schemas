@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ site_title_html }}</title>
+    <link rel="stylesheet" href="docs-home.css">
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <h1>PostgreSQL schema development, organized like source code</h1>
+        <p>{{ site_description_html }}</p>
+        <p class="hero-note">Free, open source tooling for teams that want database changes to be reviewable, repeatable, and owned in Git.</p>
+        <div class="actions">
+          <a class="button" href="{{ developing_url_attr }}/">Read development docs</a>
+          <a class="button secondary" href="{{ current_url_attr }}/">Read current stable docs</a>
+        </div>
+      </section>
+
+      <section class="doc-grid" aria-label="Primary documentation versions">
+{{ primary_cards_raw }}
+      </section>
+
+      <section class="feature-grid" aria-label="Feature highlights">
+        <article class="feature">
+          <h2>Git-first database development</h2>
+          <p>Keep schemas, migrations, safeguards, and settings in reviewable source trees with the rest of the application.</p>
+        </article>
+        <article class="feature">
+          <h2>Shorter migrations</h2>
+          <p>Migrate persistent data schemas explicitly, then recreate function and API schemas from source instead of maintaining long migration files for them.</p>
+        </article>
+        <article class="feature">
+          <h2>Reviewable SQL output</h2>
+          <p>Generate SQL from source trees and pseudo-hosts for CI artifacts, pull request review, or DBA-controlled execution.</p>
+        </article>
+        <article class="feature">
+          <h2>Guarded upgrades</h2>
+          <p>Use stored revisions, migration path checks, safeguard scripts, and ACL checks to catch unsafe states before final commit.</p>
+        </article>
+        <article class="feature">
+          <h2>Application-owned roles</h2>
+          <p>Run technical SQL through configured source-tree roles instead of depending on the default <code>postgres</code> role where privileges allow it.</p>
+        </article>
+        <article class="feature">
+          <h2>Single or multi-host runs</h2>
+          <p>Operate on one database for a focused release, or resolve a multi-host setup and run the same source tree across a fleet.</p>
+        </article>
+        <article class="feature">
+          <h2>Targeted settings</h2>
+          <p>Override conninfo or host params for a single-host run, and feed settings SQL with shared deployment values for each environment.</p>
+        </article>
+      </section>
+
+      <details>
+        <summary>All documentation versions</summary>
+        <ul>
+{{ version_links_raw }}
+        </ul>
+      </details>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+{% extends "!page.html" %}
+{% block content %}
+<div class="version-switcher">
+  <span class="version-current">{{ docs_site_current_title|e }}</span>
+  <a href="{{ docs_site_root_url|e }}">Documentation home</a>
+  <details>
+    <summary>Other versions</summary>
+    {% for item in docs_site_versions %}
+    <a href="{{ item.url|e }}">{{ item.title|e }}</a>
+    {% endfor %}
+  </details>
+</div>
+{{ super() }}
+{% endblock content %}
