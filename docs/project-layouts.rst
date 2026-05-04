@@ -75,10 +75,10 @@ The hosts file maps physical connections to those types:
        conninfo: dbname=ledger_archive user=postgres password=postgres
 
 ``--exclusive`` is allowed only for a single-host run. After resolving
-``HOSTS``, the command must have one target host, which means one database
-connection during execution or one SQL output file during offline generation.
-For several target hosts, use separate command invocations if each database
-needs the exclusive guard.
+``HOSTS`` and applying options such as ``--host-name``, the command must have
+one target host, which means one database connection during execution or one SQL
+output file during offline generation. For several target hosts, use separate
+command invocations if each database needs the exclusive guard.
 
 Shared SQL
 ----------

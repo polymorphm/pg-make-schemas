@@ -237,13 +237,14 @@ this application's pg-make-schemas revision structures:
 
 .. code-block:: console
 
-   $ ./pg-make-schemas install --exclusive --execute -v -o out/install hosts.yaml src
+   $ ./pg-make-schemas install --host-name main-east-1 --exclusive --execute -v -o out/install hosts.yaml src
 
 The option adds an early SQL guard that fails if any other ``*_revision`` schema
 already exists. It also creates a transaction-held lock schema while the command
 runs. Because the guard is database-wide, pg-make-schemas accepts
-``--exclusive`` only when the resolved hosts list contains one host, producing
-one database connection or one SQL output file.
+``--exclusive`` only when the resolved hosts list contains one host after any
+``--host-name`` selection is applied, producing one database connection or one
+SQL output file.
 
 Show Current Revision
 ---------------------

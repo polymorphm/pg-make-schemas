@@ -10,8 +10,9 @@ The executable has three commands:
    $ ./pg-make-schemas upgrade HOSTS SOURCE_CODE [SETTINGS_SOURCE_CODE ...]
 
 ``HOSTS`` may be ``-``. In that case pg-make-schemas builds pseudo-hosts from
-the source tree. This is useful for generated SQL output, but cannot execute
-against a database because there is no ``conninfo``.
+the source tree. This is useful for generated SQL output. In a single-host run,
+pseudo-hosts can also execute when ``--conninfo`` or libpq environment
+defaults provide connection details.
 
 Shared Options
 --------------
@@ -39,13 +40,35 @@ Shared Options
     This option may be used many times and may define an include reference with
     ``name=value``.
 
+``--host-name HOST_NAME``
+    Use only the resolved host with this name. With a real hosts file, this
+    matches the host entry's ``name`` field. With ``HOSTS`` set to ``-``, this
+    matches a pseudo-host name from the source tree schema types.
+
+``-C CONNINFO``, ``--conninfo CONNINFO``
+    Use ``CONNINFO`` for the target host. This is a single-host run option.
+    If a single-host run has no ``conninfo``, pg-make-schemas connects through
+    libpq defaults and environment variables.
+
+``-D NAME=VALUE``, ``--define NAME=VALUE``
+    Set a string value in the hosts shared script environment. This updates
+    ``pg_temp.scr_env_shared()``. Repeat as needed; later values override
+    earlier values with the same name.
+
+``-d NAME=VALUE``, ``--host-define NAME=VALUE``
+    Set a string value in the selected host params script environment. This
+    updates ``pg_temp.scr_env_host_params()``. Repeat as needed; later values
+    override earlier values with the same name. This is a single-host run
+    option.
+
 ``-X``, ``--exclusive``
     Abort if a ``*_revision`` schema for another application already exists in
     the target database. The generated SQL takes a transaction-held schema lock
     before checking revision schemas, so this option also works in output-only
-    SQL. It is allowed only for a single-host run: after resolving ``HOSTS``,
-    the command must have one target host, so it will make one database
-    connection or write one SQL output file.
+    SQL. It is allowed only for a single-host run: after resolving ``HOSTS``
+    and applying options such as ``--host-name``, the command must have one
+    target host, so it will make one database connection or write one SQL
+    output file.
 
 Output Files
 ------------

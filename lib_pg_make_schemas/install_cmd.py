@@ -55,6 +55,13 @@ def install_cmd(args_ctx, print_func, err_print_func):
     if args_ctx.hosts is None:
         hosts_descr.load_pseudo(source_code_cluster_descr)
 
+    cmd.apply_hosts_options(
+            hosts_descr,
+            args_ctx.host_name,
+            args_ctx.define_map,
+            args_ctx.conninfo,
+            args_ctx.host_define_map)
+
     if args_ctx.exclusive and not cmd.is_single_host_run(hosts_descr):
         raise InstallCmdError('unable to use --exclusive without a single-host run')
 

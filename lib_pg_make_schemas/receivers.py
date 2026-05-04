@@ -80,7 +80,10 @@ class Receivers:
         self._notices = self._execute and self._output is not None
 
     def _connect(self, conninfo):
-        con = psycopg.connect(conninfo)
+        if conninfo is None:
+            con = psycopg.connect()
+        else:
+            con = psycopg.connect(conninfo)
 
         if con.autocommit:
             raise AssertionError('con.autocommit should not be set into True')
@@ -116,7 +119,7 @@ class Receivers:
                     ),
                 )
 
-            if conninfo is None:
+            if conninfo is None and len(hosts_descr.host_list) != 1:
                 raise ValueError(
                     '{!r}, {!r}: unable to connect to host without its conninfo'.format(
                         host_name,

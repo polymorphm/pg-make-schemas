@@ -52,12 +52,45 @@ def add_shared_options(sub_parser):
     )
 
     sub_parser.add_argument(
+        '--host-name',
+        metavar='HOST_NAME',
+        help='use only the resolved host whose name is HOST_NAME',
+    )
+
+    sub_parser.add_argument(
+        '-C',
+        '--conninfo',
+        metavar='CONNINFO',
+        help='use CONNINFO for the target host. this is a single-host run '
+                'option',
+    )
+
+    sub_parser.add_argument(
+        '-D',
+        '--define',
+        metavar='NAME=VALUE',
+        action='append',
+        help='set a string value in the hosts shared script environment. '
+                'repeat as needed',
+    )
+
+    sub_parser.add_argument(
+        '-d',
+        '--host-define',
+        metavar='NAME=VALUE',
+        action='append',
+        help='set a string value in the selected host params script '
+                'environment. repeat as needed. this is a single-host run '
+                'option',
+    )
+
+    sub_parser.add_argument(
         '-X',
         '--exclusive',
         action='store_true',
         help='abort if a *_revision schema for another application already '
                 'exists in the database. use only for a single-host run, '
-                'when HOSTS resolves to one target host',
+                'when HOSTS and optional --host-name select one target host',
     )
 
 def add_install_upgrade_options(sub_parser):
@@ -224,6 +257,20 @@ def make_parser():
 
     return parser
 
+def parse_define_map(arg_define_list):
+    define_map = {}
+
+    if arg_define_list is not None:
+        for arg_define in arg_define_list:
+            if '=' not in arg_define:
+                raise ValueError('unable to parse define without =')
+
+            arg_define_name, arg_define_val = arg_define.split('=', 1)
+
+            define_map[arg_define_name] = arg_define_val
+
+    return define_map
+
 def make_args_ctx(args):
     args_ctx = ArgsCtx()
 
@@ -233,6 +280,10 @@ def make_args_ctx(args):
     args_ctx.pretend = args.pretend
     args_ctx.output = args.output
     args_ctx.hosts = args.hosts
+    args_ctx.host_name = args.host_name
+    args_ctx.conninfo = args.conninfo
+    args_ctx.define_map = parse_define_map(args.define)
+    args_ctx.host_define_map = parse_define_map(args.host_define)
 
     if args_ctx.pretend or args_ctx.output is None:
         args_ctx.execute = True
